@@ -160,7 +160,7 @@ mango::Matrix& mango::Matrix::Sum(Axis axis)
 	return Sum(axis, 0, end);
 }
 
-mango::Matrix & mango::Matrix::Sum(Axis axis, unsigned start, unsigned end)
+mango::Matrix& mango::Matrix::Sum(Axis axis, unsigned start, unsigned end)
 {
 	if (end <= start)
 	{
@@ -224,7 +224,7 @@ mango::Matrix & mango::Matrix::Sum(Axis axis, unsigned start, unsigned end)
 	}
 }
 
-mango::Matrix & mango::Matrix::Average(mango::Axis axis)
+mango::Matrix& mango::Matrix::Average(mango::Axis axis)
 {
 	unsigned length;
 	switch (axis)
@@ -246,7 +246,7 @@ mango::Matrix & mango::Matrix::Average(mango::Axis axis)
 	return *this;
 }
 
-mango::Matrix & mango::Matrix::Average(Axis axis, unsigned start, unsigned end)
+mango::Matrix& mango::Matrix::Average(Axis axis, unsigned start, unsigned end)
 {
 	Sum(axis, start, end);
 	(*this) /= float(end - start);
@@ -274,6 +274,100 @@ mango::Matrix mango::Matrix::Log(const Matrix & m)
 {
 	Matrix m_new = m;
 	return std::move(m_new.Log());
+}
+
+mango::Matrix mango::Matrix::Sum(const Matrix & m, Axis axis)
+{
+	unsigned end;	// start is always 0
+	switch (axis)
+	{
+	case mango::Axis::Row:
+		end = m.Rows();
+		break;
+	case mango::Axis::Col:
+		end = m.Cols();
+		break;
+	case mango::Axis::Page:
+		end = m.Pages();
+		break;
+	}
+
+	return Sum(m, axis, 0, end);
+}
+
+mango::Matrix mango::Matrix::Sum(const Matrix & m, Axis axis, unsigned start, unsigned end)
+{
+	unsigned rows = m.Rows();
+	unsigned cols = m.Cols();
+	unsigned pages = m.Pages();
+
+	unsigned zero = 0;
+	unsigned row, col, page;	// index for Matrix m
+	unsigned *prow = &row;		// index for result matrix
+	unsigned *pcol = &col;		// index for result matrix
+	unsigned *ppage = &page;	// index for result matrix
+
+	unsigned row_start = 0, row_end = rows;
+	unsigned col_start = 0, col_end = cols;
+	unsigned page_start = 0, page_end = pages;
+
+	switch (axis)
+	{
+	case mango::Axis::Row:
+		rows = 1;
+		prow = &zero;
+		row_start = start;
+		row_end = end;
+		break;
+	case mango::Axis::Col:
+		cols = 1;
+		pcol = &zero;
+		col_start = start;
+		col_end = end;
+		break;
+	case mango::Axis::Page:
+		pages = 1;
+		ppage = &zero;
+		page_start = start;
+		page_end = end;
+		break;
+	}
+
+	Matrix m_new(rows, cols, pages);
+
+	for (page = page_start; page < page_end; page++)
+		for (row = row_start; row < row_end; row++)
+			for (col = col_start; col < col_end; col++)
+				m_new(*prow, *pcol, *ppage) += m(row, col, page);
+
+	return m_new;
+}
+
+mango::Matrix mango::Matrix::Average(const Matrix & m, Axis axis)
+{
+	Matrix m_new = Sum(m, axis);
+
+	switch (axis)
+	{
+	case mango::Axis::Row:
+		m_new /= float(m.Rows());
+		break;
+	case mango::Axis::Col:
+		m_new /= float(m.Cols());
+		break;
+	case mango::Axis::Page:
+		m_new /= float(m.Pages());
+		break;
+	}
+
+	return m_new;
+}
+
+mango::Matrix mango::Matrix::Average(const Matrix & m, Axis axis, unsigned start, unsigned end)
+{
+	Matrix m_new = Sum(m, axis, start, end);
+	m_new /= float(end - start);
+	return m_new;
 }
 
 mango::Matrix mango::operator+(const Matrix & m1, const Matrix & m2)

@@ -84,6 +84,17 @@ namespace mango
 		// Take the logarithm of each element.
 		static Matrix Log(const Matrix& m);
 
+		// Sum the matrix along the specified axis, and return the result new matrix.
+		static Matrix Sum(const Matrix& m, Axis axis);
+
+		// Sum the matrix along the specified axis (range from start to end), and return the result new matrix.
+		static Matrix Sum(const Matrix& m, Axis axis, unsigned start, unsigned end);
+
+		// Take the average along the specified axis, and return the result new matrix.
+		static Matrix Average(const Matrix& m, Axis axis);
+
+		// Take the average along the specified axis (range from start to end), and return the result new matrix.
+		static Matrix Average(const Matrix& m, Axis axis, unsigned start, unsigned end);
 
 	};
 

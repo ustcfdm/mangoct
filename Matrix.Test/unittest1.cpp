@@ -570,6 +570,271 @@ namespace MatrixTest
 			}
 		}
 
+
+		TEST_METHOD(Matrix12_StaticSum)
+		{
+			mango::Matrix m1(2, 3, 4);
+			for (unsigned page = 0; page < m1.Pages(); page++)
+			{
+				for (unsigned row = 0; row < m1.Rows(); row++)
+				{
+					for (unsigned col = 0; col < m1.Cols(); col++)
+					{
+						m1(row, col, page) = 1;
+					}
+				}
+			}
+			mango::Matrix m2(m1);
+			mango::Matrix m3(m1);
+
+			mango::Matrix m11 = mango::Matrix::Sum(m1, mango::Axis::Row);
+			mango::Matrix m22 = mango::Matrix::Sum(m1, mango::Axis::Col);
+			mango::Matrix m33 = mango::Matrix::Sum(m1, mango::Axis::Page);
+
+			m1.Sum(mango::Axis::Row);
+			m2.Sum(mango::Axis::Col);
+			m3.Sum(mango::Axis::Page);
+
+			Assert::AreEqual(m1.Rows(), 1u);
+			Assert::AreEqual(m1.Cols(), 3u);
+			Assert::AreEqual(m1.Pages(), 4u);
+
+			Assert::AreEqual(m2.Rows(), 2u);
+			Assert::AreEqual(m2.Cols(), 1u);
+			Assert::AreEqual(m2.Pages(), 4u);
+
+			Assert::AreEqual(m3.Rows(), 2u);
+			Assert::AreEqual(m3.Cols(), 3u);
+			Assert::AreEqual(m3.Pages(), 1u);
+
+			for (unsigned page = 0; page < 4; page++)
+			{
+				for (unsigned row = 0; row < 2; row++)
+				{
+					for (unsigned col = 0; col < 3; col++)
+					{
+						Assert::AreEqual(m1(0, col, page), 2.0f, 0.0001f);
+						Assert::AreEqual(m2(row, 0, page), 3.0f, 0.0001f);
+						Assert::AreEqual(m3(row, col, 0), 4.0f, 0.0001f);
+
+						Assert::AreEqual(m11(0, col, page), 2.0f, 0.0001f);
+						Assert::AreEqual(m22(row, 0, page), 3.0f, 0.0001f);
+						Assert::AreEqual(m33(row, col, 0), 4.0f, 0.0001f);
+					}
+				}
+			}
+
+
+
+
+		}
+
+
+		TEST_METHOD(Matrix12_StaticSum_2)
+		{
+			mango::Matrix m1(5, 6, 7);
+			for (unsigned page = 0; page < m1.Pages(); page++)
+			{
+				for (unsigned row = 0; row < m1.Rows(); row++)
+				{
+					for (unsigned col = 0; col < m1.Cols(); col++)
+					{
+						m1(row, col, page) = 1;
+					}
+				}
+			}
+			mango::Matrix m2(m1);
+			mango::Matrix m3(m1);
+
+			mango::Matrix m11 = mango::Matrix::Sum(m1, mango::Axis::Row, 0u, 2u);
+			mango::Matrix m22 = mango::Matrix::Sum(m1, mango::Axis::Col, 1u, 4u);
+			mango::Matrix m33 = mango::Matrix::Sum(m1, mango::Axis::Page, 1u, 5u);
+
+
+			m1.Sum(mango::Axis::Row, 0u, 2u);
+			m2.Sum(mango::Axis::Col, 1u, 4u);
+			m3.Sum(mango::Axis::Page, 1u, 5u);
+
+			Assert::AreEqual(m1.Rows(), 1u, L"m1.Rows()");
+			Assert::AreEqual(m1.Cols(), 6u, L"m1.Cols()");
+			Assert::AreEqual(m1.Pages(), 7u, L"m1.Pages()");
+
+			Assert::AreEqual(m2.Rows(), 5u, L"m2.Rows()");
+			Assert::AreEqual(m2.Cols(), 1u, L"m2.Cols()");
+			Assert::AreEqual(m2.Pages(), 7u, L"m2.Pages()");
+
+			Assert::AreEqual(m3.Rows(), 5u, L"m3.Rows()");
+			Assert::AreEqual(m3.Cols(), 6u, L"m3.Cols()");
+			Assert::AreEqual(m3.Pages(), 1u, L"m3.Pages");
+
+			Assert::AreEqual(m11.Rows(), 1u, L"m11.Rows()");
+			Assert::AreEqual(m11.Cols(), 6u, L"m11.Cols()");
+			Assert::AreEqual(m11.Pages(), 7u, L"m11.Pages()");
+
+			Assert::AreEqual(m22.Rows(), 5u, L"m22.Rows()");
+			Assert::AreEqual(m22.Cols(), 1u, L"m22.Cols()");
+			Assert::AreEqual(m22.Pages(), 7u, L"m22.Pages()");
+
+			Assert::AreEqual(m33.Rows(), 5u, L"m33.Rows()");
+			Assert::AreEqual(m33.Cols(), 6u, L"m33.Cols()");
+			Assert::AreEqual(m33.Pages(), 1u, L"m33.Pages");
+
+			for (unsigned page = 0; page < 7; page++)
+			{
+				for (unsigned row = 0; row < 5; row++)
+				{
+					for (unsigned col = 0; col < 6; col++)
+					{
+						Assert::AreEqual(m1(0, col, page), 2.0f, 0.0001f);
+						Assert::AreEqual(m2(row, 0, page), 3.0f, 0.0001f);
+						Assert::AreEqual(m3(row, col, 0), 4.0f, 0.0001f);
+
+						Assert::AreEqual(m11(0, col, page), 2.0f, 0.0001f, L"m11");
+						Assert::AreEqual(m22(row, 0, page), 3.0f, 0.0001f), L"m22";
+						Assert::AreEqual(m33(row, col, 0), 4.0f, 0.0001f, L"m33");
+					}
+				}
+			}
+		}
+
+
+		TEST_METHOD(Matrix13_StaticAverage)
+		{
+			mango::Matrix m1(2, 3, 4);
+			for (unsigned page = 0; page < m1.Pages(); page++)
+			{
+				for (unsigned row = 0; row < m1.Rows(); row++)
+				{
+					for (unsigned col = 0; col < m1.Cols(); col++)
+					{
+						m1(row, col, page) = 1;
+					}
+				}
+			}
+			mango::Matrix m2(m1);
+			mango::Matrix m3(m1);
+
+			mango::Matrix m11 = mango::Matrix::Average(m1, mango::Axis::Row);
+			mango::Matrix m22 = mango::Matrix::Average(m1, mango::Axis::Col);
+			mango::Matrix m33 = mango::Matrix::Average(m1, mango::Axis::Page);
+
+			m1.Average(mango::Axis::Row);
+			m2.Average(mango::Axis::Col);
+			m3.Average(mango::Axis::Page);
+
+			Assert::AreEqual(m1.Rows(), 1u);
+			Assert::AreEqual(m1.Cols(), 3u);
+			Assert::AreEqual(m1.Pages(), 4u);
+
+			Assert::AreEqual(m2.Rows(), 2u);
+			Assert::AreEqual(m2.Cols(), 1u);
+			Assert::AreEqual(m2.Pages(), 4u);
+
+			Assert::AreEqual(m3.Rows(), 2u);
+			Assert::AreEqual(m3.Cols(), 3u);
+			Assert::AreEqual(m3.Pages(), 1u);
+
+			Assert::AreEqual(m11.Rows(), 1u);
+			Assert::AreEqual(m11.Cols(), 3u);
+			Assert::AreEqual(m11.Pages(), 4u);
+
+			Assert::AreEqual(m22.Rows(), 2u);
+			Assert::AreEqual(m22.Cols(), 1u);
+			Assert::AreEqual(m22.Pages(), 4u);
+
+			Assert::AreEqual(m33.Rows(), 2u);
+			Assert::AreEqual(m33.Cols(), 3u);
+			Assert::AreEqual(m33.Pages(), 1u);
+
+			for (unsigned page = 0; page < 4; page++)
+			{
+				for (unsigned row = 0; row < 2; row++)
+				{
+					for (unsigned col = 0; col < 3; col++)
+					{
+						Assert::AreEqual(m1(0, col, page), 1.0f, 0.0001f);
+						Assert::AreEqual(m2(row, 0, page), 1.0f, 0.0001f);
+						Assert::AreEqual(m3(row, col, 0), 1.0f, 0.0001f);
+
+						Assert::AreEqual(m11(0, col, page), 1.0f, 0.0001f);
+						Assert::AreEqual(m22(row, 0, page), 1.0f, 0.0001f);
+						Assert::AreEqual(m33(row, col, 0), 1.0f, 0.0001f);
+					}
+				}
+			}
+
+
+
+		}
+
+
+		TEST_METHOD(Matrix13_StaticAverage_2)
+		{
+			mango::Matrix m1(5, 6, 7);
+			for (unsigned page = 0; page < m1.Pages(); page++)
+			{
+				for (unsigned row = 0; row < m1.Rows(); row++)
+				{
+					for (unsigned col = 0; col < m1.Cols(); col++)
+					{
+						m1(row, col, page) = 3.3;
+					}
+				}
+			}
+			mango::Matrix m2(m1);
+			mango::Matrix m3(m1);
+
+			mango::Matrix m11 = mango::Matrix::Average(m1, mango::Axis::Row, 0u, 2u);
+			mango::Matrix m22 = mango::Matrix::Average(m1, mango::Axis::Col, 1u, 4u);
+			mango::Matrix m33 = mango::Matrix::Average(m1, mango::Axis::Page, 1u, 5u);
+
+
+			m1.Average(mango::Axis::Row, 0u, 2u);
+			m2.Average(mango::Axis::Col, 1u, 4u);
+			m3.Average(mango::Axis::Page, 1u, 5u);
+
+			Assert::AreEqual(m1.Rows(), 1u, L"m1.Rows()");
+			Assert::AreEqual(m1.Cols(), 6u, L"m1.Cols()");
+			Assert::AreEqual(m1.Pages(), 7u, L"m1.Pages()");
+
+			Assert::AreEqual(m2.Rows(), 5u, L"m2.Rows()");
+			Assert::AreEqual(m2.Cols(), 1u, L"m2.Cols()");
+			Assert::AreEqual(m2.Pages(), 7u, L"m2.Pages()");
+
+			Assert::AreEqual(m3.Rows(), 5u, L"m3.Rows()");
+			Assert::AreEqual(m3.Cols(), 6u, L"m3.Cols()");
+			Assert::AreEqual(m3.Pages(), 1u, L"m3.Pages");
+
+			Assert::AreEqual(m11.Rows(), 1u, L"m11.Rows()");
+			Assert::AreEqual(m11.Cols(), 6u, L"m11.Cols()");
+			Assert::AreEqual(m11.Pages(), 7u, L"m11.Pages()");
+
+			Assert::AreEqual(m22.Rows(), 5u, L"m22.Rows()");
+			Assert::AreEqual(m22.Cols(), 1u, L"m22.Cols()");
+			Assert::AreEqual(m22.Pages(), 7u, L"m22.Pages()");
+
+			Assert::AreEqual(m33.Rows(), 5u, L"m33.Rows()");
+			Assert::AreEqual(m33.Cols(), 6u, L"m33.Cols()");
+			Assert::AreEqual(m33.Pages(), 1u, L"m33.Pages");
+
+			for (unsigned page = 0; page < 7; page++)
+			{
+				for (unsigned row = 0; row < 5; row++)
+				{
+					for (unsigned col = 0; col < 6; col++)
+					{
+						Assert::AreEqual(m1(0, col, page), 3.3f, 0.0001f);
+						Assert::AreEqual(m2(row, 0, page), 3.3f, 0.0001f);
+						Assert::AreEqual(m3(row, col, 0), 3.3f, 0.0001f);
+
+						Assert::AreEqual(m11(0, col, page), 3.3f, 0.0001f, L"m11");
+						Assert::AreEqual(m22(row, 0, page), 3.3f, 0.0001f), L"m22";
+						Assert::AreEqual(m33(row, col, 0), 3.3f, 0.0001f, L"m33");
+					}
+				}
+			}
+		}
+
 	};
 
 }

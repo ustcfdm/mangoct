@@ -4,25 +4,60 @@ using namespace mango;
 
 int main()
 {
-	Matrix m1(3, 4);
-	for (unsigned row = 0; row < m1.Rows(); row++)
+	mango::Matrix m1(5, 6, 7);
+	for (unsigned page = 0; page < m1.Pages(); page++)
 	{
-		for (unsigned col = 0; col < m1.Cols(); col++)
+		for (unsigned row = 0; row < m1.Rows(); row++)
 		{
-			m1(row, col) = 1;
+			for (unsigned col = 0; col < m1.Cols(); col++)
+			{
+				m1(row, col, page) = 1;
+			}
+		}
+	}
+	mango::Matrix m2(m1);
+	mango::Matrix m3(m1);
+
+	mango::Matrix m11 = mango::Matrix::Average(m1, mango::Axis::Row, 0u, 2u);
+	mango::Matrix m22 = mango::Matrix::Average(m1, mango::Axis::Col, 1u, 4u);
+	mango::Matrix m33 = mango::Matrix::Sum(m1, mango::Axis::Col, 1u, 5u);
+
+
+	m1.Average(mango::Axis::Row, 0u, 2u);
+	m2.Average(mango::Axis::Col, 1u, 4u);
+	m3.Average(mango::Axis::Page, 1u, 5u);
+
+	for (unsigned page = 0; page < m33.Pages(); page++)
+	{
+		for (unsigned row = 0; row < m33.Rows(); row++)
+		{
+			for (unsigned col = 0; col < m33.Cols(); col++)
+			{
+				printf("%f\t", m33(row, col, page));
+			}
+			printf("\n");
 		}
 	}
 
-	m1.Sum(Axis::Col);
+	//Matrix m1(3, 4);
+	//for (unsigned row = 0; row < m1.Rows(); row++)
+	//{
+	//	for (unsigned col = 0; col < m1.Cols(); col++)
+	//	{
+	//		m1(row, col) = 1;
+	//	}
+	//}
 
-	for (unsigned row = 0; row < m1.Rows(); row++)
-	{
-		for (unsigned col = 0; col < m1.Cols(); col++)
-		{
-			printf("%f\t", m1(row, col));
-		}
-		printf("\n");
-	}
+	//m1.Sum(Axis::Col);
+
+	//for (unsigned row = 0; row < m1.Rows(); row++)
+	//{
+	//	for (unsigned col = 0; col < m1.Cols(); col++)
+	//	{
+	//		printf("%f\t", m1(row, col));
+	//	}
+	//	printf("\n");
+	//}
 
 
 
