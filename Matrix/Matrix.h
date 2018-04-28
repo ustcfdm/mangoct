@@ -61,8 +61,14 @@ namespace mango
 		// Sum the matrix along the specified axis, the length along this axis will become one.
 		Matrix& Sum(Axis axis);
 
+		// Sum the matrix along the specified axis (range from start to end), the length along this axis will become one.
+		Matrix& Sum(Axis axis, unsigned start, unsigned end);
+
 		// Take the average along the specified axis, the length along this axis will become one.
 		Matrix& Average(Axis axis);
+
+		// Take the average along the specified axis (range from start to end), the length along this axis will become one.
+		Matrix& Average(Axis axis, unsigned start, unsigned end);
 
 		// For any element less than threshold in the matrix, make the value equal to threshold.
 		Matrix& AllNoLessThan(float threshold);

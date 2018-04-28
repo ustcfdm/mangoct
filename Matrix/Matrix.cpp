@@ -143,20 +143,43 @@ mango::Matrix& mango::Matrix::Reshape(unsigned rows, unsigned cols, unsigned pag
 
 mango::Matrix& mango::Matrix::Sum(Axis axis)
 {
+	unsigned end;
+	switch (axis)
+	{
+	case mango::Axis::Row:
+		end = rows_;
+		break;
+	case mango::Axis::Col:
+		end = cols_;
+		break;
+	case mango::Axis::Page:
+		end = pages_;
+		break;
+	}
+
+	return Sum(axis, 0, end);
+}
+
+mango::Matrix & mango::Matrix::Sum(Axis axis, unsigned start, unsigned end)
+{
+	if (end <= start)
+	{
+		throw std::invalid_argument("Invalid axis range");
+	}
+
 	// TODO: insert return statement here
 	if (axis == mango::Axis::Row)
 	{
+		if (end > rows_)
+			throw std::invalid_argument("Invalid axis range");
+
 		float* data_new = new float[cols_*pages_]();
+
 		for (unsigned page = 0; page < pages_; page++)
-		{
-			for (unsigned row = 0; row < rows_; row++)
-			{
+			for (unsigned row = start; row < end; row++)
 				for (unsigned col = 0; col < cols_; col++)
-				{
 					data_new[page*cols_ + col] += this->operator()(row, col, page);
-				}
-			}
-		}
+
 		rows_ = 1u;
 		delete[] data_;
 		data_ = data_new;
@@ -164,17 +187,16 @@ mango::Matrix& mango::Matrix::Sum(Axis axis)
 	}
 	else if (axis == mango::Axis::Col)
 	{
+		if (end > cols_)
+			throw std::invalid_argument("Invalid axis range");
+
 		float* data_new = new float[rows_*pages_]();
+
 		for (unsigned page = 0; page < pages_; page++)
-		{
 			for (unsigned row = 0; row < rows_; row++)
-			{
-				for (unsigned col = 0; col < cols_; col++)
-				{
+				for (unsigned col = start; col < end; col++)
 					data_new[page*rows_ + row] += this->operator()(row, col, page);
-				}
-			}
-		}
+
 		cols_ = 1u;
 		delete[] data_;
 		data_ = data_new;
@@ -182,17 +204,15 @@ mango::Matrix& mango::Matrix::Sum(Axis axis)
 	}
 	else if (axis == mango::Axis::Page)
 	{
+		if (end > pages_)
+			throw std::invalid_argument("Invalid axis range");
+
 		float* data_new = new float[rows_*cols_]();
-		for (unsigned page = 0; page < pages_; page++)
-		{
+		for (unsigned page = start; page < end; page++)
 			for (unsigned row = 0; row < rows_; row++)
-			{
 				for (unsigned col = 0; col < cols_; col++)
-				{
-					data_new[row*cols_+col] += this->operator()(row, col, page);
-				}
-			}
-		}
+					data_new[row*cols_ + col] += this->operator()(row, col, page);
+
 		pages_ = 1u;
 		delete[] data_;
 		data_ = data_new;
@@ -202,7 +222,6 @@ mango::Matrix& mango::Matrix::Sum(Axis axis)
 	{
 		throw std::invalid_argument("Invalid input argument");
 	}
-
 }
 
 mango::Matrix & mango::Matrix::Average(mango::Axis axis)
@@ -224,6 +243,13 @@ mango::Matrix & mango::Matrix::Average(mango::Axis axis)
 	Sum(axis);
 	(*this) /= float(length);
 
+	return *this;
+}
+
+mango::Matrix & mango::Matrix::Average(Axis axis, unsigned start, unsigned end)
+{
+	Sum(axis, start, end);
+	(*this) /= float(end - start);
 	return *this;
 }
 

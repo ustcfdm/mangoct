@@ -519,7 +519,57 @@ namespace MatrixTest
 					}
 				}
 			}
+
+
+		};
+
+
+		TEST_METHOD(Matrix11_Average_2)
+		{
+			mango::Matrix m1(5,6,7);
+			for (unsigned page = 0; page < m1.Pages(); page++)
+			{
+				for (unsigned row = 0; row < m1.Rows(); row++)
+				{
+					for (unsigned col = 0; col < m1.Cols(); col++)
+					{
+						m1(row, col, page) = 1;
+					}
+				}
+			}
+			mango::Matrix m2(m1);
+			mango::Matrix m3(m1);
+
+			m1.Average(mango::Axis::Row, 0u, 2u);
+			m2.Average(mango::Axis::Col, 1u, 4u);
+			m3.Average(mango::Axis::Page,1u, 5u);
+
+			Assert::AreEqual(m1.Rows(), 1u, L"m1.Rows()");
+			Assert::AreEqual(m1.Cols(), 6u, L"m1.Cols()");
+			Assert::AreEqual(m1.Pages(), 7u, L"m1.Pages()");
+
+			Assert::AreEqual(m2.Rows(), 5u, L"m2.Rows()");
+			Assert::AreEqual(m2.Cols(), 1u,L"m2.Cols()");
+			Assert::AreEqual(m2.Pages(), 7u,L"m2.Pages()");
+
+			Assert::AreEqual(m3.Rows(), 5u,L"m3.Rows()");
+			Assert::AreEqual(m3.Cols(), 6u,L"m3.Cols()");
+			Assert::AreEqual(m3.Pages(), 1u, L"m3.Pages");
+
+			for (unsigned page = 0; page < 4; page++)
+			{
+				for (unsigned row = 0; row < 2; row++)
+				{
+					for (unsigned col = 0; col < 3; col++)
+					{
+						Assert::AreEqual(m1(0, col, page), 1.0f, 0.0001f);
+						Assert::AreEqual(m2(row, 0, page), 1.0f, 0.0001f);
+						Assert::AreEqual(m3(row, col, 0), 1.0f, 0.0001f);
+					}
+				}
+			}
 		}
 
 	};
+
 }
