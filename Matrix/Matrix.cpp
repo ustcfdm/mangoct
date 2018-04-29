@@ -297,6 +297,11 @@ mango::Matrix mango::Matrix::Sum(const Matrix & m, Axis axis)
 
 mango::Matrix mango::Matrix::Sum(const Matrix & m, Axis axis, unsigned start, unsigned end)
 {
+	if (end<=start)
+	{
+		throw std::invalid_argument("Invalid range");
+	}
+
 	unsigned rows = m.Rows();
 	unsigned cols = m.Cols();
 	unsigned pages = m.Pages();
