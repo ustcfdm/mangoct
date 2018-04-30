@@ -386,31 +386,32 @@ mango::Matrix mango::operator+(const Matrix & m1, const Matrix & m2)
 					m_new(row, col, page) = m1(row, col, page) + m2(row, col, page);
 		return m_new;
 	}
+
 	// Broadcasting
 	unsigned row, col, page;				// index in the for loop
 	unsigned rows, cols, pages;				// size of the result matrix
-	unsigned *prow, *pcol, *ppage;			// index for this matrix
-	unsigned *prow_m, *pcol_m, *ppage_m;	// index for matrix m
+	unsigned *prow1, *pcol1, *ppage1;		// index for matrix m1
+	unsigned *prow2, *pcol2, *ppage2;		// index for matrix m2
 	unsigned zero = 0;
 
 	// judgement for row
 	if (m1.Rows() == m2.Rows())
 	{
 		rows = m1.Rows();
-		prow = &row;
-		prow_m = &row;
+		prow1 = &row;
+		prow2 = &row;
 	}
 	else if (m1.Rows() == 1)
 	{
 		rows = m2.Rows();
-		prow = &zero;
-		prow_m = &row;
+		prow1 = &zero;
+		prow2 = &row;
 	}
 	else if (m2.Rows() == 1)
 	{
 		rows = m1.Rows();
-		prow = &row;
-		prow_m = &zero;
+		prow1 = &row;
+		prow2 = &zero;
 	}
 	else
 	{
@@ -421,20 +422,20 @@ mango::Matrix mango::operator+(const Matrix & m1, const Matrix & m2)
 	if (m1.Cols() == m2.Cols())
 	{
 		cols = m1.Cols();
-		pcol = &col;
-		pcol_m = &col;
+		pcol1 = &col;
+		pcol2 = &col;
 	}
 	else if (m1.Cols() == 1)
 	{
 		cols = m2.Cols();
-		pcol = &zero;
-		pcol_m = &col;
+		pcol1 = &zero;
+		pcol2 = &col;
 	}
 	else if (m2.Cols() == 1)
 	{
 		cols = m1.Cols();
-		pcol = &col;
-		pcol_m = &zero;
+		pcol1 = &col;
+		pcol2 = &zero;
 	}
 	else
 	{
@@ -445,20 +446,20 @@ mango::Matrix mango::operator+(const Matrix & m1, const Matrix & m2)
 	if (m1.Pages() == m2.Pages())
 	{
 		pages = m1.Pages();
-		ppage = &page;
-		ppage_m = &page;
+		ppage1 = &page;
+		ppage2 = &page;
 	}
 	else if (m1.Pages() == 1)
 	{
 		pages = m2.Pages();
-		ppage = &zero;
-		ppage_m = &page;
+		ppage1 = &zero;
+		ppage2 = &page;
 	}
 	else if (m2.Pages() == 1)
 	{
 		pages = m1.Pages();
-		ppage = &page;
-		ppage_m = &zero;
+		ppage1 = &page;
+		ppage2 = &zero;
 	}
 	else
 	{
@@ -469,7 +470,7 @@ mango::Matrix mango::operator+(const Matrix & m1, const Matrix & m2)
 	for (page = 0; page < pages; page++)
 		for (row = 0; row < rows; row++)
 			for (col = 0; col < cols; col++)
-				m_new(row, col, page) = m1(*prow, *pcol, *ppage) + m2(*prow_m, *pcol_m, *ppage_m);
+				m_new(row, col, page) = m1(*prow1, *pcol1, *ppage1) + m2(*prow2, *pcol2, *ppage2);
 
 	return m_new;
 }
@@ -485,31 +486,32 @@ mango::Matrix mango::operator-(const Matrix & m1, const Matrix & m2)
 					m_new(row, col, page) = m1(row, col, page) - m2(row, col, page);
 		return m_new;
 	}
+
 	// Broadcasting
 	unsigned row, col, page;				// index in the for loop
 	unsigned rows, cols, pages;				// size of the result matrix
-	unsigned *prow, *pcol, *ppage;			// index for this matrix
-	unsigned *prow_m, *pcol_m, *ppage_m;	// index for matrix m
+	unsigned *prow1, *pcol1, *ppage1;		// index for matrix m1
+	unsigned *prow2, *pcol2, *ppage2;		// index for matrix m2
 	unsigned zero = 0;
 
 	// judgement for row
 	if (m1.Rows() == m2.Rows())
 	{
 		rows = m1.Rows();
-		prow = &row;
-		prow_m = &row;
+		prow1 = &row;
+		prow2 = &row;
 	}
 	else if (m1.Rows() == 1)
 	{
 		rows = m2.Rows();
-		prow = &zero;
-		prow_m = &row;
+		prow1 = &zero;
+		prow2 = &row;
 	}
 	else if (m2.Rows() == 1)
 	{
 		rows = m1.Rows();
-		prow = &row;
-		prow_m = &zero;
+		prow1 = &row;
+		prow2 = &zero;
 	}
 	else
 	{
@@ -520,20 +522,20 @@ mango::Matrix mango::operator-(const Matrix & m1, const Matrix & m2)
 	if (m1.Cols() == m2.Cols())
 	{
 		cols = m1.Cols();
-		pcol = &col;
-		pcol_m = &col;
+		pcol1 = &col;
+		pcol2 = &col;
 	}
 	else if (m1.Cols() == 1)
 	{
 		cols = m2.Cols();
-		pcol = &zero;
-		pcol_m = &col;
+		pcol1 = &zero;
+		pcol2 = &col;
 	}
 	else if (m2.Cols() == 1)
 	{
 		cols = m1.Cols();
-		pcol = &col;
-		pcol_m = &zero;
+		pcol1 = &col;
+		pcol2 = &zero;
 	}
 	else
 	{
@@ -544,20 +546,20 @@ mango::Matrix mango::operator-(const Matrix & m1, const Matrix & m2)
 	if (m1.Pages() == m2.Pages())
 	{
 		pages = m1.Pages();
-		ppage = &page;
-		ppage_m = &page;
+		ppage1 = &page;
+		ppage2 = &page;
 	}
 	else if (m1.Pages() == 1)
 	{
 		pages = m2.Pages();
-		ppage = &zero;
-		ppage_m = &page;
+		ppage1 = &zero;
+		ppage2 = &page;
 	}
 	else if (m2.Pages() == 1)
 	{
 		pages = m1.Pages();
-		ppage = &page;
-		ppage_m = &zero;
+		ppage1 = &page;
+		ppage2 = &zero;
 	}
 	else
 	{
@@ -568,7 +570,7 @@ mango::Matrix mango::operator-(const Matrix & m1, const Matrix & m2)
 	for (page = 0; page < pages; page++)
 		for (row = 0; row < rows; row++)
 			for (col = 0; col < cols; col++)
-				m_new(row, col, page) = m1(*prow, *pcol, *ppage) - m2(*prow_m, *pcol_m, *ppage_m);
+				m_new(row, col, page) = m1(*prow1, *pcol1, *ppage1) - m2(*prow2, *pcol2, *ppage2);
 
 	return m_new;
 }
@@ -584,31 +586,32 @@ mango::Matrix mango::operator*(const Matrix & m1, const Matrix & m2)
 					m_new(row, col, page) = m1(row, col, page) * m2(row, col, page);
 		return m_new;
 	}
+
 	// Broadcasting
 	unsigned row, col, page;				// index in the for loop
 	unsigned rows, cols, pages;				// size of the result matrix
-	unsigned *prow, *pcol, *ppage;			// index for this matrix
-	unsigned *prow_m, *pcol_m, *ppage_m;	// index for matrix m
+	unsigned *prow1, *pcol1, *ppage1;		// index for matrix m1
+	unsigned *prow2, *pcol2, *ppage2;		// index for matrix m2
 	unsigned zero = 0;
 
 	// judgement for row
 	if (m1.Rows() == m2.Rows())
 	{
 		rows = m1.Rows();
-		prow = &row;
-		prow_m = &row;
+		prow1 = &row;
+		prow2 = &row;
 	}
 	else if (m1.Rows() == 1)
 	{
 		rows = m2.Rows();
-		prow = &zero;
-		prow_m = &row;
+		prow1 = &zero;
+		prow2 = &row;
 	}
 	else if (m2.Rows() == 1)
 	{
 		rows = m1.Rows();
-		prow = &row;
-		prow_m = &zero;
+		prow1 = &row;
+		prow2 = &zero;
 	}
 	else
 	{
@@ -619,20 +622,20 @@ mango::Matrix mango::operator*(const Matrix & m1, const Matrix & m2)
 	if (m1.Cols() == m2.Cols())
 	{
 		cols = m1.Cols();
-		pcol = &col;
-		pcol_m = &col;
+		pcol1 = &col;
+		pcol2 = &col;
 	}
 	else if (m1.Cols() == 1)
 	{
 		cols = m2.Cols();
-		pcol = &zero;
-		pcol_m = &col;
+		pcol1 = &zero;
+		pcol2 = &col;
 	}
 	else if (m2.Cols() == 1)
 	{
 		cols = m1.Cols();
-		pcol = &col;
-		pcol_m = &zero;
+		pcol1 = &col;
+		pcol2 = &zero;
 	}
 	else
 	{
@@ -643,20 +646,20 @@ mango::Matrix mango::operator*(const Matrix & m1, const Matrix & m2)
 	if (m1.Pages() == m2.Pages())
 	{
 		pages = m1.Pages();
-		ppage = &page;
-		ppage_m = &page;
+		ppage1 = &page;
+		ppage2 = &page;
 	}
 	else if (m1.Pages() == 1)
 	{
 		pages = m2.Pages();
-		ppage = &zero;
-		ppage_m = &page;
+		ppage1 = &zero;
+		ppage2 = &page;
 	}
 	else if (m2.Pages() == 1)
 	{
 		pages = m1.Pages();
-		ppage = &page;
-		ppage_m = &zero;
+		ppage1 = &page;
+		ppage2 = &zero;
 	}
 	else
 	{
@@ -667,7 +670,7 @@ mango::Matrix mango::operator*(const Matrix & m1, const Matrix & m2)
 	for (page = 0; page < pages; page++)
 		for (row = 0; row < rows; row++)
 			for (col = 0; col < cols; col++)
-				m_new(row, col, page) = m1(*prow, *pcol, *ppage) * m2(*prow_m, *pcol_m, *ppage_m);
+				m_new(row, col, page) = m1(*prow1, *pcol1, *ppage1) * m2(*prow2, *pcol2, *ppage2);
 
 	return m_new;
 }
@@ -683,31 +686,32 @@ mango::Matrix mango::operator/(const Matrix & m1, const Matrix & m2)
 					m_new(row, col, page) = m1(row, col, page) / m2(row, col, page);
 		return m_new;
 	}
+
 	// Broadcasting
 	unsigned row, col, page;				// index in the for loop
 	unsigned rows, cols, pages;				// size of the result matrix
-	unsigned *prow, *pcol, *ppage;			// index for this matrix
-	unsigned *prow_m, *pcol_m, *ppage_m;	// index for matrix m
+	unsigned *prow1, *pcol1, *ppage1;		// index for matrix m1
+	unsigned *prow2, *pcol2, *ppage2;		// index for matrix m2
 	unsigned zero = 0;
 
 	// judgement for row
 	if (m1.Rows() == m2.Rows())
 	{
 		rows = m1.Rows();
-		prow = &row;
-		prow_m = &row;
+		prow1 = &row;
+		prow2 = &row;
 	}
 	else if (m1.Rows() == 1)
 	{
 		rows = m2.Rows();
-		prow = &zero;
-		prow_m = &row;
+		prow1 = &zero;
+		prow2 = &row;
 	}
 	else if (m2.Rows() == 1)
 	{
 		rows = m1.Rows();
-		prow = &row;
-		prow_m = &zero;
+		prow1 = &row;
+		prow2 = &zero;
 	}
 	else
 	{
@@ -718,20 +722,20 @@ mango::Matrix mango::operator/(const Matrix & m1, const Matrix & m2)
 	if (m1.Cols() == m2.Cols())
 	{
 		cols = m1.Cols();
-		pcol = &col;
-		pcol_m = &col;
+		pcol1 = &col;
+		pcol2 = &col;
 	}
 	else if (m1.Cols() == 1)
 	{
 		cols = m2.Cols();
-		pcol = &zero;
-		pcol_m = &col;
+		pcol1 = &zero;
+		pcol2 = &col;
 	}
 	else if (m2.Cols() == 1)
 	{
 		cols = m1.Cols();
-		pcol = &col;
-		pcol_m = &zero;
+		pcol1 = &col;
+		pcol2 = &zero;
 	}
 	else
 	{
@@ -742,20 +746,20 @@ mango::Matrix mango::operator/(const Matrix & m1, const Matrix & m2)
 	if (m1.Pages() == m2.Pages())
 	{
 		pages = m1.Pages();
-		ppage = &page;
-		ppage_m = &page;
+		ppage1 = &page;
+		ppage2 = &page;
 	}
 	else if (m1.Pages() == 1)
 	{
 		pages = m2.Pages();
-		ppage = &zero;
-		ppage_m = &page;
+		ppage1 = &zero;
+		ppage2 = &page;
 	}
 	else if (m2.Pages() == 1)
 	{
 		pages = m1.Pages();
-		ppage = &page;
-		ppage_m = &zero;
+		ppage1 = &page;
+		ppage2 = &zero;
 	}
 	else
 	{
@@ -766,7 +770,7 @@ mango::Matrix mango::operator/(const Matrix & m1, const Matrix & m2)
 	for (page = 0; page < pages; page++)
 		for (row = 0; row < rows; row++)
 			for (col = 0; col < cols; col++)
-				m_new(row, col, page) = m1(*prow, *pcol, *ppage) / m2(*prow_m, *pcol_m, *ppage_m);
+				m_new(row, col, page) = m1(*prow1, *pcol1, *ppage1) / m2(*prow2, *pcol2, *ppage2);
 
 	return m_new;
 }
