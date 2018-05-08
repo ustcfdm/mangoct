@@ -277,8 +277,8 @@ namespace MatrixTest
 				}
 			}
 
-			mango::Matrix m4;
-			mango::Matrix m5(m4);
+			//mango::Matrix m4;
+			//mango::Matrix m5(m4);
 			mango::Matrix m6(std::move(m3));
 			Assert::AreEqual(m3.Rows(), 0u);
 			Assert::AreEqual(m3.Cols(), 0u);

@@ -22,7 +22,7 @@ namespace mango
 
 
 	public:
-		Matrix() {};
+
 		Matrix(unsigned rows, unsigned cols, unsigned pages = 1);
 		Matrix(const Matrix& m);
 		Matrix(Matrix&& m);
