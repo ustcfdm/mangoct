@@ -835,6 +835,51 @@ namespace MatrixTest
 			}
 		}
 
+
+		TEST_METHOD(Matrix14_ReadRawFile)
+		{
+
+			mango::Matrix m1(5, 6, 7);
+			float val = 0;
+			for (unsigned page = 0; page < m1.Pages(); page++)
+			{
+				for (unsigned row = 0; row < m1.Rows(); row++)
+				{
+					for (unsigned col = 0; col < m1.Cols(); col++)
+					{
+						m1(row, col, page) = val++;
+					}
+				}
+			}
+			m1.SaveRawFile("testfile.raw");
+
+			FILE* fp = fopen("testfile.raw", "rb");
+			
+			if (fp==NULL)
+			{
+				Assert::AreEqual(1, 2);
+			}
+			else
+			{
+				Assert::AreEqual(1, 1);
+			}
+
+			mango::Matrix m = mango::Matrix::ReadRawFile("testfile.raw", 5, 6, 7);
+
+			val = 0;
+			for (unsigned page = 0; page < m.Pages(); page++)
+			{
+				for (unsigned row = 0; row < m.Rows(); row++)
+				{
+					for (unsigned col = 0; col < m.Cols(); col++)
+					{
+						Assert::AreEqual(val, m(row, col, page), 0.0001f);
+						val++;
+					}
+				}
+			}
+		}
+
 	};
 
 }

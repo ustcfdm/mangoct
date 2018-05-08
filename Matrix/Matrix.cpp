@@ -1,7 +1,7 @@
 #include "stdafx.h"
 #include "Matrix.h"
 
-
+#pragma warning(disable : 4996)
 
 mango::Matrix::Matrix(unsigned rows, unsigned cols, unsigned pages)
 {
@@ -270,6 +270,22 @@ mango::Matrix& mango::Matrix::Log()
 	return *this;
 }
 
+bool mango::Matrix::SaveRawFile(const char * filename)
+{
+	FILE* fp = fopen(filename, "wb");
+
+	if (fp==NULL)
+	{
+		fprintf(stderr, "Cannot open file '%s'\n", filename);
+		return false;
+	}
+
+	fwrite(data_, sizeof(float), rows_*cols_*pages_, fp);
+	fclose(fp);
+
+	return true;
+}
+
 mango::Matrix mango::Matrix::Log(const Matrix & m)
 {
 	Matrix m_new = m;
@@ -373,6 +389,24 @@ mango::Matrix mango::Matrix::Average(const Matrix & m, Axis axis, unsigned start
 	Matrix m_new = Sum(m, axis, start, end);
 	m_new /= float(end - start);
 	return m_new;
+}
+
+mango::Matrix mango::Matrix::ReadRawFile(const char* filename, const unsigned& rows, const unsigned& cols, const unsigned& pages)
+{
+	FILE* fp = fopen(filename, "rb");
+
+	if (fp==NULL)
+	{
+		throw std::runtime_error("Cannot open file");
+	}
+
+	Matrix m(rows, cols, pages);
+
+	fread(m.data_, sizeof(float), rows*cols*pages, fp);
+	
+	fclose(fp);
+
+	return m;
 }
 
 mango::Matrix mango::operator+(const Matrix & m1, const Matrix & m2)

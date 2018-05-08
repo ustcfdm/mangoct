@@ -28,7 +28,7 @@ namespace mango
 		Matrix(Matrix&& m);
 		~Matrix();
 
-		inline unsigned Rows() const { return rows_; };
+		inline unsigned Rows()  const { return rows_; };
 		inline unsigned Cols()  const { return cols_; };
 		inline unsigned Pages() const { return pages_; };
 
@@ -76,6 +76,9 @@ namespace mango
 		// Take the logarithm of each element.
 		Matrix& Log();
 
+		// Save to raw file.
+		bool SaveRawFile(const char* filename);
+
 
 		//////////////////////////////////////////////////////////////////////////////////////
 		// static functions
@@ -95,6 +98,9 @@ namespace mango
 
 		// Take the average along the specified axis (range from start to end), and return the result new matrix.
 		static Matrix Average(const Matrix& m, Axis axis, unsigned start, unsigned end);
+
+		// Read data from raw file.
+		static Matrix ReadRawFile(const char* filename, const unsigned& rows, const unsigned& cols, const unsigned& pages = 1);
 
 	};
 
