@@ -4,42 +4,50 @@ using namespace mango;
 
 int main()
 {
-	float one = 1.0f;
-	float zero = 0.0f;
-	float inf = one/zero;
 
-	float nan_ = zero / zero;
+	Matrix m = Matrix::ReadEviFile("C:\\Users\\mfeng\\Local Files\\For Evan\\Beamhardening water correction\\20170423watercorrection\\EVIdata\\1_TE.EVI", 64u, 5120u, 2720u, 2368u, 64u);
 
-	if (one<inf)
-	{
-		printf("one < inf\n");
-	}
-	else
-	{
-		printf("one >= inf\n");
-	}
+	printf("rows = %d, cols = %d, pages = %d\n", m.Rows(), m.Cols(), m.Pages());
 
-	if (one>nan_)
-	{
-		printf("one > nan\n");
-	}
-	else if (one<nan_)
-	{
-		printf("one < nan\n");
-	}
-	else if (one== nan_)
-	{
-		printf("one == nan\n");
-	}
 
-	if (isnan(nan_))
-	{
-		printf("nan is NaN\n");
-	}
+	m.SaveRawFile("C:\\Users\\mfeng\\Local Files\\For Evan\\Beamhardening water correction\\20170423watercorrection\\EVIdata\\1_TE.raw");
 
-	float log_Inf = log(inf);
-	float log_Nan = log(nan_);
-	printf("log_inf = %f\nlog_nan = %f\n", log_Inf, log_Nan);
+	//float one = 1.0f;
+	//float zero = 0.0f;
+	//float inf = one/zero;
+
+	//float nan_ = zero / zero;
+
+	//if (one<inf)
+	//{
+	//	printf("one < inf\n");
+	//}
+	//else
+	//{
+	//	printf("one >= inf\n");
+	//}
+
+	//if (one>nan_)
+	//{
+	//	printf("one > nan\n");
+	//}
+	//else if (one<nan_)
+	//{
+	//	printf("one < nan\n");
+	//}
+	//else if (one== nan_)
+	//{
+	//	printf("one == nan\n");
+	//}
+
+	//if (isnan(nan_))
+	//{
+	//	printf("nan is NaN\n");
+	//}
+
+	//float log_Inf = log(inf);
+	//float log_Nan = log(nan_);
+	//printf("log_inf = %f\nlog_nan = %f\n", log_Inf, log_Nan);
 	//auto a = nan(ind);
 
 

@@ -541,6 +541,31 @@ mango::Matrix mango::Matrix::ReadRawFile(const char* filename, const unsigned& r
 	return m;
 }
 
+mango::Matrix mango::Matrix::ReadEviFile(const char * filename, const unsigned rows, const unsigned cols, const unsigned pages, const unsigned offset, const unsigned gap)
+{
+	FILE* fp = fopen(filename, "rb");
+
+	if (fp == NULL)
+	{
+		throw std::runtime_error("Cannot open file");
+	}
+
+	Matrix m(rows, cols, pages);
+
+	// skip the offset to first image
+	fseek(fp, offset, SEEK_SET);
+
+	for (unsigned page = 0; page < pages; page++)
+	{
+		fread(m.data_ + page * rows*cols, sizeof(float), rows*cols, fp);
+		fseek(fp, gap, SEEK_CUR);
+	}
+
+	fclose(fp);
+
+	return m;
+}
+
 mango::Matrix mango::operator+(const Matrix & m1, const Matrix & m2)
 {
 	if (m1.Rows() == m2.Rows() && m1.Cols() == m2.Cols() && m1.Pages() == m2.Pages())

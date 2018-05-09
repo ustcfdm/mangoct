@@ -111,6 +111,9 @@ namespace mango
 		// Read data from raw file.
 		static Matrix ReadRawFile(const char* filename, const unsigned& rows, const unsigned& cols, const unsigned& pages = 1);
 
+		// Read data from evi file.
+		static Matrix ReadEviFile(const char* filename, const unsigned rows, const unsigned cols, const unsigned pages, const unsigned offset, const unsigned gap);
+
 	};
 
 
