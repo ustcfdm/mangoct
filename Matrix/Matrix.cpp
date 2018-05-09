@@ -369,6 +369,16 @@ mango::Matrix& mango::Matrix::AllNoLessThan(float threshold)
 	return *this;
 }
 
+mango::Matrix& mango::Matrix::SetNanOrInf(const float val)
+{
+	for (unsigned i = 0; i < rows_*cols_*pages_; i++)
+	{
+		if (isinf(data_[i]) || isnan(data_[i]))
+			data_[i] = val;
+	}
+	return *this;
+}
+
 mango::Matrix& mango::Matrix::Log()
 {
 	for (unsigned idx = 0; idx < rows_*cols_*pages_; idx++)

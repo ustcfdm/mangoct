@@ -990,6 +990,49 @@ namespace MatrixTest
 			}
 
 		}
+
+		TEST_METHOD(Matrix17_SetNanOrInf)
+		{
+			mango::Matrix m1(2, 2);
+			mango::Matrix m2(2, 2);
+
+			float one = 1;
+			float zero = 0;
+			float myInf = one / zero;
+			float myNan = zero / zero;
+
+			for (unsigned row = 0; row < 2; row++)
+			{
+				for (unsigned col = 0; col < 2; col++)
+				{
+					m1(row, col) = myInf;
+					m2(row, col) = myNan;
+				}
+			}
+
+			for (unsigned row = 0; row < 2; row++)
+			{
+				for (unsigned col = 0; col < 2; col++)
+				{
+					Assert::IsTrue(isinf(m1(row, col)));
+					Assert::IsTrue(isnan(m2(row, col)));
+				}
+			}
+
+			m1.SetNanOrInf(23.3f);
+			m2.SetNanOrInf(5.1f);
+
+			for (unsigned row = 0; row < 2; row++)
+			{
+				for (unsigned col = 0; col < 2; col++)
+				{
+					Assert::AreEqual(23.3f, m1(row, col), 0.00001f);
+					Assert::AreEqual(5.1f, m2(row, col), 0.00001f);
+				}
+			}
+
+
+		}
 	};
 
 }

@@ -76,6 +76,9 @@ namespace mango
 		// For any element less than threshold in the matrix, make the value equal to threshold.
 		Matrix& AllNoLessThan(float threshold);
 
+		// If the element is nan or inf, set the value as given number.
+		Matrix& SetNanOrInf(const float val);
+
 		// Take the logarithm of each element.
 		Matrix& Log();
 

@@ -4,18 +4,57 @@ using namespace mango;
 
 int main()
 {
-	mango::Matrix m1(5, 6, 7);
-	float val = 0;
-	for (unsigned page = 0; page < m1.Pages(); page++)
+	float one = 1.0f;
+	float zero = 0.0f;
+	float inf = one/zero;
+
+	float nan_ = zero / zero;
+
+	if (one<inf)
 	{
-		for (unsigned row = 0; row < m1.Rows(); row++)
-		{
-			for (unsigned col = 0; col < m1.Cols(); col++)
-			{
-				m1(row, col, page) = val++;
-			}
-		}
+		printf("one < inf\n");
 	}
+	else
+	{
+		printf("one >= inf\n");
+	}
+
+	if (one>nan_)
+	{
+		printf("one > nan\n");
+	}
+	else if (one<nan_)
+	{
+		printf("one < nan\n");
+	}
+	else if (one== nan_)
+	{
+		printf("one == nan\n");
+	}
+
+	if (isnan(nan_))
+	{
+		printf("nan is NaN\n");
+	}
+
+	float log_Inf = log(inf);
+	float log_Nan = log(nan_);
+	printf("log_inf = %f\nlog_nan = %f\n", log_Inf, log_Nan);
+	//auto a = nan(ind);
+
+
+	//mango::Matrix m1(5, 6, 7);
+	//float val = 0;
+	//for (unsigned page = 0; page < m1.Pages(); page++)
+	//{
+	//	for (unsigned row = 0; row < m1.Rows(); row++)
+	//	{
+	//		for (unsigned col = 0; col < m1.Cols(); col++)
+	//		{
+	//			m1(row, col, page) = val++;
+	//		}
+	//	}
+	//}
 	//mango::Matrix m2(m1);
 	//mango::Matrix m3(m1);
 
@@ -28,19 +67,19 @@ int main()
 	//m2.Average(mango::Axis::Col, 1u, 4u);
 	//m3.Average(mango::Axis::Page, 1u, 5u);
 
-	for (unsigned page = 0; page < m1.Pages(); page++)
-	{
-		for (unsigned row = 0; row < m1.Rows(); row++)
-		{
-			for (unsigned col = 0; col < m1.Cols(); col++)
-			{
-				printf("%f\t", m1(row, col, page));
-			}
-			printf("\n");
-		}
-	}
+	//for (unsigned page = 0; page < m1.Pages(); page++)
+	//{
+	//	for (unsigned row = 0; row < m1.Rows(); row++)
+	//	{
+	//		for (unsigned col = 0; col < m1.Cols(); col++)
+	//		{
+	//			printf("%f\t", m1(row, col, page));
+	//		}
+	//		printf("\n");
+	//	}
+	//}
 
-	m1.SaveRawFile("testfile.raw");
+	//m1.SaveRawFile("testfile.raw");
 
 	//Matrix m1(3, 4);
 	//for (unsigned row = 0; row < m1.Rows(); row++)
