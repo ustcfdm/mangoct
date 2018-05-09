@@ -880,6 +880,54 @@ namespace MatrixTest
 			}
 		}
 
+
+
+
+		TEST_METHOD(Matrix15_AppendRawFile)
+		{
+
+			mango::Matrix m1(1,2,3);
+			float val = 0;
+			for (unsigned page = 0; page < m1.Pages(); page++)
+			{
+				for (unsigned row = 0; row < m1.Rows(); row++)
+				{
+					for (unsigned col = 0; col < m1.Cols(); col++)
+					{
+						m1(row, col, page) = val++;
+					}
+				}
+			}
+			m1.SaveRawFile("testfile2.raw");
+
+			mango::Matrix m2(2, 2, 2);
+			for (unsigned page = 0; page < m2.Pages(); page++)
+			{
+				for (unsigned row = 0; row < m2.Rows(); row++)
+				{
+					for (unsigned col = 0; col < m2.Cols(); col++)
+					{
+						m2(row, col, page) = val++;
+					}
+				}
+			}
+			m2.AppendRawFile("testfile2.raw");
+
+			mango::Matrix m3 = mango::Matrix::ReadRawFile("testfile2.raw", 2, 1, 7);
+			val = 0;
+			for (unsigned page = 0; page < m3.Pages(); page++)
+			{
+				for (unsigned row = 0; row < m3.Rows(); row++)
+				{
+					for (unsigned col = 0; col < m3.Cols(); col++)
+					{
+						Assert::AreEqual(val, m3(row, col, page), 0.0001f);
+						val++;
+					}
+				}
+			}
+		}
+
 	};
 
 }

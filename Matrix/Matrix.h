@@ -79,6 +79,9 @@ namespace mango
 		// Save to raw file.
 		bool SaveRawFile(const char* filename);
 
+		// Append to raw file.
+		bool AppendRawFile(const char* filename);
+
 
 		//////////////////////////////////////////////////////////////////////////////////////
 		// static functions

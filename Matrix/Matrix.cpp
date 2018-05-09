@@ -286,6 +286,22 @@ bool mango::Matrix::SaveRawFile(const char * filename)
 	return true;
 }
 
+bool mango::Matrix::AppendRawFile(const char * filename)
+{
+	FILE* fp = fopen(filename, "ab");
+
+	if (fp == NULL)
+	{
+		fprintf(stderr, "Cannot open file '%s'\n", filename);
+		return false;
+	}
+
+	fwrite(data_, sizeof(float), rows_*cols_*pages_, fp);
+	fclose(fp);
+
+	return true;
+}
+
 mango::Matrix mango::Matrix::Log(const Matrix & m)
 {
 	Matrix m_new = m;
