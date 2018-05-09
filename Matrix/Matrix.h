@@ -70,6 +70,9 @@ namespace mango
 		// Take the average along the specified axis (range from start to end), the length along this axis will become one.
 		Matrix& Average(Axis axis, unsigned start, unsigned end);
 
+		// Rebin the matrix laong the specified axis, the length along this axis will reduce by a factor of rebin size.
+		Matrix& Rebin(unsigned rebinSize, Axis axis, bool ignoreTail=false);
+
 		// For any element less than threshold in the matrix, make the value equal to threshold.
 		Matrix& AllNoLessThan(float threshold);
 

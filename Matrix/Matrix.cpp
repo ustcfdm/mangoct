@@ -253,6 +253,112 @@ mango::Matrix& mango::Matrix::Average(Axis axis, unsigned start, unsigned end)
 	return *this;
 }
 
+mango::Matrix& mango::Matrix::Rebin(unsigned rebinSize, Axis axis, bool ignoreTail)
+{
+	if (rebinSize <= 1)
+	{
+		throw std::invalid_argument("Invalid rebin size");
+	}
+
+	float* data_new;
+
+	if (axis == Axis::Row)
+	{
+		if (rebinSize >= rows_ || ignoreTail == false && rows_%rebinSize != 0)
+		{
+			throw std::invalid_argument("Invalid rebin size");
+		}
+
+		unsigned rows_new = rows_ / rebinSize;
+
+		data_new = new float[rows_new*cols_*pages_]();
+
+		for (unsigned page = 0; page < pages_; page++)
+		{
+			for (unsigned row = 0; row < rows_new; row++)
+			{
+				for (unsigned col = 0; col < cols_; col++)
+				{
+					for (unsigned i = 0; i < rebinSize; i++)
+					{
+						data_new[page*rows_new*cols_ + row * cols_ + col] += this->operator()(row + i, col, page);
+					}
+					data_new[page*rows_new*cols_ + row * cols_ + col] /= float(rebinSize);
+				}
+			}
+		}
+
+		rows_ = rows_new;
+
+		delete[] data_;
+		data_ = data_new;
+	}
+	else if (axis == Axis::Col)
+	{
+		if (rebinSize >= cols_ || ignoreTail == false && cols_%rebinSize != 0)
+		{
+			throw std::invalid_argument("Invalid rebin size");
+		}
+
+		unsigned cols_new = cols_ / rebinSize;
+
+		data_new = new float[rows_*cols_new*pages_]();
+
+		for (unsigned page = 0; page < pages_; page++)
+		{
+			for (unsigned row = 0; row < rows_; row++)
+			{
+				for (unsigned col = 0; col < cols_new; col++)
+				{
+					for (unsigned i = 0; i < rebinSize; i++)
+					{
+						data_new[page*rows_*cols_new + row * cols_new + col] += this->operator()(row, col + i, page);
+					}
+					data_new[page*rows_*cols_new + row * cols_new + col] /= float(rebinSize);
+				}
+			}
+		}
+
+		cols_ = cols_new;
+
+		delete[] data_;
+		data_ = data_new;
+	}
+	else if (axis == Axis::Page)
+	{
+		if (rebinSize >= pages_ || ignoreTail == false && pages_%rebinSize != 0)
+		{
+			throw std::invalid_argument("Invalid rebin size");
+		}
+
+		unsigned pages_new = pages_ / rebinSize;
+
+		data_new = new float[rows_*cols_*pages_new]();
+
+		for (unsigned page = 0; page < pages_new; page++)
+		{
+			for (unsigned row = 0; row < rows_; row++)
+			{
+				for (unsigned col = 0; col < cols_; col++)
+				{
+					for (unsigned i = 0; i < rebinSize; i++)
+					{
+						data_new[page*rows_*cols_ + row * cols_ + col] += this->operator()(row, col, page + i);
+					}
+					data_new[page*rows_*cols_ + row * cols_ + col] /= float(rebinSize);
+				}
+			}
+		}
+
+		pages_ = pages_new;
+
+		delete[] data_;
+		data_ = data_new;
+	}
+
+	return *this;
+}
+
 mango::Matrix& mango::Matrix::AllNoLessThan(float threshold)
 {
 	for (unsigned idx = 0; idx < rows_*cols_*pages_; idx++)
@@ -274,7 +380,7 @@ bool mango::Matrix::SaveRawFile(const char * filename)
 {
 	FILE* fp = fopen(filename, "wb");
 
-	if (fp==NULL)
+	if (fp == NULL)
 	{
 		fprintf(stderr, "Cannot open file '%s'\n", filename);
 		return false;
@@ -329,7 +435,7 @@ mango::Matrix mango::Matrix::Sum(const Matrix & m, Axis axis)
 
 mango::Matrix mango::Matrix::Sum(const Matrix & m, Axis axis, unsigned start, unsigned end)
 {
-	if (end<=start)
+	if (end <= start)
 	{
 		throw std::invalid_argument("Invalid range");
 	}
@@ -411,7 +517,7 @@ mango::Matrix mango::Matrix::ReadRawFile(const char* filename, const unsigned& r
 {
 	FILE* fp = fopen(filename, "rb");
 
-	if (fp==NULL)
+	if (fp == NULL)
 	{
 		throw std::runtime_error("Cannot open file");
 	}
@@ -419,7 +525,7 @@ mango::Matrix mango::Matrix::ReadRawFile(const char* filename, const unsigned& r
 	Matrix m(rows, cols, pages);
 
 	fread(m.data_, sizeof(float), rows*cols*pages, fp);
-	
+
 	fclose(fp);
 
 	return m;

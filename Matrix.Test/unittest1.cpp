@@ -928,6 +928,68 @@ namespace MatrixTest
 			}
 		}
 
+
+
+		TEST_METHOD(Matrix16_Rebin)
+		{
+			mango::Matrix m1(8, 8, 8);
+			m1.AllNoLessThan(1.2f);
+
+			mango::Matrix m2(m1);
+			mango::Matrix m3 = m1;
+
+			unsigned rebin = 2;
+
+			m1.Rebin(rebin, mango::Axis::Row);
+			m2.Rebin(rebin, mango::Axis::Col);
+			m3.Rebin(rebin, mango::Axis::Page);
+
+			Assert::AreEqual(4u, m1.Rows());
+			Assert::AreEqual(8u, m1.Cols());
+			Assert::AreEqual(8u, m1.Pages());
+
+			Assert::AreEqual(8u, m2.Rows());
+			Assert::AreEqual(4u, m2.Cols());
+			Assert::AreEqual(8u, m2.Pages());
+
+			Assert::AreEqual(8u, m3.Rows());
+			Assert::AreEqual(8u, m3.Cols());
+			Assert::AreEqual(4u, m3.Pages());
+
+			for (unsigned page = 0; page < m1.Pages(); page++)
+			{
+				for (unsigned row = 0; row < m1.Rows(); row++)
+				{
+					for (unsigned col = 0; col < m1.Cols(); col++)
+					{
+						Assert::AreEqual(1.2f, m1(row, col, page), 0.00001f);
+					}
+				}
+			}
+
+			for (unsigned page = 0; page < m2.Pages(); page++)
+			{
+				for (unsigned row = 0; row < m2.Rows(); row++)
+				{
+					for (unsigned col = 0; col < m2.Cols(); col++)
+					{
+						Assert::AreEqual(1.2f, m2(row, col, page), 0.00001f);
+					}
+				}
+			}
+
+			for (unsigned page = 0; page < m3.Pages(); page++)
+			{
+				for (unsigned row = 0; row < m3.Rows(); row++)
+				{
+					for (unsigned col = 0; col < m3.Cols(); col++)
+					{
+						Assert::AreEqual(1.2f, m3(row, col, page), 0.00001f);
+					}
+				}
+			}
+
+		}
 	};
 
 }
