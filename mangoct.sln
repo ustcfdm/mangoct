@@ -1,13 +1,13 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 15
-VisualStudioVersion = 15.0.27428.2043
+VisualStudioVersion = 15.0.27130.2027
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Matrix", "Matrix\Matrix.vcxproj", "{2DA8BCC0-AD11-4A38-ADE4-030F004478D3}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Matrix.Test", "Matrix.Test\Matrix.Test.vcxproj", "{D3FC60E3-7361-49C6-A4FB-FA3A9C19D6BA}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "tempTest", "tempTest\tempTest.vcxproj", "{65B84243-028C-4DDD-8CDF-0286AC5344C0}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "mglog", "mglog\mglog.vcxproj", "{258BC0B1-00CF-45FE-8849-E649225B5AF2}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -33,14 +33,14 @@ Global
 		{D3FC60E3-7361-49C6-A4FB-FA3A9C19D6BA}.Release|x64.Build.0 = Release|x64
 		{D3FC60E3-7361-49C6-A4FB-FA3A9C19D6BA}.Release|x86.ActiveCfg = Release|Win32
 		{D3FC60E3-7361-49C6-A4FB-FA3A9C19D6BA}.Release|x86.Build.0 = Release|Win32
-		{65B84243-028C-4DDD-8CDF-0286AC5344C0}.Debug|x64.ActiveCfg = Debug|x64
-		{65B84243-028C-4DDD-8CDF-0286AC5344C0}.Debug|x64.Build.0 = Debug|x64
-		{65B84243-028C-4DDD-8CDF-0286AC5344C0}.Debug|x86.ActiveCfg = Debug|Win32
-		{65B84243-028C-4DDD-8CDF-0286AC5344C0}.Debug|x86.Build.0 = Debug|Win32
-		{65B84243-028C-4DDD-8CDF-0286AC5344C0}.Release|x64.ActiveCfg = Release|x64
-		{65B84243-028C-4DDD-8CDF-0286AC5344C0}.Release|x64.Build.0 = Release|x64
-		{65B84243-028C-4DDD-8CDF-0286AC5344C0}.Release|x86.ActiveCfg = Release|Win32
-		{65B84243-028C-4DDD-8CDF-0286AC5344C0}.Release|x86.Build.0 = Release|Win32
+		{258BC0B1-00CF-45FE-8849-E649225B5AF2}.Debug|x64.ActiveCfg = Debug|x64
+		{258BC0B1-00CF-45FE-8849-E649225B5AF2}.Debug|x64.Build.0 = Debug|x64
+		{258BC0B1-00CF-45FE-8849-E649225B5AF2}.Debug|x86.ActiveCfg = Debug|Win32
+		{258BC0B1-00CF-45FE-8849-E649225B5AF2}.Debug|x86.Build.0 = Debug|Win32
+		{258BC0B1-00CF-45FE-8849-E649225B5AF2}.Release|x64.ActiveCfg = Release|x64
+		{258BC0B1-00CF-45FE-8849-E649225B5AF2}.Release|x64.Build.0 = Release|x64
+		{258BC0B1-00CF-45FE-8849-E649225B5AF2}.Release|x86.ActiveCfg = Release|Win32
+		{258BC0B1-00CF-45FE-8849-E649225B5AF2}.Release|x86.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
