@@ -23,7 +23,7 @@ struct Config
 	unsigned		objViews;
 
 	unsigned		rebinSize;
-	unsigned		sliceNumber;
+	unsigned		sliceCount;
 	unsigned		sliceStartIdx;
 	unsigned		sliceThickness;
 

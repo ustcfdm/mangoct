@@ -14,7 +14,7 @@
   // output file name (prefix, replace)
   "OutputFilePrefix": "sng_",
   // replace substring in input file name
-  "OutputFileReplace": [ "_TE", "" , ".EVI", ".raw", "", "haha_"],
+  "OutputFileReplace": [ "_TE", "" , ".EVI", ".raw"],
 
   /********************************************************* 
   * sinogram and slice parameters
@@ -26,7 +26,7 @@
   // rebin the sinogram along detector width direction, do not rebin if it is one
   "RebinSize": 1,
   // total number of slices for the sinogram
-  "SliceNumber": 1,
+  "SliceCount": 1,
   // index starts from 0
   "SliceStartIdx": 2,
   // integer

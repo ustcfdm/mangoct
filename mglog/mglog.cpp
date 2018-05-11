@@ -29,12 +29,11 @@ int main(int argc, char* argv[])
 		//////////////////////////////////////////////////////////////////////////////
 		std::ifstream ifs(argv[configIdx]);
 		js::IStreamWrapper isw(ifs);
-
 		js::Document doc;
 		doc.ParseStream<js::kParseCommentsFlag | js::kParseTrailingCommasFlag>(isw);
 
-
 		LoadConfigFile(doc, config);
+
 	}
 
 
@@ -140,4 +139,35 @@ void LoadConfigFile(js::Document& d, Config& config)
 	}
 
 	config.outputFiles = GetOutputFileNames(config.inputFiles, replace, d["OutputFilePrefix"].GetString());
+
+
+	/*********************************************************
+	* sinogram and slice parameters
+	*********************************************************/
+
+	config.bkgViews = d["BackgroundViews"].GetUint();
+	config.objViews = d["ObjectViews"].GetUint();
+	config.rebinSize = d["RebinSize"].GetUint();
+	config.sliceCount = d["SliceCount"].GetUint();
+	config.sliceStartIdx = d["SliceStartIdx"].GetUint();
+	config.sliceThickness = d["SliceThickness"].GetUint();
+
+	/*********************************************************
+	* correct sinogram artifacts
+	*********************************************************/
+
+	config.interpolateWhiteLines = d["InterpolateWhiteLines"].GetBool();
+	config.smoothoutMarginalData = d["SmoothoutMarginalData"].GetBool();
+	config.smoothoutLeftIdx = d["SmoothoutLeftIdx"].GetUint();
+	config.smoothoutRightIdx = d["SmoothoutRightIdx"].GetUint();
+
+	/*********************************************************
+	*  EVI file parameters
+	*********************************************************/
+
+	config.detectorWidth = d["DetectorWidth"].GetUint();
+	config.detectorHeight = d["DetectorHeight"].GetUint();
+	config.offsetToFirstImage = d["OffsetToFirstImage"].GetUint();
+	config.gap = d["Gap"].GetUint();
+
 }
