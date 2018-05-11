@@ -4,50 +4,49 @@
   /********************************************************* 
   * input and out director and files
   *********************************************************/
-  "InputDir"  : "C:/Users/mfeng/Local Files/For Evan/20180420mtf/EVI_data",
-  "OutputDir" : ".",
+  "InputDir": "C:\\Users\\fengm\\Desktop\\test",
+  "OutputDir": ".",
 
   // data file of backgorund (air)
-  "BackgroundFile"    : "AIR_TE.EVI",
+  "BackgroundFile": "AIR_TE.EVI",
   // all the files in the directory, use regular expression
-  "InputFiles"        : "[0-9]_TE.EVI",
-  // output file name (prefix, postfix, replace)
-  "OutputFilePrefix"  : "sng_",
-  "OutputFilePostFix" : "_test",
+  "InputFiles": "[0-9]_TE.EVI",
+  // output file name (prefix, replace)
+  "OutputFilePrefix": "sng_",
   // replace substring in input file name
-  "OutputFileReplace" : [ "_TE", "" ],
+  "OutputFileReplace": [ "_TE", "" , ".EVI", ".raw", "", "haha_"],
 
   /********************************************************* 
   * sinogram and slice parameters
   *********************************************************/
   // number of views in background file
-  "BackgroundViews" : 300,
+  "BackgroundViews": 300,
   // number of views in object file
-  "ObjectViews"     : 2710,
+  "ObjectViews": 2710,
   // rebin the sinogram along detector width direction, do not rebin if it is one
-  "RebinSize"       : 1,
+  "RebinSize": 1,
   // total number of slices for the sinogram
-  "SliceNumber"     : 1,
+  "SliceNumber": 1,
   // index starts from 0
-  "SliceStartIdx" : 2,
+  "SliceStartIdx": 2,
   // integer
-  "SliceThickness"  : 60,
+  "SliceThickness": 60,
 
   /********************************************************* 
   * correct sinogram artifacts
   *********************************************************/
   // linear interpolation for white lines
-  "InterpolateWhiteLines" : true,
+  "InterpolateWhiteLines": true,
   // smooth out left and right part of sinogram, index won't be used if it is false
-  "SmoothoutMarginalData" : true,
-  "SmoothoutLeftIdx"    : 10,
-  "SmoothoutRightIdx"   : 1200,
+  "SmoothoutMarginalData": true,
+  "SmoothoutLeftIdx": 10,
+  "SmoothoutRightIdx": 1200,
 
   /********************************************************* 
   *  EVI file parameters, usually you do not need to change
   *********************************************************/
-  "DetectorWidth"     : 5120,
-  "DetectorHeight"    : 64,
+  "DetectorWidth": 5120,
+  "DetectorHeight": 64,
   "OffsetToFirstImage": 2368,
-  "Gap"               : 64,
+  "Gap": 64,
 }

@@ -13,10 +13,7 @@ struct Config
 
 	std::string		bkgFile;
 	std::vector<std::string>	inputFiles;
-
-	std::string		outputFilePrefix;
-	std::string		outputFilePostfix;
-	std::vector<std::string>	outputFileReplace;
+	std::vector<std::string>	outputFiles;
 
 	/*********************************************************
 	* sinogram and slice parameters
