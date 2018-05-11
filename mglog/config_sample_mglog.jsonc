@@ -4,11 +4,11 @@
   /********************************************************* 
   * input and out director and files
   *********************************************************/
-  "InputDirectory"  : ".",
-  "OutputDirectory" : ".",
+  "InputDir"  : "C:/Users/mfeng/Local Files/For Evan/20180420mtf/EVI_data",
+  "OutputDir" : ".",
 
   // data file of backgorund (air)
-  "BackgroundFile"    : "bkg_TE.EVI",
+  "BackgroundFile"    : "AIR_TE.EVI",
   // all the files in the directory, use regular expression
   "InputFiles"        : "[0-9]_TE.EVI",
   // output file name (prefix, postfix, replace)
@@ -26,10 +26,10 @@
   "ObjectViews"     : 2710,
   // rebin the sinogram along detector width direction, do not rebin if it is one
   "RebinSize"       : 1,
-  // number of slices for the sinogram
+  // total number of slices for the sinogram
   "SliceNumber"     : 1,
   // index starts from 0
-  "SliceStartIndex" : 2,
+  "SliceStartIdx" : 2,
   // integer
   "SliceThickness"  : 60,
 
@@ -40,12 +40,12 @@
   "InterpolateWhiteLines" : true,
   // smooth out left and right part of sinogram, index won't be used if it is false
   "SmoothoutMarginalData" : true,
-  "SmoothoutLeftIndex"    : 10,
-  "SmoothoutRightIndex"   : 1200,
+  "SmoothoutLeftIdx"    : 10,
+  "SmoothoutRightIdx"   : 1200,
 
   /********************************************************* 
-    *  EVI file parameters, usually you do not need to change
-    *********************************************************/
+  *  EVI file parameters, usually you do not need to change
+  *********************************************************/
   "DetectorWidth"     : 5120,
   "DetectorHeight"    : 64,
   "OffsetToFirstImage": 2368,
