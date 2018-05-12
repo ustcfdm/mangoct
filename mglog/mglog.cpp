@@ -10,7 +10,7 @@ namespace js = rapidjson;
 
 void LoadConfigFile(js::Document& d, Config& config);
 std::vector<mg::Matrix> GetBkgData(const Config& config);
-
+std::vector<mg::Matrix> GetPrelogSinogram(const mg::Matrix& obj, const Config& config);
 
 int main(int argc, char* argv[])
 {
@@ -40,6 +40,30 @@ int main(int argc, char* argv[])
 		//////////////////////////////////////////////////////////////////////////////
 
 		std::vector<mg::Matrix> bkg = GetBkgData(config);
+
+		//////////////////////////////////////////////////////////////////////////////
+		// Step 2£º acquire and process object data
+		//////////////////////////////////////////////////////////////////////////////
+
+		mg::Matrix obj(config.detectorHeight, config.detectorWidth, config.objViews);
+
+		// repeat for each output file
+		for (size_t i = 0; i < config.outputFiles.size(); i++)
+		{
+			// read the evi file
+			obj.ReadEviFile(config.inputFiles[0].c_str(), config.offsetToFirstImage, config.gap);
+
+			// get the pre-log sinogram
+			std::vector<mg::Matrix> sgm = GetPrelogSinogram(obj, config);
+
+			// pre-log sinogram to post-log sinogram
+			for (size_t k = 0; k < sgm.size(); k++)
+			{
+				sgm[k] = (bkg[k] / sgm[k]).Log();
+				sgm[k].SetNanOrInf(0.0f);
+			}
+
+		}
 
 	}
 
@@ -188,10 +212,10 @@ std::vector<mg::Matrix> GetBkgData(const Config& config)
 	// take the average along views(pages) direction
 	bkg.Average(mg::Axis::Page);
 
-	// the return varialbe
+	// the bkg data to be returned
 	std::vector<mg::Matrix> b;
 
-	unsigned idx = config.sliceStartIdx;		// 
+	unsigned idx = config.sliceStartIdx;		
 	for (unsigned i = 0; i < config.sliceCount; i++)
 	{
 		b.push_back(mg::Matrix::Average(bkg, mg::Axis::Row, idx, idx + config.sliceThickness));
@@ -199,4 +223,18 @@ std::vector<mg::Matrix> GetBkgData(const Config& config)
 	}
 
 	return b;
+}
+
+std::vector<mg::Matrix> GetPrelogSinogram(const mg::Matrix& obj, const Config& config)
+{
+	std::vector<mg::Matrix> sgm;
+
+	unsigned idx = config.sliceStartIdx;
+	for (unsigned i = 0; i < config.sliceCount; i++)
+	{
+		sgm.push_back(mg::Matrix::Average(obj, mg::Axis::Row, idx, idx + config.sliceThickness).Reshape(config.objViews,config.detectorWidth));
+		idx += config.sliceThickness;
+	}
+	
+	return sgm;
 }
