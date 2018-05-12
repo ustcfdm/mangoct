@@ -386,6 +386,22 @@ mango::Matrix& mango::Matrix::Log()
 	return *this;
 }
 
+mango::Matrix& mango::Matrix::ReadRawfile(const char * filename)
+{
+	FILE* fp = fopen(filename, "rb");
+
+	if (fp == NULL)
+	{
+		throw std::runtime_error("Cannot open file");
+	}
+
+	fread(data_, sizeof(float), rows_*cols_*pages_, fp);
+
+	fclose(fp);
+
+	return *this;
+}
+
 bool mango::Matrix::SaveRawFile(const char * filename)
 {
 	FILE* fp = fopen(filename, "wb");

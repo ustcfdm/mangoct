@@ -866,6 +866,9 @@ namespace MatrixTest
 
 			mango::Matrix m = mango::Matrix::ReadRawFile("testfile.raw", 5, 6, 7);
 
+			mango::Matrix m2(5, 6, 7);
+			m2.ReadRawfile("testfile.raw");
+
 			val = 0;
 			for (unsigned page = 0; page < m.Pages(); page++)
 			{
@@ -874,6 +877,7 @@ namespace MatrixTest
 					for (unsigned col = 0; col < m.Cols(); col++)
 					{
 						Assert::AreEqual(val, m(row, col, page), 0.0001f);
+						Assert::AreEqual(val, m2(row, col, page), 0.0001f);
 						val++;
 					}
 				}

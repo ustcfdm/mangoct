@@ -82,6 +82,9 @@ namespace mango
 		// Take the logarithm of each element.
 		Matrix& Log();
 
+		// Read from raw file. The size of this matrix need to be pre-defined.
+		Matrix& ReadRawfile(const char* filename);
+
 		// Save to raw file.
 		bool SaveRawFile(const char* filename);
 
