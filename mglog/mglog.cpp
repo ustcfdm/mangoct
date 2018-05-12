@@ -9,6 +9,7 @@ namespace mg = mango;
 namespace js = rapidjson;
 
 void LoadConfigFile(js::Document& d, Config& config);
+std::vector<mg::Matrix> GetBkgData(const Config& config);
 
 
 int main(int argc, char* argv[])
@@ -33,6 +34,12 @@ int main(int argc, char* argv[])
 		doc.ParseStream<js::kParseCommentsFlag | js::kParseTrailingCommasFlag>(isw);
 
 		LoadConfigFile(doc, config);
+
+		//////////////////////////////////////////////////////////////////////////////
+		// Step 2£º acquire and process bakcground data
+		//////////////////////////////////////////////////////////////////////////////
+
+		std::vector<mg::Matrix> bkg = GetBkgData(config);
 
 	}
 
@@ -170,4 +177,26 @@ void LoadConfigFile(js::Document& d, Config& config)
 	config.offsetToFirstImage = d["OffsetToFirstImage"].GetUint();
 	config.gap = d["Gap"].GetUint();
 
+}
+
+// acquire background file data, and process the data according to config infomation
+std::vector<mg::Matrix> GetBkgData(const Config& config)
+{
+	// read background data file
+	mg::Matrix bkg = mg::Matrix::ReadEviFile(config.bkgFile.c_str(), config.detectorHeight, config.detectorWidth, config.bkgViews, config.offsetToFirstImage, config.gap);
+
+	// take the average along views(pages) direction
+	bkg.Average(mg::Axis::Page);
+
+	// the return varialbe
+	std::vector<mg::Matrix> b;
+
+	unsigned idx = config.sliceStartIdx;		// 
+	for (unsigned i = 0; i < config.sliceCount; i++)
+	{
+		b.push_back(mg::Matrix::Average(bkg, mg::Axis::Row, idx, idx + config.sliceThickness));
+		idx += config.sliceThickness;
+	}
+
+	return b;
 }
