@@ -82,6 +82,9 @@ namespace mango
 		// Take the logarithm of each element.
 		Matrix& Log();
 
+		// Read from evi file. The size of this matrix need to be pre-defined.
+		Matrix& ReadEviFile(const char* filename, const unsigned offset, const unsigned gap);
+
 		// Read from raw file. The size of this matrix need to be pre-defined.
 		Matrix& ReadRawfile(const char* filename);
 
