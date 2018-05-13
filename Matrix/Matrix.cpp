@@ -285,7 +285,7 @@ mango::Matrix& mango::Matrix::Rebin(unsigned rebinSize, Axis axis, bool ignoreTa
 				{
 					for (unsigned i = 0; i < rebinSize; i++)
 					{
-						data_new[page*rows_new*cols_ + row * cols_ + col] += this->operator()(row + i, col, page);
+						data_new[page*rows_new*cols_ + row * cols_ + col] += this->operator()(row*rebinSize + i, col, page);
 					}
 					data_new[page*rows_new*cols_ + row * cols_ + col] /= float(rebinSize);
 				}
@@ -316,7 +316,7 @@ mango::Matrix& mango::Matrix::Rebin(unsigned rebinSize, Axis axis, bool ignoreTa
 				{
 					for (unsigned i = 0; i < rebinSize; i++)
 					{
-						data_new[page*rows_*cols_new + row * cols_new + col] += this->operator()(row, col + i, page);
+						data_new[page*rows_*cols_new + row * cols_new + col] += this->operator()(row, col*rebinSize + i, page);
 					}
 					data_new[page*rows_*cols_new + row * cols_new + col] /= float(rebinSize);
 				}
@@ -347,7 +347,7 @@ mango::Matrix& mango::Matrix::Rebin(unsigned rebinSize, Axis axis, bool ignoreTa
 				{
 					for (unsigned i = 0; i < rebinSize; i++)
 					{
-						data_new[page*rows_*cols_ + row * cols_ + col] += this->operator()(row, col, page + i);
+						data_new[page*rows_*cols_ + row * cols_ + col] += this->operator()(row, col, page*rebinSize + i);
 					}
 					data_new[page*rows_*cols_ + row * cols_ + col] /= float(rebinSize);
 				}
