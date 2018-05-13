@@ -255,9 +255,13 @@ mango::Matrix& mango::Matrix::Average(Axis axis, unsigned start, unsigned end)
 
 mango::Matrix& mango::Matrix::Rebin(unsigned rebinSize, Axis axis, bool ignoreTail)
 {
-	if (rebinSize <= 1)
+	if (rebinSize == 0)
 	{
 		throw std::invalid_argument("Invalid rebin size");
+	}
+	else if (rebinSize == 1)
+	{
+		return *this;
 	}
 
 	float* data_new;
