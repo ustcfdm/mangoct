@@ -24,7 +24,7 @@
   // number of views in object file
   "ObjectViews": 1510,
   // rebin the sinogram along detector width direction, do not rebin if it is one
-  "RebinSize": 1,
+  "RebinSize": 4,
   // total number of slices for the sinogram
   "SliceCount": 1,
   // index starts from 0

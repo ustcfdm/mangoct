@@ -14,17 +14,14 @@ std::vector<mg::Matrix> GetPrelogSinogram(const mg::Matrix& obj, const Config& c
 
 int main(int argc, char* argv[])
 {
-
 	if (argc == 1)
 	{
 		fprintf(stderr, "No config files!\n");
 		return -1;
 	}
 
-
 	for (int configIdx = 1; configIdx < argc; configIdx++)
 	{
-
 		//////////////////////////////////////////////////////////////////////////////
 		// Step 1: load the config file
 		//////////////////////////////////////////////////////////////////////////////
@@ -66,17 +63,20 @@ int main(int argc, char* argv[])
 				sgm[k].SetNanOrInf(0.0f);
 			}
 
+			// rebin sinogram data
+			for (size_t k = 0; k < sgm.size(); k++)
+			{
+				sgm[k].Rebin(config.rebinSize, mg::Axis::Col, true);
+			}
 
 			// save to file
 			std::string saveFullName = (fs::path(config.outputDir) / config.outputFiles[i]).string();
-
-			printf("\t->\tSave to %s\n", config.outputFiles[i].c_str());
-
 			sgm[0].SaveRawFile(saveFullName.c_str());
 			for (size_t k = 1; k < sgm.size(); k++)
 			{
 				sgm[k].AppendRawFile(saveFullName.c_str());
 			}
+			printf("\t->\tSave to %s\n", config.outputFiles[i].c_str());
 
 		}
 
