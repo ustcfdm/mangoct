@@ -39,6 +39,7 @@ int main(int argc, char* argv[])
 		// Step 2£º acquire and process bakcground data
 		//////////////////////////////////////////////////////////////////////////////
 
+		printf("Processing background file: %s\n", config.bkgFile.c_str());
 		std::vector<mg::Matrix> bkg = GetBkgData(config);
 
 		//////////////////////////////////////////////////////////////////////////////
@@ -50,8 +51,10 @@ int main(int argc, char* argv[])
 		// repeat for each output file
 		for (size_t i = 0; i < config.outputFiles.size(); i++)
 		{
+			printf("    Processing %s...", config.inputFiles[i].c_str());
+
 			// read the evi file
-			obj.ReadEviFile(config.inputFiles[0].c_str(), config.offsetToFirstImage, config.gap);
+			obj.ReadEviFile((fs::path(config.inputDir)/config.inputFiles[i]).string().c_str(), config.offsetToFirstImage, config.gap);
 
 			// get the pre-log sinogram
 			std::vector<mg::Matrix> sgm = GetPrelogSinogram(obj, config);
@@ -61,6 +64,18 @@ int main(int argc, char* argv[])
 			{
 				sgm[k] = (bkg[k] / sgm[k]).Log();
 				sgm[k].SetNanOrInf(0.0f);
+			}
+
+
+			// save to file
+			std::string saveFullName = (fs::path(config.outputDir) / config.outputFiles[i]).string();
+
+			printf("\t->\tSave to %s\n", config.outputFiles[i].c_str());
+
+			sgm[0].SaveRawFile(saveFullName.c_str());
+			for (size_t k = 1; k < sgm.size(); k++)
+			{
+				sgm[k].AppendRawFile(saveFullName.c_str());
 			}
 
 		}
@@ -207,7 +222,7 @@ void LoadConfigFile(js::Document& d, Config& config)
 std::vector<mg::Matrix> GetBkgData(const Config& config)
 {
 	// read background data file
-	mg::Matrix bkg = mg::Matrix::ReadEviFile(config.bkgFile.c_str(), config.detectorHeight, config.detectorWidth, config.bkgViews, config.offsetToFirstImage, config.gap);
+	mg::Matrix bkg = mg::Matrix::ReadEviFile((fs::path(config.inputDir)/config.bkgFile).string().c_str(), config.detectorHeight, config.detectorWidth, config.bkgViews, config.offsetToFirstImage, config.gap);
 
 	// take the average along views(pages) direction
 	bkg.Average(mg::Axis::Page);

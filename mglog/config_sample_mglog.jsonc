@@ -5,16 +5,16 @@
   * input and out director and files
   *********************************************************/
   "InputDir": "C:\\Users\\fengm\\Desktop\\test",
-  "OutputDir": ".",
+  "OutputDir": "C:\\Users\\fengm\\Desktop\\test",
 
   // data file of backgorund (air)
-  "BackgroundFile": "AIR_TE.EVI",
+  "BackgroundFile": "air_TE.EVI",
   // all the files in the directory, use regular expression
-  "InputFiles": "[0-9]_TE.EVI",
+  "InputFiles": "1_TE.EVI",
   // output file name (prefix, replace)
   "OutputFilePrefix": "sng_",
   // replace substring in input file name
-  "OutputFileReplace": [ "_TE", "" , ".EVI", ".raw"],
+  "OutputFileReplace": [ "_TE", "", ".EVI", ".raw" ],
 
   /********************************************************* 
   * sinogram and slice parameters
@@ -22,7 +22,7 @@
   // number of views in background file
   "BackgroundViews": 300,
   // number of views in object file
-  "ObjectViews": 2710,
+  "ObjectViews": 1510,
   // rebin the sinogram along detector width direction, do not rebin if it is one
   "RebinSize": 1,
   // total number of slices for the sinogram
@@ -48,5 +48,5 @@
   "DetectorWidth": 5120,
   "DetectorHeight": 64,
   "OffsetToFirstImage": 2368,
-  "Gap": 64,
+  "Gap": 64
 }
