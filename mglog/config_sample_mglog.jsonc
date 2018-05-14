@@ -39,8 +39,8 @@
   "InterpolateWhiteLines": true,
   // smooth out left and right part of sinogram, index won't be used if it is false
   "SmoothoutMarginalData": true,
-  "SmoothoutLeftIdx": 10,
-  "SmoothoutRightIdx": 1200,
+  "SmoothoutLeftIdx": 500,
+  "SmoothoutRightIdx": 800,
 
   /********************************************************* 
   *  EVI file parameters, usually you do not need to change

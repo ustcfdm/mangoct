@@ -11,6 +11,7 @@ namespace js = rapidjson;
 void LoadConfigFile(js::Document& d, Config& config);
 std::vector<mg::Matrix> GetBkgData(const Config& config);
 std::vector<mg::Matrix> GetPrelogSinogram(const mg::Matrix& obj, const Config& config);
+void SmoothoutMargianlData(std::vector<mg::Matrix>& sgm, const Config& config);
 
 int main(int argc, char* argv[])
 {
@@ -67,6 +68,12 @@ int main(int argc, char* argv[])
 			for (size_t k = 0; k < sgm.size(); k++)
 			{
 				sgm[k].Rebin(config.rebinSize, mg::Axis::Col, true);
+			}
+
+			// smoothout marginal data
+			if (config.smoothoutMarginalData)
+			{
+				SmoothoutMargianlData(sgm, config);
 			}
 
 			// save to file
@@ -252,4 +259,21 @@ std::vector<mg::Matrix> GetPrelogSinogram(const mg::Matrix& obj, const Config& c
 	}
 	
 	return sgm;
+}
+
+void SmoothoutMargianlData(std::vector<mg::Matrix>& sgm, const Config& config)
+{
+	for (size_t slice = 0; slice < sgm.size(); slice++)
+	{
+		for (unsigned row = 0; row < config.objViews; row++)
+		{
+			// left part
+			for (unsigned col = 0; col < config.smoothoutLeftIdx; col++)
+				sgm[slice](row, col) = 0;
+
+			// right part
+			for (unsigned col = config.smoothoutRightIdx; col < sgm[slice].Cols(); col++)
+				sgm[slice](row, col) = 0;
+		}
+	}
 }
