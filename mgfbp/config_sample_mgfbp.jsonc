@@ -1,0 +1,71 @@
+// This is a config sample for mgfbp
+
+{
+  /********************************************************* 
+  * input and output directory and files
+  *********************************************************/
+
+  "InputDir": "C:\\Users\\mfeng\\Local Files\\For Evan\\PCDCT data\\HeadPhan\\sinogram_no_correction",
+  "OutputDir": "C:\\Users\\mfeng\\Desktop\\test",
+
+  // all the files in the input directory, use regular expression
+  "InputFiles": "0[0-9]_TE.raw",
+  // output file name (prefix, replace)
+  "OutputFilePrefix": "img_",
+  // replace substring in input file name
+  "OutputFileReplace": [ "TE", "" ],
+
+  // save filtered sinogram data
+  "SaveFilteredSinogram": false,
+
+  /*********************************************************
+	* sinogram and slice parameters
+	*********************************************************/
+
+  // number of detector elements
+  "SinogramWidth": 1280,
+  // number of frames
+  "SinogramHeight": 1510,
+  // number of views for reconstruction
+  "Views": 1502,
+  // number of slices in each sinogram file
+  "SliceCount": 6,
+
+  // the physical size of detector element size [mm]
+  "DetectorElementSize": 0.4,
+  // the position (coordinate) of detector center [mm]
+  "DetectorOffcenter": 35,
+
+  // source to isocenter distance [mm]
+  "SourceIsocenterDistance": 539,
+  // source to detector distance [mm]
+  "SourceDetectorDistance": 949,
+
+  /*********************************************************
+	* reconstruction parameters
+	*********************************************************/
+
+  // image dimension (integer)
+  "ImageDimension": 1024,
+
+  /* pixel size or image size, just use one of them */
+
+  // image pixel size [mm]
+  //"PixelSize": 0,
+
+  // image size [mm]
+  "ImageSize": 200,
+
+  // rotate the image [degree]
+  "ImageRotation": 0,
+  // image center [x(mm), y(mm)]
+  "ImageCenter": [ 0, 0 ],
+
+  /* reconstruction kernel, avaliable list:
+  *  1. "HammingFilter": t + (1-t)*cos(pi*k/ 2*kn), 1 for ramp kernel, 0 for consine kernel, others are in-between
+  *  2. "QuadraticFilter": (for bone-plus kernel) tow parameters for t and h, three parameters for a, b, c
+  */
+  //"HammingFilter": 0.5
+  "QuadraticFilter": [0.42, 0]
+
+}

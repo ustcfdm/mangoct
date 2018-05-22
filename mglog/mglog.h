@@ -5,7 +5,7 @@
 struct Config
 {
 	/*********************************************************
-	* input and out director and files
+	* input and out directory and files
 	*********************************************************/
 
 	std::string		inputDir;
