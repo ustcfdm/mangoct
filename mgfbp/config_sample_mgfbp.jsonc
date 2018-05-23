@@ -9,7 +9,7 @@
   "OutputDir": "C:\\Users\\mfeng\\Desktop\\test",
 
   // all the files in the input directory, use regular expression
-  "InputFiles": "0[0-9]_TE.raw",
+  "InputFiles": "0[8-9]_TE.raw",
   // output file name (prefix, replace)
   "OutputFilePrefix": "img_",
   // replace substring in input file name
@@ -23,7 +23,7 @@
 	*********************************************************/
 
   // number of detector elements
-  "SinogramWidth": 1280,
+  "SinogramWidth": 854,
   // number of frames
   "SinogramHeight": 1510,
   // number of views for reconstruction
@@ -32,7 +32,7 @@
   "SliceCount": 6,
 
   // the physical size of detector element size [mm]
-  "DetectorElementSize": 0.4,
+  "DetectorElementSize": 0.6,
   // the position (coordinate) of detector center [mm]
   "DetectorOffcenter": 35,
 
@@ -46,15 +46,15 @@
 	*********************************************************/
 
   // image dimension (integer)
-  "ImageDimension": 1024,
+  "ImageDimension": 512,
 
   /* pixel size or image size, just use one of them */
 
   // image pixel size [mm]
-  //"PixelSize": 0,
+  "PixelSize": 0.43,
 
   // image size [mm]
-  "ImageSize": 200,
+  //"ImageSize": 200,
 
   // rotate the image [degree]
   "ImageRotation": 0,

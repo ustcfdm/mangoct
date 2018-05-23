@@ -49,9 +49,10 @@ namespace mango
 
 	class FbpClass
 	{
-	private:
+	public:
 		static Config config;
 
+	private:
 		// array of detector element coordinate
 		static float* u;
 		// array of each view angle [radius]
@@ -62,6 +63,7 @@ namespace mango
 
 	private:
 		float* sinogram = nullptr;
+		float* sinogram_filter = nullptr;
 		float* image = nullptr;
 
 	public:
@@ -75,9 +77,20 @@ namespace mango
 		// Initialize parameters
 		void InitParam();
 
+		// Read sinogram file
+		void ReadSinogramFile(const char* filename);
 
+		// Save filtered sinogram data to file
+		void SaveFilteredSinogram(const char* filename);
 
-	private:
+		// Save image to file
+		void SaveImage(const char* filename);
+
+		// Filter the current sinogram data
+		void FilterSinogram();
+
+		// Backproject the image using pixel-driven method
+		void BackprojectPixelDriven();
 
 	};
 

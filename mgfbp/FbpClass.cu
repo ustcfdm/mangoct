@@ -1,6 +1,8 @@
 #include "stdafx.h"
 #include "FbpClass.cuh"
+
 #include "FbpClass_Agent.cuh"
+
 
 mango::Config mango::FbpClass::config;
 float* mango::FbpClass::u = nullptr;
@@ -17,6 +19,11 @@ mango::FbpClass::~FbpClass()
 	FreeMemory_Agent(u);
 	FreeMemory_Agent(beta);
 	FreeMemory_Agent(reconKernel);
+
+	FreeMemory_Agent(sinogram);
+	FreeMemory_Agent(sinogram_filter);
+	FreeMemory_Agent(image);
+
 }
 
 // acquire the list of file names in the dir that matches filter
@@ -197,6 +204,63 @@ void mango::FbpClass::InitParam()
 
 	InitializeBeta_Agent(beta, config.views, config.imgRot);
 
-	InitializeReconKernl_Agent(reconKernel, config.sgmWidth, config.detEltSize, config.kernelName, config.kernelParam);
+	InitializeReconKernel_Agent(reconKernel, config.sgmWidth, config.detEltSize, config.kernelName, config.kernelParam);
 
+	MallocManaged_Agent(sinogram, config.sgmWidth*config.sgmHeight*config.sliceCount * sizeof(float));
+	MallocManaged_Agent(sinogram_filter, config.sgmWidth*config.views*config.sliceCount * sizeof(float));
+	MallocManaged_Agent(image, config.imgDim*config.imgDim*config.sliceCount * sizeof(float));
+}
+
+void mango::FbpClass::ReadSinogramFile(const char * filename)
+{
+#pragma warning (disable : 4996)
+
+	FILE* fp = fopen(filename, "rb");
+	if (fp==NULL)
+	{
+		fprintf(stderr, "Cannot open file %s!\n", filename);
+		exit(3);
+	}
+
+	fread(sinogram, sizeof(float), config.sgmWidth*config.sgmHeight*config.sliceCount, fp);
+
+	fclose(fp);
+}
+
+void mango::FbpClass::SaveFilteredSinogram(const char * filename)
+{
+#pragma warning (disable : 4996)
+
+	FILE* fp = fopen(filename, "wb");
+	if (fp==NULL)
+	{
+		fprintf(stderr, "Cannot save to file %s!\n", filename);
+		exit(4);
+	}
+	fwrite(sinogram_filter, sizeof(float), config.sgmWidth * config.views * config.sliceCount, fp);
+	fclose(fp);
+}
+
+void mango::FbpClass::SaveImage(const char * filename)
+{
+#pragma warning (disable : 4996)
+
+	FILE* fp = fopen(filename, "wb");
+	if (fp == NULL)
+	{
+		fprintf(stderr, "Cannot save to file %s!\n", filename);
+		exit(4);
+	}
+	fwrite(image, sizeof(float), config.imgDim * config.imgDim * config.sliceCount, fp);
+	fclose(fp);
+}
+
+void mango::FbpClass::FilterSinogram()
+{
+	FilterSinogram_Agent(sinogram, sinogram_filter, reconKernel, u, config);
+}
+
+void mango::FbpClass::BackprojectPixelDriven()
+{
+	BackprojectPixelDriven_Agent(sinogram_filter, image, u, beta, config);
 }
