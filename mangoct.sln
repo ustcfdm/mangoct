@@ -11,6 +11,8 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "mglog", "mglog\mglog.vcxpro
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "mgfbp", "mgfbp\mgfbp.vcxproj", "{12EF5DBA-D5E7-45F4-AA9F-D08F430CA4DF}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "mgfpj", "mgfpj\mgfpj.vcxproj", "{A14DD9D8-5E55-4172-8497-F3C8F99B9F61}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|x64 = Debug|x64
@@ -51,6 +53,12 @@ Global
 		{12EF5DBA-D5E7-45F4-AA9F-D08F430CA4DF}.Release|x64.Build.0 = Release|x64
 		{12EF5DBA-D5E7-45F4-AA9F-D08F430CA4DF}.Release|x86.ActiveCfg = Release|Win32
 		{12EF5DBA-D5E7-45F4-AA9F-D08F430CA4DF}.Release|x86.Build.0 = Release|Win32
+		{A14DD9D8-5E55-4172-8497-F3C8F99B9F61}.Debug|x64.ActiveCfg = Debug|x64
+		{A14DD9D8-5E55-4172-8497-F3C8F99B9F61}.Debug|x64.Build.0 = Debug|x64
+		{A14DD9D8-5E55-4172-8497-F3C8F99B9F61}.Debug|x86.ActiveCfg = Debug|x64
+		{A14DD9D8-5E55-4172-8497-F3C8F99B9F61}.Release|x64.ActiveCfg = Release|x64
+		{A14DD9D8-5E55-4172-8497-F3C8F99B9F61}.Release|x64.Build.0 = Release|x64
+		{A14DD9D8-5E55-4172-8497-F3C8F99B9F61}.Release|x86.ActiveCfg = Release|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
