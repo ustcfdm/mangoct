@@ -50,12 +50,21 @@ namespace mango
 		// array of each view angle [radius]
 		static float* beta;
 
+
+	private:
+		float* image = nullptr;
+		float* sinogram = nullptr;
+
 	public:
 		FpjClass();
 		~FpjClass();
 
 		// Read config file
 		void ReadConfigFile(const char* filename);
+
+		// Initialize parameters
+		void InitParam();
+
 
 
 	};

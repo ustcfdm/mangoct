@@ -15,7 +15,10 @@
     <ClInclude Include="targetver.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="FpjClass.cuh">
+    <ClInclude Include="FpjClass_Agent.cuh">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="FpjClass.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
@@ -26,13 +29,16 @@
     <ClCompile Include="stdafx.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="FpjClass.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />
     <None Include="config_sample_mgfpj.jsonc" />
   </ItemGroup>
   <ItemGroup>
-    <CudaCompile Include="FpjClass.cu">
+    <CudaCompile Include="FpjClass_Agent.cu">
       <Filter>Source Files</Filter>
     </CudaCompile>
   </ItemGroup>

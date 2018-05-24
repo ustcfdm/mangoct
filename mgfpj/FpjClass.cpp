@@ -1,7 +1,10 @@
-#include "FpjClass.cuh"
+#include "FpjClass.h"
+#include "FpjClass_Agent.cuh"
 #include "stdafx.h"
 
 mango::Config mango::FpjClass::config;
+float* mango::FpjClass::u = nullptr;
+float* mango::FpjClass::beta = nullptr;
 
 mango::FpjClass::FpjClass()
 {
@@ -9,6 +12,11 @@ mango::FpjClass::FpjClass()
 
 mango::FpjClass::~FpjClass()
 {
+	FreeMemory_Agent(u);
+	FreeMemory_Agent(beta);
+
+	FreeMemory_Agent(image);
+	FreeMemory_Agent(sinogram);
 }
 
 
@@ -148,4 +156,13 @@ void mango::FpjClass::ReadConfigFile(const char * filename)
 	config.detEltSize = doc["DetectorElementSize"].GetFloat();
 	config.detOffCenter = doc["DetectorOffcenter"].GetFloat();
 #pragma endregion
+}
+
+void mango::FpjClass::InitParam()
+{
+	InitializeU_Agent(u, config.detEltCount, config.detEltSize, config.detOffCenter);
+	InitializeBeta_Agent(beta, config.views);
+
+	MallocManaged_Agent(image, config.imgDim*config.imgDim*config.sliceCount * sizeof(float));
+	MallocManaged_Agent(sinogram, config.detEltCount*config.views*config.sliceCount * sizeof(float));
 }
