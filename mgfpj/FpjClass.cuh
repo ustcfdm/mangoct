@@ -38,4 +38,28 @@ namespace mango
 
 	};
 
+
+	class FpjClass
+	{
+	public:
+		static Config config;
+
+	private:
+		// array of detector element coordinate
+		static float* u;
+		// array of each view angle [radius]
+		static float* beta;
+
+	public:
+		FpjClass();
+		~FpjClass();
+
+		// Read config file
+		void ReadConfigFile(const char* filename);
+
+
+	};
+
+	
+
 }

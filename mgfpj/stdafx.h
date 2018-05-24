@@ -14,6 +14,11 @@
 
 // TODO: reference additional headers your program requires here
 #include "rapidjson/document.h"
+#include "rapidjson/istreamwrapper.h"
+#include <fstream>
+#include <filesystem>
+#include <regex>
+
 
 #include "cuda_runtime.h"
 #include "device_launch_parameters.h"

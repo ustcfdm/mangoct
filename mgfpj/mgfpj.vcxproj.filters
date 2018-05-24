@@ -15,6 +15,9 @@
     <ClInclude Include="targetver.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="FpjClass.cuh">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="mgfpj.cpp">
@@ -26,5 +29,11 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />
+    <None Include="config_sample_mgfpj.jsonc" />
+  </ItemGroup>
+  <ItemGroup>
+    <CudaCompile Include="FpjClass.cu">
+      <Filter>Source Files</Filter>
+    </CudaCompile>
   </ItemGroup>
 </Project>
