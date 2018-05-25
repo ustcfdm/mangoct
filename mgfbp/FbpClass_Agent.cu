@@ -194,7 +194,7 @@ __global__ void BackprojectPixelDriven_device(float* sgm, float* img, float* u, 
 				U = sid - x * cosf(beta[view]) - y * sinf(beta[view]);
 				u0 = sdd * (x*sinf(beta[view]) - y * cosf(beta[view])) / U;
 
-				k = int((u0 - u[0]) / du);
+				k = floorf((u0 - u[0]) / du);
 				if (k<0 || k+1>N-1)
 				{
 					img[row*M + col + slice * M*M] = 0;

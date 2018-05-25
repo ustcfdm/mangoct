@@ -4,11 +4,11 @@
   /*********************************************************
 	* input and output directory and files
 	*********************************************************/
-  "InputDir": "C:\\Users\\mfeng\\Local Files\\For Evan\\PCDCT data\\HeadPhan\\images",
+  "InputDir": "C:\\Users\\mfeng\\Desktop\\test\\images",
   "OutputDir": "C:\\Users\\mfeng\\Desktop\\test",
 
   // all the files in the input directory, use regular expression
-  "InputFiles": "0[0-9]_TE.raw",
+  "InputFiles": "img_0[1-3]_TE.raw",
   // output file name (prefix, replace)
   "OutputFilePrefix": "test_",
   // replace substring in input file name
@@ -24,7 +24,7 @@
 
   /* pixel size or image size, just use one of them */
   // image pixel size [mm]
-  "PixelSize": 0.43,
+  "PixelSize": 0.33,
   // image size [mm]
   //"ImageSize": 200,
 

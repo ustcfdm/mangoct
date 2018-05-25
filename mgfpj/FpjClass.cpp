@@ -196,3 +196,8 @@ void mango::FpjClass::SaveSinogram(const char * filename)
 	fwrite(sinogram, sizeof(float), config.detEltCount * config.views * config.sliceCount, fp);
 	fclose(fp);
 }
+
+void mango::FpjClass::ForwardProjectionBilinear()
+{
+	ForwardProjectionBilinear_Agent(image, sinogram, u, beta, config);
+}

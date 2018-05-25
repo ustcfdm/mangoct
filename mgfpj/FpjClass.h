@@ -71,6 +71,9 @@ namespace mango
 		// Save sinogram data to file (raw format)
 		void SaveSinogram(const char* filename);
 
+		// Forward projection, using bilinear interpolation
+		void ForwardProjectionBilinear();
+
 	};
 
 	

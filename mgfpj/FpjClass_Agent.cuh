@@ -17,6 +17,9 @@ void InitializeU_Agent(float* &u, const int N, const float du, const float offce
 // V: number of views
 void InitializeBeta_Agent(float* &beta, const int V);
 
+// Forward projection, using bilinear interpolation
+void ForwardProjectionBilinear_Agent(float* &image, float* &sinogram, const float* u, const float* beta, const mango::Config& config);
+
 // Malloc the memory as a given size
 void MallocManaged_Agent(float* &p, const int size);
 
