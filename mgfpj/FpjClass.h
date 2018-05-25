@@ -65,7 +65,11 @@ namespace mango
 		// Initialize parameters
 		void InitParam();
 
+		// Read image file (raw format)
+		void ReadImageFile(const char* filename);
 
+		// Save sinogram data to file (raw format)
+		void SaveSinogram(const char* filename);
 
 	};
 

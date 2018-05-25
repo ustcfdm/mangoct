@@ -4,15 +4,15 @@
   /*********************************************************
 	* input and output directory and files
 	*********************************************************/
-  "InputDir": "C:\\Users\\mfeng\\Local Files\\For Evan\\PCDCT data\\HeadPhan\\sinogram_no_correction",
+  "InputDir": "C:\\Users\\mfeng\\Local Files\\For Evan\\PCDCT data\\HeadPhan\\images",
   "OutputDir": "C:\\Users\\mfeng\\Desktop\\test",
 
   // all the files in the input directory, use regular expression
-  "InputFiles": "0[8-9]_TE.raw",
+  "InputFiles": "0[0-9]_TE.raw",
   // output file name (prefix, replace)
-  "OutputFilePrefix": "img_",
+  "OutputFilePrefix": "test_",
   // replace substring in input file name
-  "OutputFileReplace": [ "TE", "" ],
+  "OutputFileReplace": [ "img_", "sgm_" ],
 
 
   /*********************************************************
@@ -42,7 +42,7 @@
   "SourceDetectorDistance": 949,
 
   // number of detector elements
-  "DetectorElementCount": 1280,
+  "DetectorElementCount": 854,
   // number of views for reconstruction
   "Views": 1502,
 

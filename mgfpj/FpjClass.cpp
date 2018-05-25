@@ -166,3 +166,33 @@ void mango::FpjClass::InitParam()
 	MallocManaged_Agent(image, config.imgDim*config.imgDim*config.sliceCount * sizeof(float));
 	MallocManaged_Agent(sinogram, config.detEltCount*config.views*config.sliceCount * sizeof(float));
 }
+
+void mango::FpjClass::ReadImageFile(const char * filename)
+{
+#pragma warning (disable : 4996)
+
+	FILE* fp = fopen(filename, "rb");
+	if (fp == NULL)
+	{
+		fprintf(stderr, "Cannot open file %s!\n", filename);
+		exit(3);
+	}
+
+	fread(image, sizeof(float), config.imgDim*config.imgDim*config.sliceCount, fp);
+
+	fclose(fp);
+}
+
+void mango::FpjClass::SaveSinogram(const char * filename)
+{
+#pragma warning (disable : 4996)
+
+	FILE* fp = fopen(filename, "wb");
+	if (fp == NULL)
+	{
+		fprintf(stderr, "Cannot save to file %s!\n", filename);
+		exit(4);
+	}
+	fwrite(sinogram, sizeof(float), config.detEltCount * config.views * config.sliceCount, fp);
+	fclose(fp);
+}
