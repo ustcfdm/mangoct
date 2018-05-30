@@ -1,0 +1,52 @@
+// This is a config template for mglog
+
+{
+  /********************************************************* 
+  * input and output directory and files
+  *********************************************************/
+  "InputDir": "C:/Users/fengm/Desktop/test",
+  "OutputDir": "C:\\Users\\fengm\\Desktop\\test",
+
+  // data file of backgorund (air)
+  "BackgroundFile": "air_TE.EVI",
+  // all the files in the directory, use regular expression
+  "InputFiles": "1_TE.EVI",
+  // output file name (prefix, replace)
+  "OutputFilePrefix": "sng_",
+  // replace substring in input file name
+  "OutputFileReplace": [ "_TE", "", ".EVI", ".raw" ],
+
+  /********************************************************* 
+  * sinogram and slice parameters
+  *********************************************************/
+  // number of views in background file
+  "BackgroundViews": 300,
+  // number of views in object file
+  "ObjectViews": 1510,
+  // rebin the sinogram along detector width direction, do not rebin if it is one
+  "RebinSize": 4,
+  // total number of slices for the sinogram
+  "SliceCount": 1,
+  // index starts from 0
+  "SliceStartIdx": 2,
+  // integer
+  "SliceThickness": 60,
+
+  /********************************************************* 
+  * correct sinogram artifacts
+  *********************************************************/
+  // linear interpolation for white lines
+  "InterpolateWhiteLines": true,
+  // smooth out left and right part of sinogram, index won't be used if it is false
+  "SmoothoutMarginalData": true,
+  "SmoothoutLeftIdx": 500,
+  "SmoothoutRightIdx": 800,
+
+  /********************************************************* 
+  *  EVI file parameters, usually you do not need to change
+  *********************************************************/
+  "DetectorWidth": 5120,
+  "DetectorHeight": 64,
+  "OffsetToFirstImage": 2368,
+  "Gap": 64
+}

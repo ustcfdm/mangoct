@@ -1,0 +1,53 @@
+// This is a config sample for mgfpj
+
+{
+  /*********************************************************
+	* input and output directory and files
+	*********************************************************/
+  "InputDir": "C:\\Users\\mfeng\\Desktop\\test\\images",
+  "OutputDir": "C:\\Users\\mfeng\\Desktop\\test",
+
+  // all the files in the input directory, use regular expression
+  "InputFiles": "img_0[1-3]_TE.raw",
+  // output file name (prefix, replace)
+  "OutputFilePrefix": "test_",
+  // replace substring in input file name
+  "OutputFileReplace": [ "img_", "sgm_" ],
+
+
+  /*********************************************************
+	* image parameters
+	*********************************************************/
+
+  // image dimension (integer)
+  "ImageDimension": 512,
+
+  /* pixel size or image size, just use one of them */
+  // image pixel size [mm]
+  "PixelSize": 0.33,
+  // image size [mm]
+  //"ImageSize": 200,
+
+  // number of slices in each image file
+  "SliceCount": 6,
+
+
+  /*********************************************************
+	* geometry and detector parameters
+	*********************************************************/
+
+  // source to isocenter distance [mm]
+  "SourceIsocenterDistance": 539,
+  // source to detector distance [mm]
+  "SourceDetectorDistance": 949,
+
+  // number of detector elements
+  "DetectorElementCount": 854,
+  // number of views for reconstruction
+  "Views": 1502,
+
+  // the physical size of detector element size [mm]
+  "DetectorElementSize": 0.6,
+  // the position (coordinate) of detector center [mm]
+  "DetectorOffcenter": 35
+}
