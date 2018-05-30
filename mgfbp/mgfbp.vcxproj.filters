@@ -32,9 +32,6 @@
     <ClCompile Include="mgfbp.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="FbpClass.cu">
-      <Filter>Source Files</Filter>
-    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <CudaCompile Include="FbpClass_Agent.cu">
@@ -43,9 +40,10 @@
     <CudaCompile Include="FbpClass_Agent.cuh">
       <Filter>Header Files</Filter>
     </CudaCompile>
+    <CudaCompile Include="FbpClass.cu" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="packages.config" />
     <None Include="config_sample_mgfbp.jsonc" />
+    <None Include="packages.config" />
   </ItemGroup>
 </Project>
