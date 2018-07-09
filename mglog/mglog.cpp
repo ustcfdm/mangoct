@@ -52,7 +52,7 @@ int main(int argc, char* argv[])
 			printf("    Processing %s...", config.inputFiles[i].c_str());
 
 			// read the evi file
-			obj.ReadEviFile((fs::path(config.inputDir)/config.inputFiles[i]).string().c_str(), config.offsetToFirstImage, config.gap);
+			obj.ReadEviFile((fs::path(config.inputDir) / config.inputFiles[i]).string().c_str(), config.offsetToFirstImage, config.gap);
 
 			// get the pre-log sinogram
 			std::vector<mg::Matrix> sgm = GetPrelogSinogram(obj, config);
@@ -62,6 +62,23 @@ int main(int argc, char* argv[])
 			{
 				sgm[k] = (bkg[k] / sgm[k]).Log();
 				sgm[k].SetNanOrInf(0.0f);
+			}
+
+			// interpolate white lines
+
+			if (config.interpolateWhiteLines)
+			{
+				for (size_t k = 0; k < sgm.size(); k++)
+				{
+					for (unsigned row = 0; row < config.objViews; row++)
+					{
+						for (unsigned col = 255; col < 5119; col += 256)
+						{
+							sgm[k](row, col) = sgm[k](row, col - 1) * 2 / 3 + sgm[k](row, col + 2) / 3;
+							sgm[k](row, col + 1) = sgm[k](row, col - 1) / 3 + sgm[k](row, col + 2) * 2 / 3;
+						}
+					}
+				}
 			}
 
 			// rebin sinogram data
@@ -229,7 +246,7 @@ void LoadConfigFile(js::Document& d, Config& config)
 std::vector<mg::Matrix> GetBkgData(const Config& config)
 {
 	// read background data file
-	mg::Matrix bkg = mg::Matrix::ReadEviFile((fs::path(config.inputDir)/config.bkgFile).string().c_str(), config.detectorHeight, config.detectorWidth, config.bkgViews, config.offsetToFirstImage, config.gap);
+	mg::Matrix bkg = mg::Matrix::ReadEviFile((fs::path(config.inputDir) / config.bkgFile).string().c_str(), config.detectorHeight, config.detectorWidth, config.bkgViews, config.offsetToFirstImage, config.gap);
 
 	// take the average along views(pages) direction
 	bkg.Average(mg::Axis::Page);
@@ -237,7 +254,7 @@ std::vector<mg::Matrix> GetBkgData(const Config& config)
 	// the bkg data to be returned
 	std::vector<mg::Matrix> b;
 
-	unsigned idx = config.sliceStartIdx;		
+	unsigned idx = config.sliceStartIdx;
 	for (unsigned i = 0; i < config.sliceCount; i++)
 	{
 		b.push_back(mg::Matrix::Average(bkg, mg::Axis::Row, idx, idx + config.sliceThickness));
@@ -254,10 +271,10 @@ std::vector<mg::Matrix> GetPrelogSinogram(const mg::Matrix& obj, const Config& c
 	unsigned idx = config.sliceStartIdx;
 	for (unsigned i = 0; i < config.sliceCount; i++)
 	{
-		sgm.push_back(mg::Matrix::Average(obj, mg::Axis::Row, idx, idx + config.sliceThickness).Reshape(config.objViews,config.detectorWidth));
+		sgm.push_back(mg::Matrix::Average(obj, mg::Axis::Row, idx, idx + config.sliceThickness).Reshape(config.objViews, config.detectorWidth));
 		idx += config.sliceThickness;
 	}
-	
+
 	return sgm;
 }
 
