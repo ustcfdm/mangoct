@@ -5,15 +5,15 @@
   * input and output directory and files
   *********************************************************/
 
-  "InputDir": "C:\\Users\\mfeng\\Local Files\\For Evan\\PCDCT data\\HeadPhan\\sinogram_no_correction",
-  "OutputDir": "C:\\Users\\mfeng\\Desktop\\test",
+  "InputDir": "C:\\Users\\mfeng\\Local Files\\2018 For Evan\\PCDCT data\\20180512_CatPhan_BB",
+  "OutputDir": "C:\\Users\\mfeng\\Local Files\\2018 For Evan\\PCDCT data\\20180512_CatPhan_BB",
 
   // all the files in the input directory, use regular expression
-  "InputFiles": "0[8-9]_TE.raw",
+  "InputFiles": "sgm_avg.raw",
   // output file name (prefix, replace)
-  "OutputFilePrefix": "img_",
+  "OutputFilePrefix": "",
   // replace substring in input file name
-  "OutputFileReplace": [ "TE", "" ],
+  "OutputFileReplace": [ "sgm_", "img_" ],
 
   // save filtered sinogram data
   "SaveFilteredSinogram": false,
@@ -23,13 +23,13 @@
 	*********************************************************/
 
   // number of detector elements
-  "SinogramWidth": 854,
+  "SinogramWidth": 853,
   // number of frames
   "SinogramHeight": 1510,
   // number of views for reconstruction
-  "Views": 1502,
+  "Views": 1501,
   // number of slices in each sinogram file
-  "SliceCount": 6,
+  "SliceCount": 1,
 
   // the physical size of detector element size [mm]
   "DetectorElementSize": 0.6,
@@ -51,21 +51,25 @@
   /* pixel size or image size, just use one of them */
 
   // image pixel size [mm]
-  "PixelSize": 0.43,
+  //"PixelSize": 0.43,
 
   // image size [mm]
-  //"ImageSize": 200,
+  "ImageSize": 10,
 
   // rotate the image [degree]
-  "ImageRotation": 0,
+  "ImageRotation": 120,
   // image center [x(mm), y(mm)]
-  "ImageCenter": [ 0, 0 ],
+  "ImageCenter": [ -17, -3.5 ],
 
   /* reconstruction kernel, avaliable list:
   *  1. "HammingFilter": t + (1-t)*cos(pi*k/ 2*kn), 1 for ramp kernel, 0 for consine kernel, others are in-between
   *  2. "QuadraticFilter": (for bone-plus kernel) tow parameters for t and h, three parameters for a, b, c
+  *  3. "Polynomial": an*k^n + ... + a1*k + a0, (n <= 6)
   */
   //"HammingFilter": 0.5
-  "QuadraticFilter": [0.42, 0]
-
+  //"QuadraticFilter": [ 0.42, 0 ]
+  //"Polynomial": [  880, -2100, 1900, -750, 130, -2.1, 1.1 ]
+  //"Polynomial": [ 100, -220, 160, -54, 12, 0.9 ]
+  "Polynomial": [ -2, 2.7, -5.9, 6.5, 1 ]
+  //"Polynomial": [ -12, 8.8 , 1 ]
 }

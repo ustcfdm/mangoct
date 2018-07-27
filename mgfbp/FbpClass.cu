@@ -190,6 +190,21 @@ void mango::FbpClass::ReadConfigFile(const char * filename)
 			config.kernelParam.push_back(doc["QuadraticFilter"][i].GetFloat());
 		}
 	}
+	else if (doc.HasMember("Polynomial"))
+	{
+		config.kernelName = "Polynomial";
+
+		if (doc["Polynomial"].Size() >7)
+		{
+			fprintf(stderr, "Do not support more than 7 paramters of Polynomial kernel!\n");
+			exit(1);
+		}
+
+		for (js::SizeType i = 0; i < doc["Polynomial"].Size(); i++)
+		{
+			config.kernelParam.push_back(doc["Polynomial"][i].GetFloat());
+		}
+	}
 	else
 	{
 		fprintf(stderr, "Did not find reconstruction kernel! Please check your config file: %s.\n", filename);

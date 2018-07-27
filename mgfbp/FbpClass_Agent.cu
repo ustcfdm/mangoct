@@ -49,7 +49,7 @@ __global__ void InitReconKernel_Quadratic(float* reconKernel, const int N, const
 {
 	int idx = threadIdx.x + blockDim.x * blockIdx.x;
 
-	if (idx < 2*N )
+	if (idx < 2*N -1 )
 	{
 		float a, b, c;
 
@@ -105,6 +105,74 @@ __global__ void InitReconKernel_Quadratic(float* reconKernel, const int N, const
 		}
 	}
 }
+
+__global__ void InitReconKernel_Polynomial(float* reconKernel, const int N, const float du, const float p6, const float p5, const float p4, const float p3, const float p2, const float p1, const float p0)
+{
+	int idx = threadIdx.x + blockDim.x * blockIdx.x;
+	if (idx < 2 * N -1)
+	{
+		int n = idx - (N - 1);
+		reconKernel[idx] = 0.0f;
+		float kn = 1 / (2 * du);
+
+		float du2 = du * du;
+		float du3 = du2 * du;
+		float du4 = du3 * du;
+
+		if (n==0)
+		{
+			// H7(x)
+			reconKernel[idx] += p6 * powf(kn, 8) / 4;
+			// H6(x)
+			reconKernel[idx] += p5 * powf(kn, 7) * 2 / 7;
+			// H5(x)
+			reconKernel[idx] += p4 * powf(kn, 6) / 3;
+			// H4(x)
+			reconKernel[idx] += p3 * powf(kn, 5) * 2 /5;
+			// H3(x)
+			reconKernel[idx] += p2 * powf(kn,4) / 2;
+			// H2(x)
+			reconKernel[idx] += p1 * 2 * kn*kn*kn / 3;
+			// H1(x)
+			reconKernel[idx] += p0 * kn*kn;
+		}
+		else if (n%2==0)
+		{
+			// H7(x)
+			reconKernel[idx] += p6 * 7 * (360 - 30 * n*n*PI*PI + powf(n*PI, 4)) / (128 * du2*(powf(du*n*PI, 6)));
+			// H6(x)
+			reconKernel[idx] += p5 * 3 * (120 - 20 * n*n*PI*PI + powf(n*PI, 4)) / (32 * du*powf(du*n*PI, 6));
+			// H5(x)
+			reconKernel[idx] += p4 * 5 * (n*n*PI*PI - 12) / (32 * du2 *powf(du*n*PI, 4));
+			// H4(x)
+			reconKernel[idx] += p3 * (n*n*PI*PI - 6) / (4 * du * powf(du*n*PI, 4));
+			// H3(x)
+			reconKernel[idx] += p2 * 3 / (8 * du4 * n*n * PI*PI);
+			// H2(x)
+			reconKernel[idx] += p1 / (2 * n*n *PI*PI * du3);
+			// H1(x)
+			// do nothing, H1(even) is zero
+		}
+		else
+		{
+			// H7(x)
+			reconKernel[idx] += p6 * 7 * (1440 - 360 * n*n*PI*PI - 30 * powf(n*PI, 4) + powf(n*PI, 6)) / (128 * powf(du*n*PI, 8));
+			// H6(x)
+			reconKernel[idx] += -p5 * 3 * (120 - 20 * n*n*PI*PI + powf(n*PI, 4)) / (32 * du*powf(du*n*PI, 6));
+			// H5(x)
+			reconKernel[idx] += -p4 * 5 * (48 - 12 * n*n*PI*PI + powf(n*PI, 4)) / (32 * powf(du*n*PI, 6));
+			// H4(x)
+			reconKernel[idx] += p3 * (6 - n*n*PI*PI) / (4 * du * powf(du*n*PI, 4));
+			// H3(x)
+			reconKernel[idx] += p2 * (4 - n * n*PI*PI) * 3 / (8 * powf(du*n*PI, 4));
+			// H2(x)
+			reconKernel[idx] += -p1 / (2 * n*n *PI*PI * du3);
+			// H1(x)
+			reconKernel[idx] += -p0 / (n*n *PI*PI * du2);
+		}
+	}
+}
+
 
 // weight the sinogram data
 // sgm: sinogram (width x height x slice)
@@ -248,6 +316,20 @@ void InitializeReconKernel_Agent(float* &reconKernel, const int N, const float d
 			lastParam = kernelParam[2];
 
 		InitReconKernel_Quadratic << <(2 * N - 1 + 511) / 512, 512 >> > (reconKernel, N, du, int(kernelParam.size()), kernelParam[0], kernelParam[1], lastParam);
+	}
+	else if (kernelName=="Polynomial")
+	{
+		// TODO: 
+		// InitReconKernel_Polynomial <<<...>>> (...);
+		float p[7] = { 0 };
+
+		for (size_t i = 0; i < kernelParam.size(); i++)
+		{
+			p[i] = kernelParam[kernelParam.size() -1 - i];
+		}
+
+		//InitReconKernel_Polynomial << <(2 * N - 1 + 511) / 512, 512 >> > (reconKernel, N, du, p[0], p[1], p[2], p[3], p[4], p[5], p[6]);
+		InitReconKernel_Polynomial << <(2 * N - 1 + 511) / 512, 512 >> > (reconKernel, N, du, p[6], p[5], p[4], p[3], p[2], p[1], p[0]);
 	}
 }
 
