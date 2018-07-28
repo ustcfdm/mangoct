@@ -139,7 +139,7 @@ __global__ void InitReconKernel_Polynomial(float* reconKernel, const int N, cons
 		else if (n%2==0)
 		{
 			// H7(x)
-			reconKernel[idx] += p6 * 7 * (360 - 30 * n*n*PI*PI + powf(n*PI, 4)) / (128 * du2*(powf(du*n*PI, 6)));
+			reconKernel[idx] += p6 * 7 * (360 - 30 * n*n*PI*PI + powf(n*PI, 4)) / (128 * du2* powf(du*n*PI, 6));
 			// H6(x)
 			reconKernel[idx] += p5 * 3 * (120 - 20 * n*n*PI*PI + powf(n*PI, 4)) / (32 * du*powf(du*n*PI, 6));
 			// H5(x)
@@ -156,7 +156,7 @@ __global__ void InitReconKernel_Polynomial(float* reconKernel, const int N, cons
 		else
 		{
 			// H7(x)
-			reconKernel[idx] += p6 * 7 * (1440 - 360 * n*n*PI*PI - 30 * powf(n*PI, 4) + powf(n*PI, 6)) / (128 * powf(du*n*PI, 8));
+			reconKernel[idx] += p6 * 7 * (1440 - 360 * n*n*PI*PI + 30 * powf(n*PI, 4) - powf(n*PI, 6)) / (128 * powf(du*n*PI, 8));
 			// H6(x)
 			reconKernel[idx] += -p5 * 3 * (120 - 20 * n*n*PI*PI + powf(n*PI, 4)) / (32 * du*powf(du*n*PI, 6));
 			// H5(x)
