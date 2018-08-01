@@ -4,15 +4,15 @@
   /*********************************************************
 	* input and output directory and files
 	*********************************************************/
-  "InputDir": "C:\\Users\\mfeng\\Desktop\\test\\images",
-  "OutputDir": "C:\\Users\\mfeng\\Desktop\\test",
+  "InputDir": ".",
+  "OutputDir": ".",
 
   // all the files in the input directory, use regular expression
-  "InputFiles": "img_0[1-3]_TE.raw",
+  "InputFiles": "img_.*.raw",
   // output file name (prefix, replace)
-  "OutputFilePrefix": "test_",
+  "OutputFilePrefix": "",
   // replace substring in input file name
-  "OutputFileReplace": [ "img_", "sgm_" ],
+  "OutputFileReplace": ["img_", "sgm_5120_" ],
 
 
   /*********************************************************
@@ -20,16 +20,16 @@
 	*********************************************************/
 
   // image dimension (integer)
-  "ImageDimension": 512,
+  "ImageDimension": 1024,
 
   /* pixel size or image size, just use one of them */
   // image pixel size [mm]
-  "PixelSize": 0.33,
+  //"PixelSize": 0.33,
   // image size [mm]
-  //"ImageSize": 200,
+  "ImageSize": 35,
 
   // number of slices in each image file
-  "SliceCount": 6,
+  "SliceCount": 1,
 
 
   /*********************************************************
@@ -37,17 +37,17 @@
 	*********************************************************/
 
   // source to isocenter distance [mm]
-  "SourceIsocenterDistance": 539,
+  "SourceIsocenterDistance": 977.9,
   // source to detector distance [mm]
-  "SourceDetectorDistance": 949,
+  "SourceDetectorDistance": 1130.3,
 
   // number of detector elements
-  "DetectorElementCount": 854,
+  "DetectorElementCount": 5120,
   // number of views for reconstruction
-  "Views": 1502,
+  "Views": 2251,
 
   // the physical size of detector element size [mm]
-  "DetectorElementSize": 0.6,
+  "DetectorElementSize": 0.1,
   // the position (coordinate) of detector center [mm]
-  "DetectorOffcenter": 35
+  "DetectorOffcenter": 97.70
 }

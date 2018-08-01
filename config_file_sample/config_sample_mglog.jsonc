@@ -4,33 +4,33 @@
   /********************************************************* 
   * input and output directory and files
   *********************************************************/
-  "InputDir": "C:/Users/fengm/Desktop/test",
-  "OutputDir": "C:\\Users\\fengm\\Desktop\\test",
+  "InputDir": ".",
+  "OutputDir": ".",
 
   // data file of backgorund (air)
-  "BackgroundFile": "air_TE.EVI",
+  "BackgroundFile": "air_ME.EVI",
   // all the files in the directory, use regular expression
-  "InputFiles": "1_TE.EVI",
+  "InputFiles": "obj_ME.EVI",
   // output file name (prefix, replace)
-  "OutputFilePrefix": "sng_",
+  "OutputFilePrefix": "sgm_",
   // replace substring in input file name
-  "OutputFileReplace": [ "_TE", "", ".EVI", ".raw" ],
+  "OutputFileReplace": [ ".EVI", ".raw", ],
 
   /********************************************************* 
   * sinogram and slice parameters
   *********************************************************/
   // number of views in background file
-  "BackgroundViews": 300,
+  "BackgroundViews": 500,
   // number of views in object file
-  "ObjectViews": 1510,
+  "ObjectViews": 2260,
   // rebin the sinogram along detector width direction, do not rebin if it is one
-  "RebinSize": 4,
+  "RebinSize": 1,
   // total number of slices for the sinogram
   "SliceCount": 1,
   // index starts from 0
-  "SliceStartIdx": 2,
+  "SliceStartIdx": 7,
   // integer
-  "SliceThickness": 60,
+  "SliceThickness": 50,
 
   /********************************************************* 
   * correct sinogram artifacts
@@ -38,9 +38,9 @@
   // linear interpolation for white lines
   "InterpolateWhiteLines": true,
   // smooth out left and right part of sinogram, index won't be used if it is false
-  "SmoothoutMarginalData": true,
-  "SmoothoutLeftIdx": 500,
-  "SmoothoutRightIdx": 800,
+  "SmoothoutMarginalData": false,
+  "SmoothoutLeftIdx": 1330,
+  "SmoothoutRightIdx": 1790,
 
   /********************************************************* 
   *  EVI file parameters, usually you do not need to change
