@@ -4,7 +4,7 @@
 #include "stdafx.h"
 #include "mglog.h"
 
-namespace fs = boost::filesystem;
+namespace fs = std::experimental::filesystem;
 namespace mg = mango;
 namespace js = rapidjson;
 
