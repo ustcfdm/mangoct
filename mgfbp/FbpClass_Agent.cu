@@ -269,7 +269,7 @@ __global__ void BackprojectPixelDriven_device(float* sgm, float* img, float* u, 
 					break;
 				}
 
-				w = u0 - u[k];
+				w = (u0 - u[k]) / du;
 
 				img[row*M + col + slice * M*M] += sid / U / U * (w*sgm[view*N + k + 1 + slice * N*V] + (1 - w)*sgm[view*N + k + slice * N*V]);
 
