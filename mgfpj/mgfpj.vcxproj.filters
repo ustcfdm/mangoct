@@ -34,12 +34,11 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <None Include="config_sample_mgfpj.jsonc" />
-    <None Include="packages.config" />
-  </ItemGroup>
-  <ItemGroup>
     <CudaCompile Include="FpjClass_Agent.cu">
       <Filter>Source Files</Filter>
     </CudaCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="config_mgfpj_sample.jsonc" />
   </ItemGroup>
 </Project>

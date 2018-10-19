@@ -5,11 +5,11 @@
   * input and output directory and files
   *********************************************************/
 
-  "InputDir": "C:\\Users\\mfeng\\Local Files\\2018 For Evan\\PCDCT data\\20180512_CatPhan_BB",
-  "OutputDir": "C:\\Users\\mfeng\\Local Files\\2018 For Evan\\PCDCT data\\20180512_CatPhan_BB",
+  "InputDir": ".",
+  "OutputDir": ".",
 
   // all the files in the input directory, use regular expression
-  "InputFiles": "sgm_avg.raw",
+  "InputFiles": "sgm_.*.raw",
   // output file name (prefix, replace)
   "OutputFilePrefix": "",
   // replace substring in input file name
@@ -23,7 +23,7 @@
 	*********************************************************/
 
   // number of detector elements
-  "SinogramWidth": 853,
+  "SinogramWidth": 732,
   // number of frames
   "SinogramHeight": 1510,
   // number of views for reconstruction
@@ -32,9 +32,9 @@
   "SliceCount": 1,
 
   // the physical size of detector element size [mm]
-  "DetectorElementSize": 0.6,
+  "DetectorElementSize": 0.7,
   // the position (coordinate) of detector center [mm]
-  "DetectorOffcenter": 35,
+  "DetectorOffcenter": 32.5,
 
   // source to isocenter distance [mm]
   "SourceIsocenterDistance": 539,
@@ -51,10 +51,10 @@
   /* pixel size or image size, just use one of them */
 
   // image pixel size [mm]
-  //"PixelSize": 0.43,
+  "PixelSize": 0.43,
 
   // image size [mm]
-  "ImageSize": 10,
+  // "ImageSize": 10,
 
   // rotate the image [degree]
   "ImageRotation": 120,
@@ -68,8 +68,5 @@
   */
   //"HammingFilter": 0.5
   //"QuadraticFilter": [ 0.42, 0 ]
-  //"Polynomial": [  880, -2100, 1900, -750, 130, -2.1, 1.1 ]
-  //"Polynomial": [ 100, -220, 160, -54, 12, 0.9 ]
-  "Polynomial": [ 1 ]
-  //"Polynomial": [ -12, 8.8 , 1 ]
+  "Polynomial": [ -15.9236,   -2.1540,    3.1106,    2.3872,    1.0000]
 }

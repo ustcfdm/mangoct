@@ -34,7 +34,6 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <None Include="config_sample_mglog.jsonc" />
-    <None Include="packages.config" />
+    <None Include="config_mglog_sample.jsonc" />
   </ItemGroup>
 </Project>

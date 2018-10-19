@@ -4,11 +4,11 @@
   /*********************************************************
 	* input and output directory and files
 	*********************************************************/
-  "InputDir": "C:\\Users\\mfeng\\Desktop\\test\\images",
-  "OutputDir": "C:\\Users\\mfeng\\Desktop\\test",
+  "InputDir": ".",
+  "OutputDir": ".",
 
   // all the files in the input directory, use regular expression
-  "InputFiles": "img_0[1-3]_TE.raw",
+  "InputFiles": "img_.*.raw",
   // output file name (prefix, replace)
   "OutputFilePrefix": "test_",
   // replace substring in input file name
@@ -24,12 +24,12 @@
 
   /* pixel size or image size, just use one of them */
   // image pixel size [mm]
-  "PixelSize": 0.33,
+  "PixelSize": 0.43,
   // image size [mm]
   //"ImageSize": 200,
 
   // number of slices in each image file
-  "SliceCount": 6,
+  "SliceCount": 1,
 
 
   /*********************************************************
@@ -44,10 +44,10 @@
   // number of detector elements
   "DetectorElementCount": 854,
   // number of views for reconstruction
-  "Views": 1502,
+  "Views": 1501,
 
   // the physical size of detector element size [mm]
-  "DetectorElementSize": 0.6,
+  "DetectorElementSize": 0.7,
   // the position (coordinate) of detector center [mm]
   "DetectorOffcenter": 35
 }

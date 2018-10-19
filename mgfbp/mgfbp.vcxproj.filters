@@ -44,6 +44,5 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="config_sample_mgfbp.jsonc" />
-    <None Include="packages.config" />
   </ItemGroup>
 </Project>
