@@ -8,29 +8,29 @@
   "OutputDir": ".",
 
   // data file of backgorund (air)
-  "BackgroundFile": "air_ME.EVI",
+  "BackgroundFile": "air_TE.EVI",
   // all the files in the directory, use regular expression
-  "InputFiles": "obj_ME.EVI",
+  "InputFiles": "1_TE.EVI",
   // output file name (prefix, replace)
   "OutputFilePrefix": "sgm_",
   // replace substring in input file name
-  "OutputFileReplace": [ ".EVI", ".raw", ],
+  "OutputFileReplace": [ "_TE", "", ".EVI", ".raw" ],
 
   /********************************************************* 
   * sinogram and slice parameters
   *********************************************************/
   // number of views in background file
-  "BackgroundViews": 500,
+  "BackgroundViews": 300,
   // number of views in object file
-  "ObjectViews": 2260,
+  "ObjectViews": 1510,
   // rebin the sinogram along detector width direction, do not rebin if it is one
-  "RebinSize": 1,
+  "RebinSize": 4,
   // total number of slices for the sinogram
   "SliceCount": 1,
   // index starts from 0
-  "SliceStartIdx": 7,
+  "SliceStartIdx": 2,
   // integer
-  "SliceThickness": 50,
+  "SliceThickness": 60,
 
   /********************************************************* 
   * correct sinogram artifacts
@@ -39,8 +39,8 @@
   "InterpolateWhiteLines": true,
   // smooth out left and right part of sinogram, index won't be used if it is false
   "SmoothoutMarginalData": false,
-  "SmoothoutLeftIdx": 1330,
-  "SmoothoutRightIdx": 1790,
+  "SmoothoutLeftIdx": 500,
+  "SmoothoutRightIdx": 800,
 
   /********************************************************* 
   *  EVI file parameters, usually you do not need to change

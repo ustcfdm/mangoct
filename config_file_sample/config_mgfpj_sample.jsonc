@@ -10,9 +10,9 @@
   // all the files in the input directory, use regular expression
   "InputFiles": "img_.*.raw",
   // output file name (prefix, replace)
-  "OutputFilePrefix": "",
+  "OutputFilePrefix": "test_",
   // replace substring in input file name
-  "OutputFileReplace": ["img_", "sgm_5120_" ],
+  "OutputFileReplace": [ "img_", "sgm_" ],
 
 
   /*********************************************************
@@ -20,13 +20,13 @@
 	*********************************************************/
 
   // image dimension (integer)
-  "ImageDimension": 1024,
+  "ImageDimension": 512,
 
   /* pixel size or image size, just use one of them */
   // image pixel size [mm]
-  //"PixelSize": 0.33,
+  "PixelSize": 0.43,
   // image size [mm]
-  "ImageSize": 35,
+  //"ImageSize": 200,
 
   // number of slices in each image file
   "SliceCount": 1,
@@ -37,17 +37,17 @@
 	*********************************************************/
 
   // source to isocenter distance [mm]
-  "SourceIsocenterDistance": 977.9,
+  "SourceIsocenterDistance": 539,
   // source to detector distance [mm]
-  "SourceDetectorDistance": 1130.3,
+  "SourceDetectorDistance": 949,
 
   // number of detector elements
-  "DetectorElementCount": 5120,
+  "DetectorElementCount": 854,
   // number of views for reconstruction
-  "Views": 2251,
+  "Views": 1501,
 
   // the physical size of detector element size [mm]
-  "DetectorElementSize": 0.1,
+  "DetectorElementSize": 0.7,
   // the position (coordinate) of detector center [mm]
-  "DetectorOffcenter": 97.70
+  "DetectorOffcenter": 35
 }

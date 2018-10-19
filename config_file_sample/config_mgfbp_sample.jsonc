@@ -19,53 +19,54 @@
   "SaveFilteredSinogram": false,
 
   /*********************************************************
-  * sinogram and slice parameters
-  *********************************************************/
+	* sinogram and slice parameters
+	*********************************************************/
 
   // number of detector elements
-  "SinogramWidth": 5120,
+  "SinogramWidth": 732,
   // number of frames
-  "SinogramHeight": 2251,
+  "SinogramHeight": 1510,
   // number of views for reconstruction
-  "Views": 2251,
+  "Views": 1501,
   // number of slices in each sinogram file
   "SliceCount": 1,
 
   // the physical size of detector element size [mm]
-  "DetectorElementSize": 0.1,
+  "DetectorElementSize": 0.7,
   // the position (coordinate) of detector center [mm]
-  "DetectorOffcenter": 97.70,
+  "DetectorOffcenter": 32.5,
 
   // source to isocenter distance [mm]
-  "SourceIsocenterDistance": 977.9,
+  "SourceIsocenterDistance": 539,
   // source to detector distance [mm]
-  "SourceDetectorDistance": 1130.3,
+  "SourceDetectorDistance": 949,
 
   /*********************************************************
-  * reconstruction parameters
-  *********************************************************/
+	* reconstruction parameters
+	*********************************************************/
 
   // image dimension (integer)
-  "ImageDimension": 1024,
+  "ImageDimension": 512,
 
   /* pixel size or image size, just use one of them */
 
   // image pixel size [mm]
-  //"PixelSize": 0.43,
+  "PixelSize": 0.43,
 
   // image size [mm]
-  "ImageSize": 35,
+  // "ImageSize": 10,
 
   // rotate the image [degree]
-  "ImageRotation": 0,
+  "ImageRotation": 120,
   // image center [x(mm), y(mm)]
-  "ImageCenter": [ 0, 0 ],
+  "ImageCenter": [ -17, -3.5 ],
 
   /* reconstruction kernel, avaliable list:
   *  1. "HammingFilter": t + (1-t)*cos(pi*k/ 2*kn), 1 for ramp kernel, 0 for consine kernel, others are in-between
   *  2. "QuadraticFilter": (for bone-plus kernel) tow parameters for t and h, three parameters for a, b, c
+  *  3. "Polynomial": an*k^n + ... + a1*k + a0, (n <= 6)
   */
-  "HammingFilter": 0.5
-  //"QuadraticFilter": [0.42, 0]
-
+  //"HammingFilter": 0.5
+  //"QuadraticFilter": [ 0.42, 0 ]
+  "Polynomial": [ -15.9236,   -2.1540,    3.1106,    2.3872,    1.0000]
 }
