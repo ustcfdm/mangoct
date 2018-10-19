@@ -40,7 +40,9 @@
     <CudaCompile Include="FbpClass_Agent.cuh">
       <Filter>Header Files</Filter>
     </CudaCompile>
-    <CudaCompile Include="FbpClass.cu" />
+    <CudaCompile Include="FbpClass.cu">
+      <Filter>Source Files</Filter>
+    </CudaCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="config_sample_mgfbp.jsonc" />
