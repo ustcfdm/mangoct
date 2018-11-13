@@ -181,7 +181,7 @@
     <CudaCompile Include="FbpClass_Agent.cuh" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="config_sample_mgfbp.jsonc" />
+    <None Include="config_mgfbp_sample.jsonc" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

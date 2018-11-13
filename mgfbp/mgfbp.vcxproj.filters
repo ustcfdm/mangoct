@@ -45,6 +45,6 @@
     </CudaCompile>
   </ItemGroup>
   <ItemGroup>
-    <None Include="config_sample_mgfbp.jsonc" />
+    <None Include="config_mgfbp_sample.jsonc" />
   </ItemGroup>
 </Project>
