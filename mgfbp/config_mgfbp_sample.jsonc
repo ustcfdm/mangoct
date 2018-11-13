@@ -65,8 +65,10 @@
   *  1. "HammingFilter": t + (1-t)*cos(pi*k/ 2*kn), 1 for ramp kernel, 0 for consine kernel, others are in-between
   *  2. "QuadraticFilter": (for bone-plus kernel) tow parameters for t and h, three parameters for a, b, c
   *  3. "Polynomial": an*k^n + ... + a1*k + a0, (n <= 6)
+  *  4. "Hilbert": 1 or -1 (phase contrast, 1 or -1 for right or left direction)
   */
   //"HammingFilter": 0.5
   //"QuadraticFilter": [ 0.42, 0 ]
-  "Polynomial": [ -15.9236,   -2.1540,    3.1106,    2.3872,    1.0000]
+  //"Polynomial": [ -15.9236, -2.1540, 3.1106, 2.3872, 1.0000 ]
+  "Hilbert":  1
 }

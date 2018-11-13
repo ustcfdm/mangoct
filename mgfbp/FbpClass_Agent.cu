@@ -15,7 +15,7 @@ __global__ void InitU(float* u, const int N, const float du, const float offcent
 __global__ void InitBeta(float* beta, const int V, const float rotation)
 {
 	int tid = threadIdx.x + blockDim.x * blockIdx.x;
-	if (tid<V)
+	if (tid < V)
 	{
 		beta[tid] = (360.0f / V * tid + rotation) * PI / 180;
 	}
@@ -24,15 +24,15 @@ __global__ void InitBeta(float* beta, const int V, const float rotation)
 __global__ void InitReconKernel_Hamming(float* reconKernel, const int N, const float du, const float t)
 {
 	int tid = threadIdx.x + blockDim.x * blockIdx.x;
-	if (tid < 2* N - 1)
+	if (tid < 2 * N - 1)
 	{
 		// the center element index is N-1
 		int n = tid - (N - 1);
 
 		// ramp part
-		if (n==0)
+		if (n == 0)
 			reconKernel[tid] = t / (4 * du*du);
-		else if (n%2 ==0)
+		else if (n % 2 == 0)
 			reconKernel[tid] = 0;
 		else
 			reconKernel[tid] = -t / (n*n * PI*PI * du*du);
@@ -49,13 +49,13 @@ __global__ void InitReconKernel_Quadratic(float* reconKernel, const int N, const
 {
 	int idx = threadIdx.x + blockDim.x * blockIdx.x;
 
-	if (idx < 2*N -1 )
+	if (idx < 2 * N - 1)
 	{
 		float a, b, c;
 
 		float kn = 1 / (2 * du);
 
-		if (paramNum==2)
+		if (paramNum == 2)
 		{
 			// p1 = t, p2 = h, p3 is ignored
 			a = (p2 - 1) / (kn*kn * (1 - 2 * p1));
@@ -76,7 +76,7 @@ __global__ void InitReconKernel_Quadratic(float* reconKernel, const int N, const
 		float du4 = du3 * du;
 
 		int n = idx - (N - 1);
-		if (n==0)
+		if (n == 0)
 		{
 			// H3(x)
 			reconKernel[idx] += a / 32 / du4;
@@ -85,7 +85,7 @@ __global__ void InitReconKernel_Quadratic(float* reconKernel, const int N, const
 			// H1(x)
 			reconKernel[idx] += c / 4 / du2;
 		}
-		else if (n%2==0)
+		else if (n % 2 == 0)
 		{
 			// H3(x)
 			reconKernel[idx] += a * 3 / (8 * n*n * PI*PI * du4);
@@ -97,7 +97,7 @@ __global__ void InitReconKernel_Quadratic(float* reconKernel, const int N, const
 		else
 		{
 			// H3(x)
-			reconKernel[idx] += a * 3 / (8 * n*n * PI*PI * du4) *  (4 /(n*n*PI*PI) - 1);
+			reconKernel[idx] += a * 3 / (8 * n*n * PI*PI * du4) *  (4 / (n*n*PI*PI) - 1);
 			// H2(x)
 			reconKernel[idx] += -b / (2 * n*n * PI*PI * du3);
 			// H1(x)
@@ -109,7 +109,7 @@ __global__ void InitReconKernel_Quadratic(float* reconKernel, const int N, const
 __global__ void InitReconKernel_Polynomial(float* reconKernel, const int N, const float du, const float p6, const float p5, const float p4, const float p3, const float p2, const float p1, const float p0)
 {
 	int idx = threadIdx.x + blockDim.x * blockIdx.x;
-	if (idx < 2 * N -1)
+	if (idx < 2 * N - 1)
 	{
 		int n = idx - (N - 1);
 		reconKernel[idx] = 0.0f;
@@ -119,7 +119,7 @@ __global__ void InitReconKernel_Polynomial(float* reconKernel, const int N, cons
 		float du3 = du2 * du;
 		float du4 = du3 * du;
 
-		if (n==0)
+		if (n == 0)
 		{
 			// H7(x)
 			reconKernel[idx] += p6 * powf(kn, 8) / 4;
@@ -128,15 +128,15 @@ __global__ void InitReconKernel_Polynomial(float* reconKernel, const int N, cons
 			// H5(x)
 			reconKernel[idx] += p4 * powf(kn, 6) / 3;
 			// H4(x)
-			reconKernel[idx] += p3 * powf(kn, 5) * 2 /5;
+			reconKernel[idx] += p3 * powf(kn, 5) * 2 / 5;
 			// H3(x)
-			reconKernel[idx] += p2 * powf(kn,4) / 2;
+			reconKernel[idx] += p2 * powf(kn, 4) / 2;
 			// H2(x)
 			reconKernel[idx] += p1 * 2 * kn*kn*kn / 3;
 			// H1(x)
 			reconKernel[idx] += p0 * kn*kn;
 		}
-		else if (n%2==0)
+		else if (n % 2 == 0)
 		{
 			// H7(x)
 			reconKernel[idx] += p6 * 7 * (360 - 30 * n*n*PI*PI + powf(n*PI, 4)) / (128 * du2* powf(du*n*PI, 6));
@@ -162,7 +162,7 @@ __global__ void InitReconKernel_Polynomial(float* reconKernel, const int N, cons
 			// H5(x)
 			reconKernel[idx] += -p4 * 5 * (48 - 12 * n*n*PI*PI + powf(n*PI, 4)) / (32 * powf(du*n*PI, 6));
 			// H4(x)
-			reconKernel[idx] += p3 * (6 - n*n*PI*PI) / (4 * du * powf(du*n*PI, 4));
+			reconKernel[idx] += p3 * (6 - n * n*PI*PI) / (4 * du * powf(du*n*PI, 4));
 			// H3(x)
 			reconKernel[idx] += p2 * (4 - n * n*PI*PI) * 3 / (8 * powf(du*n*PI, 4));
 			// H2(x)
@@ -173,6 +173,23 @@ __global__ void InitReconKernel_Polynomial(float* reconKernel, const int N, cons
 	}
 }
 
+__global__ void InitReconKernel_Hilbert(float* reconKernel, const int N, const float du, const float t)
+{
+	int tid = threadIdx.x + blockDim.x * blockIdx.x;
+	if (tid < 2 * N - 1)
+	{
+		int n = tid - (N - 1);
+
+		if (n % 2 == 0)
+			reconKernel[tid] = 0;
+		else
+		{
+			reconKernel[tid] = 2 / PI / n;
+			if (t < 0)
+				reconKernel[tid] = -reconKernel[tid];
+		}
+	}
+}
 
 // weight the sinogram data
 // sgm: sinogram (width x height x slice)
@@ -185,7 +202,7 @@ __global__ void WeightSinogram_device(float* sgm, const float* u, const int N, c
 	int col = threadIdx.x + blockDim.x * blockIdx.x;
 	int row = threadIdx.y + blockDim.y * blockIdx.y;
 
-	if (col<N && row <V)
+	if (col < N && row < V)
 	{
 		for (int i = 0; i < S; i++)
 		{
@@ -209,7 +226,7 @@ __global__ void ConvolveSinogram_device(float* sgm_flt, const float* sgm, float*
 	int col = threadIdx.x + blockDim.x * blockIdx.x;
 	int row = threadIdx.y + blockDim.y * blockIdx.y;
 
-	if (col < N && row<V)
+	if (col < N && row < V)
 	{
 		for (int slice = 0; slice < S; slice++)
 		{
@@ -244,7 +261,7 @@ __global__ void BackprojectPixelDriven_device(float* sgm, float* img, float* u, 
 	int col = threadIdx.x + blockDim.x * blockIdx.x;
 	int row = threadIdx.y + blockDim.y * blockIdx.y;
 
-	if (col<M && row<M)
+	if (col < M && row < M)
 	{
 		float x = (col - (M - 1) / 2.0f)*dx + xc;
 		float y = ((M - 1) / 2.0f - row)*dx + yc;
@@ -263,7 +280,7 @@ __global__ void BackprojectPixelDriven_device(float* sgm, float* img, float* u, 
 				u0 = sdd * (x*sinf(beta[view]) - y * cosf(beta[view])) / U;
 
 				k = floorf((u0 - u[0]) / du);
-				if (k<0 || k+1>N-1)
+				if (k<0 || k + 1>N - 1)
 				{
 					img[row*M + col + slice * M*M] = 0;
 					break;
@@ -282,42 +299,42 @@ __global__ void BackprojectPixelDriven_device(float* sgm, float* img, float* u, 
 
 void InitializeU_Agent(float* &u, const int N, const float du, const float offcenter)
 {
-	if (u!=nullptr)
+	if (u != nullptr)
 		cudaFree(u);
 
 	cudaMalloc((void**)&u, N * sizeof(float));
-	InitU <<<(N + 511) / 512, 512 >>> (u, N, du, offcenter);
+	InitU <<<(N + 511) / 512, 512>>> (u, N, du, offcenter);
 }
 
 void InitializeBeta_Agent(float* &beta, const int V, const float rotation)
 {
-	if (beta!=nullptr)
+	if (beta != nullptr)
 		cudaFree(beta);
-	
+
 	cudaMalloc((void**)&beta, V * sizeof(float));
-	InitBeta<<< (V+511)/512, 512>>> (beta, V, rotation);
+	InitBeta <<< (V + 511) / 512, 512>>> (beta, V, rotation);
 }
 
 void InitializeReconKernel_Agent(float* &reconKernel, const int N, const float du, const std::string& kernelName, const std::vector<float>& kernelParam)
 {
-	if (reconKernel!=nullptr)
+	if (reconKernel != nullptr)
 		cudaFree(reconKernel);
 
 	cudaMalloc((void**)&reconKernel, (2 * N - 1) * sizeof(float));
 
-	if (kernelName=="HammingFilter")
+	if (kernelName == "HammingFilter")
 	{
-		InitReconKernel_Hamming << <(2 * N - 1 + 511) / 512, 512 >> > (reconKernel, N, du, kernelParam[0]);
+		InitReconKernel_Hamming <<<(2 * N - 1 + 511) / 512, 512>>> (reconKernel, N, du, kernelParam[0]);
 	}
-	else if (kernelName=="QuadraticFilter")
+	else if (kernelName == "QuadraticFilter")
 	{
 		float lastParam = 0.0f;
 		if (kernelParam.size() == 3)
 			lastParam = kernelParam[2];
 
-		InitReconKernel_Quadratic << <(2 * N - 1 + 511) / 512, 512 >> > (reconKernel, N, du, int(kernelParam.size()), kernelParam[0], kernelParam[1], lastParam);
+		InitReconKernel_Quadratic <<<(2 * N - 1 + 511) / 512, 512>>> (reconKernel, N, du, int(kernelParam.size()), kernelParam[0], kernelParam[1], lastParam);
 	}
-	else if (kernelName=="Polynomial")
+	else if (kernelName == "Polynomial")
 	{
 		// TODO: 
 		// InitReconKernel_Polynomial <<<...>>> (...);
@@ -325,11 +342,15 @@ void InitializeReconKernel_Agent(float* &reconKernel, const int N, const float d
 
 		for (size_t i = 0; i < kernelParam.size(); i++)
 		{
-			p[i] = kernelParam[kernelParam.size() -1 - i];
+			p[i] = kernelParam[kernelParam.size() - 1 - i];
 		}
 
-		//InitReconKernel_Polynomial << <(2 * N - 1 + 511) / 512, 512 >> > (reconKernel, N, du, p[0], p[1], p[2], p[3], p[4], p[5], p[6]);
-		InitReconKernel_Polynomial << <(2 * N - 1 + 511) / 512, 512 >> > (reconKernel, N, du, p[6], p[5], p[4], p[3], p[2], p[1], p[0]);
+		//InitReconKernel_Polynomial <<<(2 * N - 1 + 511) / 512, 512>>> (reconKernel, N, du, p[0], p[1], p[2], p[3], p[4], p[5], p[6]);
+		InitReconKernel_Polynomial <<<(2 * N - 1 + 511) / 512, 512>>> (reconKernel, N, du, p[6], p[5], p[4], p[3], p[2], p[1], p[0]);
+	}
+	else if (kernelName == "Hilbert")
+	{
+		InitReconKernel_Hilbert <<<(2 * N - 1 + 511) / 512, 512>>> (reconKernel, N, du, kernelParam[0]);
 	}
 }
 
@@ -344,10 +365,10 @@ void FilterSinogram_Agent(float * sgm, float* sgm_flt, float* reconKernel, float
 	dim3 grid((config.sgmWidth + 15) / 16, (config.sgmHeight + 15) / 16);
 	dim3 block(16, 16);
 
-	WeightSinogram_device << <grid, block >> >(sgm, u, config.sgmWidth, config.sgmHeight, config.sliceCount, config.sdd);
+	WeightSinogram_device <<<grid, block>>> (sgm, u, config.sgmWidth, config.sgmHeight, config.sliceCount, config.sdd);
 
 	// Step 2: convolve the sinogram
-	ConvolveSinogram_device << <grid, block >> > (sgm_flt, sgm, reconKernel, config.sgmWidth, config.sgmHeight, config.views, config.sliceCount, u, config.detEltSize);
+	ConvolveSinogram_device <<<grid, block>>> (sgm_flt, sgm, reconKernel, config.sgmWidth, config.sgmHeight, config.views, config.sliceCount, u, config.detEltSize);
 
 	cudaDeviceSynchronize();
 }
@@ -357,7 +378,7 @@ void BackprojectPixelDriven_Agent(float * sgm_flt, float * img, float * u, float
 	dim3 grid((config.imgDim + 15) / 16, (config.imgDim + 15) / 16);
 	dim3 block(16, 16);
 
-	BackprojectPixelDriven_device<<<grid,block>>>(sgm_flt, img, u, beta, config.sgmWidth, config.views, config.sliceCount, config.imgDim, config.sdd, config.sid, config.detEltSize, config.pixelSize, config.xCenter, config.yCenter);
+	BackprojectPixelDriven_device <<<grid, block>>> (sgm_flt, img, u, beta, config.sgmWidth, config.views, config.sliceCount, config.imgDim, config.sdd, config.sid, config.detEltSize, config.pixelSize, config.xCenter, config.yCenter);
 
 	cudaDeviceSynchronize();
 }
