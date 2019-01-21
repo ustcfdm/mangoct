@@ -20,7 +20,7 @@
 
   // Perform dual energy subtraction or not
   "DualEnergySubtraction": true,
-  // Energy bins for sinogram
+  // Energy bins for sinogram, ["LE", "HE", "TE"]
   "OutputTypes": [ "TE", "LE", "HE" ],
   // replace substring for subtraction files (replce from TE file which is already replaced by "OutputFileReplace")
   "SubtractionFileNameReplace": [ "1_TE", "_LE" ],
