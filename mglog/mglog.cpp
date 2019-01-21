@@ -70,10 +70,6 @@ int main(int argc, char* argv[])
 			// repeat for each output file
 			for (size_t i = 0; i < config.outputFiles3.size(); i++)
 			{
-				//-----------------------------------------------------
-				// for "LE"
-				//-----------------------------------------------------
-
 				printf("    Processing %s and %s ...", config.inputFiles[i].c_str(), config.inputFiles2[i].c_str());
 
 				// read the evi file
@@ -90,157 +86,163 @@ int main(int argc, char* argv[])
 					sgm_LE.push_back(sgm_TE[i] - sgm_HE[i]);
 				}
 
-				// get the post-log sinogram
-				for (size_t i = 0; i < sgm_LE.size(); i++)
+				//-----------------------------------------------------
+				// for "LE"
+				//-----------------------------------------------------
+				if (std::find(config.outputTypes.begin(),config.outputTypes.end(),"LE") != config.outputTypes.end())
 				{
-					sgm_LE[i] = (bkg_LE[i] / sgm_LE[i]).Log();
-					sgm_LE[i].SetNanOrInf(0.0f);
-				}
-
-
-				// interpolate white lines
-
-				if (config.interpolateWhiteLines)
-				{
-					for (size_t k = 0; k < sgm_LE.size(); k++)
+					// get the post-log sinogram
+					for (size_t i = 0; i < sgm_LE.size(); i++)
 					{
-						for (unsigned row = 0; row < config.objViews; row++)
+						sgm_LE[i] = (bkg_LE[i] / sgm_LE[i]).Log();
+						sgm_LE[i].SetNanOrInf(0.0f);
+					}
+
+
+					// interpolate white lines
+
+					if (config.interpolateWhiteLines)
+					{
+						for (size_t k = 0; k < sgm_LE.size(); k++)
 						{
-							for (unsigned col = 255; col < 5119; col += 256)
+							for (unsigned row = 0; row < config.objViews; row++)
 							{
-								sgm_LE[k](row, col) = sgm_LE[k](row, col - 1) * 2 / 3 + sgm_LE[k](row, col + 2) / 3;
-								sgm_LE[k](row, col + 1) = sgm_LE[k](row, col - 1) / 3 + sgm_LE[k](row, col + 2) * 2 / 3;
+								for (unsigned col = 255; col < 5119; col += 256)
+								{
+									sgm_LE[k](row, col) = sgm_LE[k](row, col - 1) * 2 / 3 + sgm_LE[k](row, col + 2) / 3;
+									sgm_LE[k](row, col + 1) = sgm_LE[k](row, col - 1) / 3 + sgm_LE[k](row, col + 2) * 2 / 3;
+								}
 							}
 						}
 					}
-				}
 
-				// rebin sinogram data
-				for (size_t k = 0; k < sgm_LE.size(); k++)
-				{
-					sgm_LE[k].Rebin(config.rebinSize, mg::Axis::Col, true);
-				}
+					// rebin sinogram data
+					for (size_t k = 0; k < sgm_LE.size(); k++)
+					{
+						sgm_LE[k].Rebin(config.rebinSize, mg::Axis::Col, true);
+					}
 
-				// smoothout marginal data
-				if (config.smoothoutMarginalData)
-				{
-					SmoothoutMargianlData(sgm_LE, config);
-				}
+					// smoothout marginal data
+					if (config.smoothoutMarginalData)
+					{
+						SmoothoutMargianlData(sgm_LE, config);
+					}
 
-				// save to file
-				std::string saveFullName = (fs::path(config.outputDir) / config.outputFiles3[i]).string();
-				sgm_LE[0].SaveRawFile(saveFullName.c_str());
-				for (size_t k = 1; k < sgm_LE.size(); k++)
-				{
-					sgm_LE[k].AppendRawFile(saveFullName.c_str());
+					// save to file
+					std::string saveFullName = (fs::path(config.outputDir) / config.outputFiles3[i]).string();
+					sgm_LE[0].SaveRawFile(saveFullName.c_str());
+					for (size_t k = 1; k < sgm_LE.size(); k++)
+					{
+						sgm_LE[k].AppendRawFile(saveFullName.c_str());
+					}
+					printf("\t->\tSave to %s\n", config.outputFiles3[i].c_str());
 				}
-				printf("\t->\tSave to %s\n", config.outputFiles3[i].c_str());
-
 
 				//-----------------------------------------------------
 				// for "TE"
 				//-----------------------------------------------------
-
-				// Get post-log sinogram
+				if (std::find(config.outputTypes.begin(), config.outputTypes.end(), "TE") != config.outputTypes.end())
+				{
+					// Get post-log sinogram
 				// get the post-log sinogram
-				for (size_t i = 0; i < sgm_TE.size(); i++)
-				{
-					sgm_TE[i] = (bkg_TE[i] / sgm_TE[i]).Log();
-					sgm_TE[i].SetNanOrInf(0.0f);
-				}
-
-
-				// interpolate white lines
-
-				if (config.interpolateWhiteLines)
-				{
-					for (size_t k = 0; k < sgm_TE.size(); k++)
+					for (size_t i = 0; i < sgm_TE.size(); i++)
 					{
-						for (unsigned row = 0; row < config.objViews; row++)
+						sgm_TE[i] = (bkg_TE[i] / sgm_TE[i]).Log();
+						sgm_TE[i].SetNanOrInf(0.0f);
+					}
+
+
+					// interpolate white lines
+
+					if (config.interpolateWhiteLines)
+					{
+						for (size_t k = 0; k < sgm_TE.size(); k++)
 						{
-							for (unsigned col = 255; col < 5119; col += 256)
+							for (unsigned row = 0; row < config.objViews; row++)
 							{
-								sgm_TE[k](row, col) = sgm_TE[k](row, col - 1) * 2 / 3 + sgm_TE[k](row, col + 2) / 3;
-								sgm_TE[k](row, col + 1) = sgm_TE[k](row, col - 1) / 3 + sgm_TE[k](row, col + 2) * 2 / 3;
+								for (unsigned col = 255; col < 5119; col += 256)
+								{
+									sgm_TE[k](row, col) = sgm_TE[k](row, col - 1) * 2 / 3 + sgm_TE[k](row, col + 2) / 3;
+									sgm_TE[k](row, col + 1) = sgm_TE[k](row, col - 1) / 3 + sgm_TE[k](row, col + 2) * 2 / 3;
+								}
 							}
 						}
 					}
+
+					// rebin sinogram data
+					for (size_t k = 0; k < sgm_TE.size(); k++)
+					{
+						sgm_TE[k].Rebin(config.rebinSize, mg::Axis::Col, true);
+					}
+
+					// smoothout marginal data
+					if (config.smoothoutMarginalData)
+					{
+						SmoothoutMargianlData(sgm_TE, config);
+					}
+
+					// save to file
+					std::string saveFullName = (fs::path(config.outputDir) / config.outputFiles[i]).string();
+					sgm_TE[0].SaveRawFile(saveFullName.c_str());
+					for (size_t k = 1; k < sgm_TE.size(); k++)
+					{
+						sgm_TE[k].AppendRawFile(saveFullName.c_str());
+					}
+					printf("\t\t\t->\tSave to %s\n", config.outputFiles[i].c_str());
 				}
-
-				// rebin sinogram data
-				for (size_t k = 0; k < sgm_TE.size(); k++)
-				{
-					sgm_TE[k].Rebin(config.rebinSize, mg::Axis::Col, true);
-				}
-
-				// smoothout marginal data
-				if (config.smoothoutMarginalData)
-				{
-					SmoothoutMargianlData(sgm_TE, config);
-				}
-
-				// save to file
-				saveFullName = (fs::path(config.outputDir) / config.outputFiles[i]).string();
-				sgm_TE[0].SaveRawFile(saveFullName.c_str());
-				for (size_t k = 1; k < sgm_TE.size(); k++)
-				{
-					sgm_TE[k].AppendRawFile(saveFullName.c_str());
-				}
-				printf("\t\t\t->\tSave to %s\n", config.outputFiles[i].c_str());
-
-
+				
 				//-----------------------------------------------------
 				// for "HE"
 				//-----------------------------------------------------
-
-				// Get post-log sinogram
+				if (std::find(config.outputTypes.begin(), config.outputTypes.end(), "HE") != config.outputTypes.end())
+				{
+					// Get post-log sinogram
 				// get the post-log sinogram
-				for (size_t i = 0; i < sgm_HE.size(); i++)
-				{
-					sgm_HE[i] = (bkg_HE[i] / sgm_HE[i]).Log();
-					sgm_HE[i].SetNanOrInf(0.0f);
-				}
-
-
-				// interpolate white lines
-
-				if (config.interpolateWhiteLines)
-				{
-					for (size_t k = 0; k < sgm_HE.size(); k++)
+					for (size_t i = 0; i < sgm_HE.size(); i++)
 					{
-						for (unsigned row = 0; row < config.objViews; row++)
+						sgm_HE[i] = (bkg_HE[i] / sgm_HE[i]).Log();
+						sgm_HE[i].SetNanOrInf(0.0f);
+					}
+
+
+					// interpolate white lines
+
+					if (config.interpolateWhiteLines)
+					{
+						for (size_t k = 0; k < sgm_HE.size(); k++)
 						{
-							for (unsigned col = 255; col < 5119; col += 256)
+							for (unsigned row = 0; row < config.objViews; row++)
 							{
-								sgm_HE[k](row, col) = sgm_HE[k](row, col - 1) * 2 / 3 + sgm_HE[k](row, col + 2) / 3;
-								sgm_HE[k](row, col + 1) = sgm_HE[k](row, col - 1) / 3 + sgm_HE[k](row, col + 2) * 2 / 3;
+								for (unsigned col = 255; col < 5119; col += 256)
+								{
+									sgm_HE[k](row, col) = sgm_HE[k](row, col - 1) * 2 / 3 + sgm_HE[k](row, col + 2) / 3;
+									sgm_HE[k](row, col + 1) = sgm_HE[k](row, col - 1) / 3 + sgm_HE[k](row, col + 2) * 2 / 3;
+								}
 							}
 						}
 					}
+
+					// rebin sinogram data
+					for (size_t k = 0; k < sgm_HE.size(); k++)
+					{
+						sgm_HE[k].Rebin(config.rebinSize, mg::Axis::Col, true);
+					}
+
+					// smoothout marginal data
+					if (config.smoothoutMarginalData)
+					{
+						SmoothoutMargianlData(sgm_HE, config);
+					}
+
+					// save to file
+					std::string saveFullName = (fs::path(config.outputDir) / config.outputFiles2[i]).string();
+					sgm_HE[0].SaveRawFile(saveFullName.c_str());
+					for (size_t k = 1; k < sgm_HE.size(); k++)
+					{
+						sgm_HE[k].AppendRawFile(saveFullName.c_str());
+					}
+					printf("\t\t\t->\tSave to %s\n", config.outputFiles2[i].c_str());
 				}
-
-				// rebin sinogram data
-				for (size_t k = 0; k < sgm_HE.size(); k++)
-				{
-					sgm_HE[k].Rebin(config.rebinSize, mg::Axis::Col, true);
-				}
-
-				// smoothout marginal data
-				if (config.smoothoutMarginalData)
-				{
-					SmoothoutMargianlData(sgm_HE, config);
-				}
-
-				// save to file
-				saveFullName = (fs::path(config.outputDir) / config.outputFiles2[i]).string();
-				sgm_HE[0].SaveRawFile(saveFullName.c_str());
-				for (size_t k = 1; k < sgm_HE.size(); k++)
-				{
-					sgm_HE[k].AppendRawFile(saveFullName.c_str());
-				}
-				printf("\t\t\t->\tSave to %s\n", config.outputFiles3[i].c_str());
-
-
 			}
 		}
 		// do not perform dual energy subtraction
