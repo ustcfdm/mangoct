@@ -1,0 +1,61 @@
+// This is a config template for mglog
+
+{
+  /********************************************************* 
+  * input and output directory and files
+  *********************************************************/
+  "InputDir": "C:\\Users\\mfeng\\Desktop\\test",
+  "OutputDir": "C:\\Users\\mfeng\\Desktop\\test",
+
+  // Data file of backgorund (air). If it is an array with two elements, it means you want to do dual energy subtraction.
+  "BackgroundFile": [ "air1_TE.EVI", "air1_HE.EVI" ],
+  // all the files in the directory, use regular expression
+  "InputFiles": [ "obj1_TE.EVI", "obj1_HE.EVI" ],
+  // output file name (prefix, replace)
+  "OutputFilePrefix": "sgm_",
+  // replace substring in input file name
+  "OutputFileReplace": [ ".EVI", ".raw" ],
+
+  // Below X are optional. They are for dual energy subtraction. Comment them if you do not need them.
+
+  // Perform dual energy subtraction or not
+  "DualEnergySubtraction": true,
+  // Energy bins for sinogram
+  "OutputTypes": [ "TE", "LE", "HE" ],
+  // replace substring for subtraction files (replce from TE file which is already replaced by "OutputFileReplace")
+  "SubtractionFileNameReplace": [ "1_TE", "_LE" ],
+
+  /********************************************************* 
+  * sinogram and slice parameters
+  *********************************************************/
+  // number of views in background file
+  "BackgroundViews": 500,
+  // number of views in object file
+  "ObjectViews": 2410,
+  // rebin the sinogram along detector width direction, do not rebin if it is one
+  "RebinSize": 1,
+  // total number of slices for the sinogram
+  "SliceCount": 1,
+  // index starts from 0
+  "SliceStartIdx": 7,
+  // integer
+  "SliceThickness": 50,
+
+  /********************************************************* 
+  * correct sinogram artifacts
+  *********************************************************/
+  // linear interpolation for white lines
+  "InterpolateWhiteLines": true,
+  // smooth out left and right part of sinogram, index won't be used if it is false
+  "SmoothoutMarginalData": true,
+  "SmoothoutLeftIdx": 1330,
+  "SmoothoutRightIdx": 1790,
+
+  /********************************************************* 
+  *  EVI file parameters, usually you do not need to change
+  *********************************************************/
+  "DetectorWidth": 5120,
+  "DetectorHeight": 64,
+  "OffsetToFirstImage": 2368,
+  "Gap": 64
+}

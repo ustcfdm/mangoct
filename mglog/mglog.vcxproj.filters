@@ -35,5 +35,6 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="config_mglog_sample.jsonc" />
+    <None Include="config_mglog_DE_sample.jsonc" />
   </ItemGroup>
 </Project>

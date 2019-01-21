@@ -9,7 +9,7 @@ namespace mg = mango;
 namespace js = rapidjson;
 
 void LoadConfigFile(js::Document& d, Config& config);
-std::vector<mg::Matrix> GetBkgData(const Config& config);
+std::vector<mg::Matrix> GetBkgData(const Config& config, const int fileId = 1);
 std::vector<mg::Matrix> GetPrelogSinogram(const mg::Matrix& obj, const Config& config);
 void SmoothoutMargianlData(std::vector<mg::Matrix>& sgm, const Config& config);
 
@@ -34,75 +34,279 @@ int main(int argc, char* argv[])
 		LoadConfigFile(doc, config);
 
 		//////////////////////////////////////////////////////////////////////////////
-		// Step 2£º acquire and process bakcground data
+		// Step 2: acquire and process bakcground data
 		//////////////////////////////////////////////////////////////////////////////
 
 		printf("Processing background file: %s\n", config.bkgFile.c_str());
-		std::vector<mg::Matrix> bkg = GetBkgData(config);
+		std::vector<mg::Matrix> bkg_TE = GetBkgData(config);
 
-		//////////////////////////////////////////////////////////////////////////////
-		// Step 2£º acquire and process object data
-		//////////////////////////////////////////////////////////////////////////////
-
-		mg::Matrix obj(config.detectorHeight, config.detectorWidth, config.objViews);
-
-		// repeat for each output file
-		for (size_t i = 0; i < config.outputFiles.size(); i++)
+		std::vector<mg::Matrix> bkg_HE;
+		if (config.dualEnergySubtraction)
 		{
-			printf("    Processing %s...", config.inputFiles[i].c_str());
+			printf("Processing background file: %s\n", config.bkgFile2.c_str());
+			bkg_HE = GetBkgData(config, 2);
+		}
 
-			// read the evi file
-			obj.ReadEviFile((fs::path(config.inputDir) / config.inputFiles[i]).string().c_str(), config.offsetToFirstImage, config.gap);
 
-			// get the pre-log sinogram
-			std::vector<mg::Matrix> sgm = GetPrelogSinogram(obj, config);
+		//////////////////////////////////////////////////////////////////////////////
+		// Step 2: acquire and process object data
+		//////////////////////////////////////////////////////////////////////////////
 
-			// pre-log sinogram to post-log sinogram
-			for (size_t k = 0; k < sgm.size(); k++)
+		// If perform dual energy subtraction
+		if (config.dualEnergySubtraction)
+		{
+			mg::Matrix obj_TE(config.detectorHeight, config.detectorWidth, config.objViews);
+			mg::Matrix obj_LE(config.detectorHeight, config.detectorWidth, config.objViews);
+			mg::Matrix obj_HE(config.detectorHeight, config.detectorWidth, config.objViews);
+
+
+			// get background file
+			std::vector<mg::Matrix> bkg_LE;
+			for (size_t i = 0; i < bkg_TE.size(); i++)
 			{
-				sgm[k] = (bkg[k] / sgm[k]).Log();
-				sgm[k].SetNanOrInf(0.0f);
+				bkg_LE.push_back(bkg_TE[i] - bkg_HE[i]);
 			}
 
-			// interpolate white lines
-
-			if (config.interpolateWhiteLines)
+			// repeat for each output file
+			for (size_t i = 0; i < config.outputFiles3.size(); i++)
 			{
-				for (size_t k = 0; k < sgm.size(); k++)
+				//-----------------------------------------------------
+				// for "LE"
+				//-----------------------------------------------------
+
+				printf("    Processing %s and %s ...", config.inputFiles[i].c_str(), config.inputFiles2[i].c_str());
+
+				// read the evi file
+				obj_TE.ReadEviFile((fs::path(config.inputDir) / config.inputFiles[i]).string().c_str(), config.offsetToFirstImage, config.gap);
+				obj_HE.ReadEviFile((fs::path(config.inputDir) / config.inputFiles2[i]).string().c_str(), config.offsetToFirstImage, config.gap);
+
+				// get the pre-log sinogram
+				std::vector<mg::Matrix> sgm_TE = GetPrelogSinogram(obj_TE, config);
+				std::vector<mg::Matrix> sgm_HE = GetPrelogSinogram(obj_HE, config);
+
+				std::vector<mg::Matrix> sgm_LE;
+				for (size_t i = 0; i < sgm_TE.size(); i++)
 				{
-					for (unsigned row = 0; row < config.objViews; row++)
+					sgm_LE.push_back(sgm_TE[i] - sgm_HE[i]);
+				}
+
+				// get the post-log sinogram
+				for (size_t i = 0; i < sgm_LE.size(); i++)
+				{
+					sgm_LE[i] = (bkg_LE[i] / sgm_LE[i]).Log();
+					sgm_LE[i].SetNanOrInf(0.0f);
+				}
+
+
+				// interpolate white lines
+
+				if (config.interpolateWhiteLines)
+				{
+					for (size_t k = 0; k < sgm_LE.size(); k++)
 					{
-						for (unsigned col = 255; col < 5119; col += 256)
+						for (unsigned row = 0; row < config.objViews; row++)
 						{
-							sgm[k](row, col) = sgm[k](row, col - 1) * 2 / 3 + sgm[k](row, col + 2) / 3;
-							sgm[k](row, col + 1) = sgm[k](row, col - 1) / 3 + sgm[k](row, col + 2) * 2 / 3;
+							for (unsigned col = 255; col < 5119; col += 256)
+							{
+								sgm_LE[k](row, col) = sgm_LE[k](row, col - 1) * 2 / 3 + sgm_LE[k](row, col + 2) / 3;
+								sgm_LE[k](row, col + 1) = sgm_LE[k](row, col - 1) / 3 + sgm_LE[k](row, col + 2) * 2 / 3;
+							}
 						}
 					}
 				}
-			}
 
-			// rebin sinogram data
-			for (size_t k = 0; k < sgm.size(); k++)
-			{
-				sgm[k].Rebin(config.rebinSize, mg::Axis::Col, true);
-			}
+				// rebin sinogram data
+				for (size_t k = 0; k < sgm_LE.size(); k++)
+				{
+					sgm_LE[k].Rebin(config.rebinSize, mg::Axis::Col, true);
+				}
 
-			// smoothout marginal data
-			if (config.smoothoutMarginalData)
-			{
-				SmoothoutMargianlData(sgm, config);
-			}
+				// smoothout marginal data
+				if (config.smoothoutMarginalData)
+				{
+					SmoothoutMargianlData(sgm_LE, config);
+				}
 
-			// save to file
-			std::string saveFullName = (fs::path(config.outputDir) / config.outputFiles[i]).string();
-			sgm[0].SaveRawFile(saveFullName.c_str());
-			for (size_t k = 1; k < sgm.size(); k++)
-			{
-				sgm[k].AppendRawFile(saveFullName.c_str());
-			}
-			printf("\t->\tSave to %s\n", config.outputFiles[i].c_str());
+				// save to file
+				std::string saveFullName = (fs::path(config.outputDir) / config.outputFiles3[i]).string();
+				sgm_LE[0].SaveRawFile(saveFullName.c_str());
+				for (size_t k = 1; k < sgm_LE.size(); k++)
+				{
+					sgm_LE[k].AppendRawFile(saveFullName.c_str());
+				}
+				printf("\t->\tSave to %s\n", config.outputFiles3[i].c_str());
 
+
+				//-----------------------------------------------------
+				// for "TE"
+				//-----------------------------------------------------
+
+				// Get post-log sinogram
+				// get the post-log sinogram
+				for (size_t i = 0; i < sgm_TE.size(); i++)
+				{
+					sgm_TE[i] = (bkg_TE[i] / sgm_TE[i]).Log();
+					sgm_TE[i].SetNanOrInf(0.0f);
+				}
+
+
+				// interpolate white lines
+
+				if (config.interpolateWhiteLines)
+				{
+					for (size_t k = 0; k < sgm_TE.size(); k++)
+					{
+						for (unsigned row = 0; row < config.objViews; row++)
+						{
+							for (unsigned col = 255; col < 5119; col += 256)
+							{
+								sgm_TE[k](row, col) = sgm_TE[k](row, col - 1) * 2 / 3 + sgm_TE[k](row, col + 2) / 3;
+								sgm_TE[k](row, col + 1) = sgm_TE[k](row, col - 1) / 3 + sgm_TE[k](row, col + 2) * 2 / 3;
+							}
+						}
+					}
+				}
+
+				// rebin sinogram data
+				for (size_t k = 0; k < sgm_TE.size(); k++)
+				{
+					sgm_TE[k].Rebin(config.rebinSize, mg::Axis::Col, true);
+				}
+
+				// smoothout marginal data
+				if (config.smoothoutMarginalData)
+				{
+					SmoothoutMargianlData(sgm_TE, config);
+				}
+
+				// save to file
+				saveFullName = (fs::path(config.outputDir) / config.outputFiles[i]).string();
+				sgm_TE[0].SaveRawFile(saveFullName.c_str());
+				for (size_t k = 1; k < sgm_TE.size(); k++)
+				{
+					sgm_TE[k].AppendRawFile(saveFullName.c_str());
+				}
+				printf("\t\t\t->\tSave to %s\n", config.outputFiles[i].c_str());
+
+
+				//-----------------------------------------------------
+				// for "HE"
+				//-----------------------------------------------------
+
+				// Get post-log sinogram
+				// get the post-log sinogram
+				for (size_t i = 0; i < sgm_HE.size(); i++)
+				{
+					sgm_HE[i] = (bkg_HE[i] / sgm_HE[i]).Log();
+					sgm_HE[i].SetNanOrInf(0.0f);
+				}
+
+
+				// interpolate white lines
+
+				if (config.interpolateWhiteLines)
+				{
+					for (size_t k = 0; k < sgm_HE.size(); k++)
+					{
+						for (unsigned row = 0; row < config.objViews; row++)
+						{
+							for (unsigned col = 255; col < 5119; col += 256)
+							{
+								sgm_HE[k](row, col) = sgm_HE[k](row, col - 1) * 2 / 3 + sgm_HE[k](row, col + 2) / 3;
+								sgm_HE[k](row, col + 1) = sgm_HE[k](row, col - 1) / 3 + sgm_HE[k](row, col + 2) * 2 / 3;
+							}
+						}
+					}
+				}
+
+				// rebin sinogram data
+				for (size_t k = 0; k < sgm_HE.size(); k++)
+				{
+					sgm_HE[k].Rebin(config.rebinSize, mg::Axis::Col, true);
+				}
+
+				// smoothout marginal data
+				if (config.smoothoutMarginalData)
+				{
+					SmoothoutMargianlData(sgm_HE, config);
+				}
+
+				// save to file
+				saveFullName = (fs::path(config.outputDir) / config.outputFiles2[i]).string();
+				sgm_HE[0].SaveRawFile(saveFullName.c_str());
+				for (size_t k = 1; k < sgm_HE.size(); k++)
+				{
+					sgm_HE[k].AppendRawFile(saveFullName.c_str());
+				}
+				printf("\t\t\t->\tSave to %s\n", config.outputFiles3[i].c_str());
+
+
+			}
 		}
+		// do not perform dual energy subtraction
+		else
+		{
+			mg::Matrix obj(config.detectorHeight, config.detectorWidth, config.objViews);
+
+			// repeat for each output file
+			for (size_t i = 0; i < config.outputFiles.size(); i++)
+			{
+				printf("    Processing %s...", config.inputFiles[i].c_str());
+
+				// read the evi file
+				obj.ReadEviFile((fs::path(config.inputDir) / config.inputFiles[i]).string().c_str(), config.offsetToFirstImage, config.gap);
+
+				// get the pre-log sinogram
+				std::vector<mg::Matrix> sgm = GetPrelogSinogram(obj, config);
+
+				// pre-log sinogram to post-log sinogram
+				for (size_t k = 0; k < sgm.size(); k++)
+				{
+					sgm[k] = (bkg_TE[k] / sgm[k]).Log();
+					sgm[k].SetNanOrInf(0.0f);
+				}
+
+				// interpolate white lines
+
+				if (config.interpolateWhiteLines)
+				{
+					for (size_t k = 0; k < sgm.size(); k++)
+					{
+						for (unsigned row = 0; row < config.objViews; row++)
+						{
+							for (unsigned col = 255; col < 5119; col += 256)
+							{
+								sgm[k](row, col) = sgm[k](row, col - 1) * 2 / 3 + sgm[k](row, col + 2) / 3;
+								sgm[k](row, col + 1) = sgm[k](row, col - 1) / 3 + sgm[k](row, col + 2) * 2 / 3;
+							}
+						}
+					}
+				}
+
+				// rebin sinogram data
+				for (size_t k = 0; k < sgm.size(); k++)
+				{
+					sgm[k].Rebin(config.rebinSize, mg::Axis::Col, true);
+				}
+
+				// smoothout marginal data
+				if (config.smoothoutMarginalData)
+				{
+					SmoothoutMargianlData(sgm, config);
+				}
+
+				// save to file
+				std::string saveFullName = (fs::path(config.outputDir) / config.outputFiles[i]).string();
+				sgm[0].SaveRawFile(saveFullName.c_str());
+				for (size_t k = 1; k < sgm.size(); k++)
+				{
+					sgm[k].AppendRawFile(saveFullName.c_str());
+				}
+				printf("\t->\tSave to %s\n", config.outputFiles[i].c_str());
+
+			}
+		}
+
 
 	}
 
@@ -184,20 +388,93 @@ void LoadConfigFile(js::Document& d, Config& config)
 		exit(1);
 	}
 
-	config.bkgFile = d["BackgroundFile"].GetString();
+	// Get background files
+	if (d["BackgroundFile"].IsArray())
+	{
+		const js::Value& bkgFiles = d["BackgroundFile"];
+		config.bkgFile = bkgFiles[0].GetString();
+		if (bkgFiles.Size() >= 2)
+		{
+			config.bkgFile2 = bkgFiles[1].GetString();
+		}
+	}
+	else
+	{
+		config.bkgFile = d["BackgroundFile"].GetString();
+	}
+
 	// check background file
 	if (!fs::exists(inDir / config.bkgFile))
 	{
 		fprintf(stderr, "Cannot find backgorund file %s!\n", config.bkgFile.c_str());
 		exit(1);
 	}
-
-	// get input file names
-	config.inputFiles = GetInputFileNames(config.inputDir, d["InputFiles"].GetString());
-	if (config.inputFiles.size() == 0)
+	if (config.bkgFile2 != "" && !fs::exists(inDir / config.bkgFile2))
 	{
-		fprintf(stderr, "No file name like %s!\n", d["InputFiles"].GetString());
+		fprintf(stderr, "Cannot find backgorund file %s!\n", config.bkgFile2.c_str());
 		exit(1);
+	}
+
+	if (d["InputFiles"].IsArray())
+	{
+		config.inputFiles = GetInputFileNames(config.inputDir, d["InputFiles"][0].GetString());
+		if (d["InputFiles"].Size() >= 2)
+		{
+			config.inputFiles2 = GetInputFileNames(config.inputDir, d["InputFiles"][1].GetString());
+		}
+	}
+	else
+	{
+		config.inputFiles = GetInputFileNames(config.inputDir, d["InputFiles"].GetString());
+	}
+
+	// check input file names
+	if (d["InputFiles"].IsArray())
+	{
+		if (config.inputFiles.size() == 0)
+		{
+			fprintf(stderr, "No file name like %s!\n", d["InputFiles"][0].GetString());
+			exit(1);
+		}
+		if (d["InputFiles"].Size() >= 2 && config.inputFiles2.size() == 0)
+		{
+			fprintf(stderr, "No file name like %s!\n", d["InputFiles"][1].GetString());
+			exit(1);
+		}
+	}
+	else
+	{
+		if (config.inputFiles.size() == 0)
+		{
+			fprintf(stderr, "No file name like %s!\n", d["InputFiles"].GetString());
+			exit(1);
+		}
+	}
+
+
+	// Dual energy subtraction or not?
+	if (d.HasMember("DualEnergySubtraction"))
+		config.dualEnergySubtraction = d["DualEnergySubtraction"].GetBool();
+	else
+		config.dualEnergySubtraction = false;
+
+	// Output types (i.e. "TE", "LE", or "HE")
+	if (d.HasMember("OutputTypes"))
+	{
+		for (auto& v : d["OutputTypes"].GetArray())
+		{
+			config.outputTypes.push_back(v.GetString());
+		}
+	}
+
+	// Subtraction file name replace
+	std::vector<std::string> subtractionReplace;
+	if (d.HasMember("SubtractionFileNameReplace"))
+	{
+		for (auto& v : d["SubtractionFileNameReplace"].GetArray())
+		{
+			subtractionReplace.push_back(v.GetString());
+		}
 	}
 
 	// get output file names
@@ -209,6 +486,13 @@ void LoadConfigFile(js::Document& d, Config& config)
 	}
 
 	config.outputFiles = GetOutputFileNames(config.inputFiles, replace, d["OutputFilePrefix"].GetString());
+	if (config.dualEnergySubtraction)
+	{
+		// For "HE" files
+		config.outputFiles2 = GetOutputFileNames(config.inputFiles2, replace, d["OutputFilePrefix"].GetString());
+		// For "LE" files
+		config.outputFiles3 = GetOutputFileNames(config.outputFiles, subtractionReplace, "");
+	}
 
 
 	/*********************************************************
@@ -243,10 +527,11 @@ void LoadConfigFile(js::Document& d, Config& config)
 }
 
 // acquire background file data, and process the data according to config infomation
-std::vector<mg::Matrix> GetBkgData(const Config& config)
+std::vector<mg::Matrix> GetBkgData(const Config& config, const int fileId)
 {
 	// read background data file
-	mg::Matrix bkg = mg::Matrix::ReadEviFile((fs::path(config.inputDir) / config.bkgFile).string().c_str(), config.detectorHeight, config.detectorWidth, config.bkgViews, config.offsetToFirstImage, config.gap);
+	std::string tmpBkgFile = fileId == 1 ? config.bkgFile : config.bkgFile2;
+	mg::Matrix bkg = mg::Matrix::ReadEviFile((fs::path(config.inputDir) / tmpBkgFile).string().c_str(), config.detectorHeight, config.detectorWidth, config.bkgViews, config.offsetToFirstImage, config.gap);
 
 	// take the average along views(pages) direction
 	bkg.Average(mg::Axis::Page);

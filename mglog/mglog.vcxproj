@@ -166,6 +166,7 @@
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
+    <None Include="config_mglog_DE_sample.jsonc" />
     <None Include="config_mglog_sample.jsonc" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
