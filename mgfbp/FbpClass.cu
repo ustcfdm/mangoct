@@ -151,6 +151,25 @@ void mango::FbpClass::ReadConfigFile(const char * filename)
 	// reconstruction parameters
 	// ========================================================================================
 
+	//BeamHardeningCorrection
+	config.doBeamHardeningCorr = false;
+	if (doc.HasMember("BeamHardeningCorrection"))
+	{
+		const js::Value& bh = doc["BeamHardeningCorrection"];
+		if (bh.Size() > 10)
+		{
+			fprintf(stderr, "You have more than 10 beam hardening correction parameters.\n");
+			exit(1);
+		}
+
+		for (js::SizeType i = 0; i < bh.Size(); i++)
+		{
+			config.beamHardening[i] = bh[i].GetFloat();
+		}
+		config.doBeamHardeningCorr = true;
+	}
+
+
 	config.imgDim = doc["ImageDimension"].GetUint();
 
 	// get pixel size
@@ -259,6 +278,11 @@ void mango::FbpClass::SaveFilteredSinogram(const char * filename)
 	}
 	fwrite(sinogram_filter, sizeof(float), config.sgmWidth * config.views * config.sliceCount, fp);
 	fclose(fp);
+}
+
+void mango::FbpClass::CorrectBeamHardening()
+{
+	CorrectBeamHardening_Agent(sinogram, config);
 }
 
 void mango::FbpClass::SaveImage(const char * filename)

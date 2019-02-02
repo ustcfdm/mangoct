@@ -33,6 +33,9 @@ namespace mango
 		/*********************************************************
 		* reconstruction parameters
 		*********************************************************/
+		bool		doBeamHardeningCorr;	// need beam hardening correction or not
+		float		beamHardening[10] = { 0 };		// beam hardening parameters
+
 		unsigned	imgDim;					// number of rows/cols of reconstructed images
 		float		pixelSize;				// image pixel size [mm]
 
@@ -82,6 +85,9 @@ namespace mango
 
 		// Save filtered sinogram data to file
 		void SaveFilteredSinogram(const char* filename);
+
+		// Perform beam hardening correction
+		void CorrectBeamHardening();
 
 		// Save image to file
 		void SaveImage(const char* filename);

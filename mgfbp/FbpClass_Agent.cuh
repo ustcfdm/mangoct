@@ -33,6 +33,9 @@ void InitializeReconKernel_Agent(float* &reconKernel, const int N, const float d
 // Malloc the memory as a given size
 void MallocManaged_Agent(float* &p, const int size);
 
+// Perform beam hardening correction
+void CorrectBeamHardening_Agent(float* sgm, mango::Config & config);
+
 // Filter the sinogram data
 void FilterSinogram_Agent(float* sgm, float* sgm_flt, float* reconKernel, float* u, mango::Config& config);
 

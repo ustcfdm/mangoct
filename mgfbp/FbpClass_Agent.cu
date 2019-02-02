@@ -211,6 +211,27 @@ __global__ void WeightSinogram_device(float* sgm, const float* u, const int N, c
 	}
 }
 
+// perform beam hardening correction of sinogram
+// sgm: sinogram (width x height x slice)
+// N: width
+// V: height (views)
+// S: slice
+// p0-p9: correction parameters
+__global__ void CorrectBeamHardening_device(float* sgm, const int N, const int V, const int S, float p0, float p1, float p2, float p3, float p4, float p5, float p6, float p7, float p8, float p9)
+{
+	int col = threadIdx.x + blockDim.x * blockIdx.x;
+	int row = threadIdx.y + blockDim.y * blockIdx.y;
+
+	if (col < N && row < V)
+	{
+		for (int i = 0; i < S; i++)
+		{
+			float oldSgm = sgm[row*N + col + i * N*V];
+			sgm[row*N + col + i * N*V] = p0 + p1 * powf(oldSgm, 1) + p2 * powf(oldSgm, 2) + p3 * powf(oldSgm, 3) + p4 * powf(oldSgm, 4) + p5 * powf(oldSgm, 5) + p6 * powf(oldSgm, 6) + p7 * powf(oldSgm, 7) + p8 * powf(oldSgm, 8) + p9 * powf(oldSgm, 9);
+		}
+	}
+}
+
 // convolve the sinogram data
 // sgm_flt: sinogram data after convolving
 // sgm: initial sinogram data
@@ -357,6 +378,18 @@ void InitializeReconKernel_Agent(float* &reconKernel, const int N, const float d
 void MallocManaged_Agent(float * &p, const int size)
 {
 	cudaMallocManaged((void**)&p, size);
+}
+
+
+void CorrectBeamHardening_Agent(float* sgm, mango::Config & config)
+{
+	dim3 grid((config.sgmWidth + 15) / 16, (config.sgmHeight + 15) / 16);
+	dim3 block(16, 16);
+
+	CorrectBeamHardening_device <<<grid, block >>> (sgm, config.sgmWidth, config.sgmHeight, config.sliceCount, config.beamHardening[0], config.beamHardening[1], config.beamHardening[2], config.beamHardening[3], config.beamHardening[4], config.beamHardening[5], config.beamHardening[6], config.beamHardening[7], config.beamHardening[8], config.beamHardening[9]);
+
+	
+
 }
 
 void FilterSinogram_Agent(float * sgm, float* sgm_flt, float* reconKernel, float* u, mango::Config & config)

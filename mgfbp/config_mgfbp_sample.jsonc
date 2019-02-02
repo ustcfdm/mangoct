@@ -45,6 +45,9 @@
 	* reconstruction parameters
 	*********************************************************/
 
+  // Beam hardening correction (optional), support 10 parameters [s = p0 + p1*s + p2*s^2 + p3*s^3 + ...]
+  //"BeamHardeningCorrection": [ 0, 1, 2, 3, 4, 5 ],
+
   // image dimension (integer)
   "ImageDimension": 512,
 
@@ -70,5 +73,5 @@
   //"HammingFilter": 0.5
   //"QuadraticFilter": [ 0.42, 0 ]
   //"Polynomial": [ -15.9236, -2.1540, 3.1106, 2.3872, 1.0000 ]
-  "Hilbert":  1
+  "Hilbert": 1
 }
