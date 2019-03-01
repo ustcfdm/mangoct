@@ -92,8 +92,8 @@ __global__ void ForwardProjectionBilinear_device(float* img, float* sgm, const f
 				if(kx>=0 && kx+1<M && ky>=0 && ky+1<M)
 				{
 					// get the weighting factor
-					wx = x - kx*dx - x0;
-					wy = y0 - y - ky*dx ;
+					wx = (x - kx * dx - x0) / dx;
+					wy = (y0 - y - ky * dx) / dx;
 
 					// perform bilinear interpolation
 					sgm[row*N + col + N * V*slice] += (1 - wx)*(1 - wy)*img[ky*M + kx + M * M*slice] // upper left
