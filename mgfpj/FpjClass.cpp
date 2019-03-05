@@ -79,6 +79,11 @@ void mango::FpjClass::ReadConfigFile(const char * filename)
 
 	// load the config file
 	std::ifstream ifs(filename);
+	if (!ifs)
+	{
+		printf("Cannot open config file '%s'!\n", filename);
+		exit(-2);
+	}
 	rapidjson::IStreamWrapper isw(ifs);
 	rapidjson::Document doc;
 	doc.ParseStream<js::kParseCommentsFlag | js::kParseTrailingCommasFlag>(isw);

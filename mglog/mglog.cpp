@@ -27,6 +27,11 @@ int main(int argc, char* argv[])
 		// Step 1: load the config file
 		//////////////////////////////////////////////////////////////////////////////
 		std::ifstream ifs(argv[configIdx]);
+		if (!ifs)
+		{
+			printf("Cannot open config file '%s'!\n", argv[configIdx]);
+			exit(-2);
+		}
 		js::IStreamWrapper isw(ifs);
 		js::Document doc;
 		doc.ParseStream<js::kParseCommentsFlag | js::kParseTrailingCommasFlag>(isw);
