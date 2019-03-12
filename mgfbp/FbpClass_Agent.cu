@@ -227,7 +227,7 @@ __global__ void WeightSinogramHilbert_device(float* sgm, const float* u, const i
 	{
 		for (int i = 0; i < S; i++)
 		{
-			sgm[row*N + col + i * N*V] *= sdd * sdd / (u[col] * u[col] + sdd * sdd);
+			sgm[row*N + col + i * N*V] *= sqrtf(u[col] * u[col] + sdd * sdd);
 		}
 	}
 }
@@ -385,7 +385,7 @@ __global__ void BackprojectPixelDrivenHilbert_device(float* sgm, float* img, flo
 
 				w = (u0 - u[k]) / du;
 
-				img[row*M + col + slice * M*M] += sid / U * (w*sgm[view*N + k + 1 + slice * N*V] + (1 - w)*sgm[view*N + k + slice * N*V]);
+				img[row*M + col + slice * M*M] += 1 / U * (w*sgm[view*N + k + 1 + slice * N*V] + (1 - w)*sgm[view*N + k + slice * N*V]);
 
 			}
 			img[row*M + col + slice * M*M] *= PI / V;
