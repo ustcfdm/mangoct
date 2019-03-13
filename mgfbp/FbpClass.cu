@@ -234,6 +234,11 @@ void mango::FbpClass::ReadConfigFile(const char * filename)
 		config.kernelName = "Hilbert";
 		config.kernelParam.push_back(doc["Hilbert"].GetFloat());
 	}
+	else if (doc.HasMember("Hilbert_angle"))
+	{
+		config.kernelName = "Hilbert_angle";
+		config.kernelParam.push_back(doc["Hilbert_angle"].GetFloat());
+	}
 	else
 	{
 		fprintf(stderr, "Did not find reconstruction kernel! Please check your config file: %s.\n", filename);
