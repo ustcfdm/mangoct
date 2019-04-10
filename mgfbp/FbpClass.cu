@@ -255,6 +255,8 @@ void mango::FbpClass::InitParam()
 
 	InitializeReconKernel_Agent(reconKernel, config.sgmWidth, config.detEltSize, config.kernelName, config.kernelParam);
 
+	cudaDeviceSynchronize();
+
 	MallocManaged_Agent(sinogram, config.sgmWidth*config.sgmHeight*config.sliceCount * sizeof(float));
 	MallocManaged_Agent(sinogram_filter, config.sgmWidth*config.views*config.sliceCount * sizeof(float));
 	MallocManaged_Agent(image, config.imgDim*config.imgDim*config.sliceCount * sizeof(float));

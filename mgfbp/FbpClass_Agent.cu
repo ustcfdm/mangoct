@@ -485,7 +485,7 @@ void CorrectBeamHardening_Agent(float* sgm, mango::Config & config)
 
 	CorrectBeamHardening_device <<<grid, block >>> (sgm, config.sgmWidth, config.sgmHeight, config.sliceCount, config.beamHardening[0], config.beamHardening[1], config.beamHardening[2], config.beamHardening[3], config.beamHardening[4], config.beamHardening[5], config.beamHardening[6], config.beamHardening[7], config.beamHardening[8], config.beamHardening[9]);
 
-	
+	cudaDeviceSynchronize();
 
 }
 
@@ -507,6 +507,7 @@ void FilterSinogram_Agent(float * sgm, float* sgm_flt, float* reconKernel, float
 	else
 		WeightSinogram_device <<<grid, block >> > (sgm, u, config.sgmWidth, config.sgmHeight, config.sliceCount, config.sdd);
 	
+	cudaDeviceSynchronize();
 
 	// Step 2: convolve the sinogram
 	ConvolveSinogram_device <<<grid, block>>> (sgm_flt, sgm, reconKernel, config.sgmWidth, config.sgmHeight, config.views, config.sliceCount, u, config.detEltSize);
