@@ -14,12 +14,12 @@ __global__ void InitU(float* u, const int N, const float du, const float offcent
 	}
 }
 
-__global__ void InitBeta(float* beta, const int V)
+__global__ void InitBeta(float* beta, const int V, const float startAngle)
 {
 	int tid = threadIdx.x + blockDim.x * blockIdx.x;
 	if (tid<V)
 	{
-		beta[tid] = (360.0f / V * tid) * PI / 180;
+		beta[tid] = (360.0f / V * tid + startAngle) * PI / 180;
 	}
 }
 
@@ -118,13 +118,13 @@ void InitializeU_Agent(float* &u, const int N, const float du, const float offce
 	InitU << <(N + 511) / 512, 512 >> > (u, N, du, offcenter);
 }
 
-void InitializeBeta_Agent(float *& beta, const int V)
+void InitializeBeta_Agent(float *& beta, const int V, const float startAngle)
 {
 	if (beta != nullptr)
 		cudaFree(beta);
 
 	cudaMalloc((void**)&beta, V * sizeof(float));
-	InitBeta << < (V + 511) / 512, 512 >> > (beta, V);
+	InitBeta << < (V + 511) / 512, 512 >> > (beta, V, startAngle);
 }
 
 void ForwardProjectionBilinear_Agent(float *& image, float * &sinogram, const float* u, const float* beta, const mango::Config & config)

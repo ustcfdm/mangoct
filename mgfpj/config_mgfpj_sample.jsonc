@@ -41,6 +41,8 @@
   // source to detector distance [mm]
   "SourceDetectorDistance": 949,
 
+  // start angle (positive counterclockwise) [degree]
+  "StartAngle": 90,
   // number of detector elements
   "DetectorElementCount": 854,
   // number of views for reconstruction

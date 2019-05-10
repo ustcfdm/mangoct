@@ -155,6 +155,10 @@ void mango::FpjClass::ReadConfigFile(const char * filename)
 	config.sid = doc["SourceIsocenterDistance"].GetFloat();
 	config.sdd = doc["SourceDetectorDistance"].GetFloat();
 
+	if (doc.HasMember("StartAngle"))
+	{
+		config.startAngle = doc["StartAngle"].GetFloat();
+	}
 	config.detEltCount = doc["DetectorElementCount"].GetUint();
 	config.views = doc["Views"].GetUint();
 
@@ -166,7 +170,7 @@ void mango::FpjClass::ReadConfigFile(const char * filename)
 void mango::FpjClass::InitParam()
 {
 	InitializeU_Agent(u, config.detEltCount, config.detEltSize, config.detOffCenter);
-	InitializeBeta_Agent(beta, config.views);
+	InitializeBeta_Agent(beta, config.views, config.startAngle);
 
 	cudaDeviceSynchronize();
 

@@ -15,7 +15,7 @@ void InitializeU_Agent(float* &u, const int N, const float du, const float offce
 // Initialize beta, the array of each view angle
 // beta: array of view angles [radius]
 // V: number of views
-void InitializeBeta_Agent(float* &beta, const int V);
+void InitializeBeta_Agent(float* &beta, const int V, const float startAngle);
 
 // Forward projection, using bilinear interpolation
 void ForwardProjectionBilinear_Agent(float* &image, float* &sinogram, const float* u, const float* beta, const mango::Config& config);

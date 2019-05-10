@@ -30,6 +30,7 @@ namespace mango
 		float		sid;					// source to isocenter distance [mm]
 		float		sdd;					// source to detector distance [mm]
 
+		float		startAngle = 0;			// angle position of source for the first view [degree]
 		unsigned	detEltCount;			// number of detector elements
 		unsigned	views;					// number of views
 

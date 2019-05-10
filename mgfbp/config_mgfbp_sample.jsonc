@@ -59,7 +59,7 @@
   // image size [mm]
   // "ImageSize": 10,
 
-  // rotate the image [degree]
+  // rotate the image (positive counterclockwise) [degree]
   "ImageRotation": 120,
   // image center [x(mm), y(mm)]
   "ImageCenter": [ -17, -3.5 ],
