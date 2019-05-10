@@ -168,6 +168,8 @@ void mango::FpjClass::InitParam()
 	InitializeU_Agent(u, config.detEltCount, config.detEltSize, config.detOffCenter);
 	InitializeBeta_Agent(beta, config.views);
 
+	cudaDeviceSynchronize();
+
 	MallocManaged_Agent(image, config.imgDim*config.imgDim*config.sliceCount * sizeof(float));
 	MallocManaged_Agent(sinogram, config.detEltCount*config.views*config.sliceCount * sizeof(float));
 }

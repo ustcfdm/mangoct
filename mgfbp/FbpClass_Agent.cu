@@ -232,6 +232,27 @@ __global__ void WeightSinogramHilbert_device(float* sgm, const float* u, const i
 	}
 }
 
+
+// weight the sinogram data of Hilbert kernel (for phase contrast imaging) along angle direction (temporary test)
+// sgm: sinogram (width x height x slice)
+// N: width
+// V: height (views)
+// S: slice
+// sdd: source to detector distance
+__global__ void WeightSinogramHilbert_angle_device(float* sgm, const float* u, const int N, const int V, const int S, float sdd)
+{
+	int col = threadIdx.x + blockDim.x * blockIdx.x;
+	int row = threadIdx.y + blockDim.y * blockIdx.y;
+
+	if (col < N && row < V)
+	{
+		for (int i = 0; i < S; i++)
+		{
+			sgm[row*N + col + i * N*V] *= sdd / sqrtf(u[col] * u[col] + sdd * sdd);
+		}
+	}
+}
+
 // perform beam hardening correction of sinogram
 // sgm: sinogram (width x height x slice)
 // N: width
@@ -445,7 +466,7 @@ void InitializeReconKernel_Agent(float* &reconKernel, const int N, const float d
 		//InitReconKernel_Polynomial <<<(2 * N - 1 + 511) / 512, 512>>> (reconKernel, N, du, p[0], p[1], p[2], p[3], p[4], p[5], p[6]);
 		InitReconKernel_Polynomial <<<(2 * N - 1 + 511) / 512, 512>>> (reconKernel, N, du, p[6], p[5], p[4], p[3], p[2], p[1], p[0]);
 	}
-	else if (kernelName == "Hilbert")
+	else if (kernelName == "Hilbert" || kernelName == "Hilbert_angle")
 	{
 		InitReconKernel_Hilbert <<<(2 * N - 1 + 511) / 512, 512>>> (reconKernel, N, du, kernelParam[0]);
 	}
@@ -464,7 +485,7 @@ void CorrectBeamHardening_Agent(float* sgm, mango::Config & config)
 
 	CorrectBeamHardening_device <<<grid, block >>> (sgm, config.sgmWidth, config.sgmHeight, config.sliceCount, config.beamHardening[0], config.beamHardening[1], config.beamHardening[2], config.beamHardening[3], config.beamHardening[4], config.beamHardening[5], config.beamHardening[6], config.beamHardening[7], config.beamHardening[8], config.beamHardening[9]);
 
-	
+	cudaDeviceSynchronize();
 
 }
 
@@ -477,10 +498,16 @@ void FilterSinogram_Agent(float * sgm, float* sgm_flt, float* reconKernel, float
 	// Hilbert kernel for phase contrast imaging
 	if (config.kernelName=="Hilbert")
 		WeightSinogramHilbert_device <<<grid, block >> > (sgm, u, config.sgmWidth, config.sgmHeight, config.sliceCount, config.sdd);
+	else if (config.kernelName=="Hilbert_angle")
+	{
+		printf("Kernel name: %s\n", config.kernelName);
+		WeightSinogramHilbert_angle_device << <grid, block >> > (sgm, u, config.sgmWidth, config.sgmHeight, config.sliceCount, config.sdd);
+	}
 	// Common attenuation imaging
 	else
 		WeightSinogram_device <<<grid, block >> > (sgm, u, config.sgmWidth, config.sgmHeight, config.sliceCount, config.sdd);
 	
+	cudaDeviceSynchronize();
 
 	// Step 2: convolve the sinogram
 	ConvolveSinogram_device <<<grid, block>>> (sgm_flt, sgm, reconKernel, config.sgmWidth, config.sgmHeight, config.views, config.sliceCount, u, config.detEltSize);
@@ -494,7 +521,7 @@ void BackprojectPixelDriven_Agent(float * sgm_flt, float * img, float * u, float
 	dim3 block(16, 16);
 
 	// Hilbert kernel for phase contrast imaging
-	if (config.kernelName == "Hilbert")
+	if (config.kernelName == "Hilbert" || config.kernelName=="Hilbert_angle")
 	{
 		BackprojectPixelDrivenHilbert_device << <grid, block >> > (sgm_flt, img, u, beta, config.sgmWidth, config.views, config.sliceCount, config.imgDim, config.sdd, config.sid, config.detEltSize, config.pixelSize, config.xCenter, config.yCenter);
 	}

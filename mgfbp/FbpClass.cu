@@ -234,6 +234,11 @@ void mango::FbpClass::ReadConfigFile(const char * filename)
 		config.kernelName = "Hilbert";
 		config.kernelParam.push_back(doc["Hilbert"].GetFloat());
 	}
+	else if (doc.HasMember("Hilbert_angle"))
+	{
+		config.kernelName = "Hilbert_angle";
+		config.kernelParam.push_back(doc["Hilbert_angle"].GetFloat());
+	}
 	else
 	{
 		fprintf(stderr, "Did not find reconstruction kernel! Please check your config file: %s.\n", filename);
@@ -249,6 +254,8 @@ void mango::FbpClass::InitParam()
 	InitializeBeta_Agent(beta, config.views, config.imgRot);
 
 	InitializeReconKernel_Agent(reconKernel, config.sgmWidth, config.detEltSize, config.kernelName, config.kernelParam);
+
+	cudaDeviceSynchronize();
 
 	MallocManaged_Agent(sinogram, config.sgmWidth*config.sgmHeight*config.sliceCount * sizeof(float));
 	MallocManaged_Agent(sinogram_filter, config.sgmWidth*config.views*config.sliceCount * sizeof(float));
