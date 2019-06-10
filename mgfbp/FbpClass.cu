@@ -239,6 +239,11 @@ void mango::FbpClass::ReadConfigFile(const char * filename)
 		config.kernelName = "Hilbert_angle";
 		config.kernelParam.push_back(doc["Hilbert_angle"].GetFloat());
 	}
+	else if (doc.HasMember("GaussianApodizedRamp"))
+	{
+		config.kernelName = "GaussianApodizedRamp";
+		config.kernelParam.push_back(doc["GaussianApodizedRamp"].GetFloat());
+	}
 	else
 	{
 		fprintf(stderr, "Did not find reconstruction kernel! Please check your config file: %s.\n", filename);

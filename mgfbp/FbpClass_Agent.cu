@@ -45,6 +45,32 @@ __global__ void InitReconKernel_Hamming(float* reconKernel, const int N, const f
 	}
 }
 
+//initialize a Gaussian kernel
+//This kernel will be used along with the ramp kernel
+//delta is in number of pixels, which is the standard deviation of the gaussian
+//This kernel is normalized
+__global__ void InitReconKernel_GaussianApodized(float* reconKernel, const int N, const float du, const float delta)
+{
+	int tid = threadIdx.x + blockDim.x * blockIdx.x;
+	if (tid < 1)
+	{
+		// the center element index is N-1
+		float temp_sum = 0;
+		for (int i = 0; i < 2 * N - 1; i++)
+		{
+			int n = i - (N - 1);
+			reconKernel[i] = exp(-float(n) * float(n) / 2.0 / delta / delta);
+			temp_sum = temp_sum + reconKernel[i];
+		}
+
+		for (int i = 0; i < 2 * N - 1; i++)
+		{
+			reconKernel[i] = reconKernel[i] / temp_sum / du;
+		}
+	}
+}
+
+
 __global__ void InitReconKernel_Quadratic(float* reconKernel, const int N, const float du, const int paramNum, const float p1, const float p2, const float p3)
 {
 	int idx = threadIdx.x + blockDim.x * blockIdx.x;
@@ -470,6 +496,10 @@ void InitializeReconKernel_Agent(float* &reconKernel, const int N, const float d
 	{
 		InitReconKernel_Hilbert <<<(2 * N - 1 + 511) / 512, 512>>> (reconKernel, N, du, kernelParam[0]);
 	}
+	else if (kernelName == "GaussianApodizedRamp")
+	{
+		InitReconKernel_GaussianApodized << <(2 * N - 1 + 511) / 512, 512 >> > (reconKernel, N, du, kernelParam[0]);
+	}
 }
 
 void MallocManaged_Agent(float * &p, const int size)
@@ -510,7 +540,30 @@ void FilterSinogram_Agent(float * sgm, float* sgm_flt, float* reconKernel, float
 	cudaDeviceSynchronize();
 
 	// Step 2: convolve the sinogram
-	ConvolveSinogram_device <<<grid, block>>> (sgm_flt, sgm, reconKernel, config.sgmWidth, config.sgmHeight, config.views, config.sliceCount, u, config.detEltSize);
+	if (config.kernelName == "GaussianApodizedRamp")
+	{
+		// if Guassian aposied kernel is used, the sinogram need to be filtered twice
+		// first by the ramp filter, then by the gaussian filter
+		float du = config.detEltSize;
+		float * reconKernel_ramp;
+		cudaMalloc((void**)&reconKernel_ramp, (2 * config.sgmWidth - 1)*sizeof(float));
+		InitReconKernel_Hamming << <(2 * config.sgmWidth - 1 + 511) / 512, 512 >> > (reconKernel_ramp, config.sgmWidth, du, 1);
+
+		cudaDeviceSynchronize();
+
+		//intermidiate filtration result is saved in sgm_flt_ramp
+		float *sgm_flt_ramp;
+		MallocManaged_Agent(sgm_flt_ramp, config.sgmWidth*config.views*config.sliceCount * sizeof(float));
+		
+		ConvolveSinogram_device << <grid, block >> > (sgm_flt_ramp, sgm, reconKernel_ramp, config.sgmWidth, config.sgmHeight, config.views, config.sliceCount, u, config.detEltSize);
+		cudaDeviceSynchronize();
+		//the height of the filtered sinogram shrinks to number of views, so the convolution parameters need to be adjusted accordingly
+		ConvolveSinogram_device << <grid, block >> > (sgm_flt, sgm_flt_ramp, reconKernel, config.sgmWidth, config.views, config.views, config.sliceCount, u, config.detEltSize);
+	}
+	else
+	{
+		ConvolveSinogram_device << <grid, block >> > (sgm_flt, sgm, reconKernel, config.sgmWidth, config.sgmHeight, config.views, config.sliceCount, u, config.detEltSize);
+	}
 
 	cudaDeviceSynchronize();
 }

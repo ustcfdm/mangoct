@@ -70,11 +70,13 @@
   *  3. "Polynomial": an*k^n + ... + a1*k + a0, (n <= 6)
   *  4. "Hilbert": 1 or -1 (phase contrast, 1 or -1 for right or left direction)
   *  5. "Hilbert_angle": temporary test of differential phase contrast along angle direction
+  *  6. "GaussianApodizedRamp": Ramp kernel apodized by a gaussian kernel (exp(-n^2/2/delta^2)), delta is in number of pixels
   */
   //"HammingFilter": 0.5
   //"QuadraticFilter": [ 0.42, 0 ]
   //"Polynomial": [ -15.9236, -2.1540, 3.1106, 2.3872, 1.0000 ]
   //"Hilbert": 1,
+  //"GaussianApodizedGaussian": 1,
 
 
   "Hilbert_angle": 1
