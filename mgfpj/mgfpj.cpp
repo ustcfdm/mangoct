@@ -36,7 +36,7 @@ int main(int argc, char* argv[])
 			fpj.SaveSinogram((outDir / mg::FpjClass::config.outputFiles[i]).string().c_str());
 
 
-			printf("\r    Forward projecting %s\t->\tSaved to file %s\n", mg::FpjClass::config.inputFiles[i].c_str(), mg::FpjClass::config.outputFiles[i].c_str());
+			printf("\b\b\b\t->\tSaved to file %s\n", mg::FpjClass::config.outputFiles[i].c_str());
 		}
 	}
 	return 0;

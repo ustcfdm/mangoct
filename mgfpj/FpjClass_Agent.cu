@@ -109,13 +109,43 @@ __global__ void ForwardProjectionBilinear_device(float* img, float* sgm, const f
 	}
 }
 
+// sgm_large: sinogram data before binning
+// sgm: sinogram data after binning
+// N: number of detector elements (after binning)
+// V: number of views
+// S: number of slices
+// binSize: bin size
+__global__ void BinSinogram(float* sgm_large, float* sgm, int N, int V, int S, int binSize)
+{
+	int col = threadIdx.x + blockDim.x * blockIdx.x;
+	int row = threadIdx.y + blockDim.y * blockIdx.y;
+
+	if (col < N && row < V)
+	{
+		// repeat for each slice
+		for (int slice = 0; slice < S; slice++)
+		{
+			// initialization
+			sgm[row * N + col + N * V * slice] = 0;
+
+			// sum over each bin
+			for (int i = 0; i < binSize; i++)
+			{
+				sgm[row * N + col + N * V * slice] += sgm_large[row * N * binSize + col*binSize + i + slice * N * binSize * V];
+			}
+			// take average
+			sgm[row * N + col + N * V * slice] /= binSize;
+		}
+	}
+}
+
 void InitializeU_Agent(float* &u, const int N, const float du, const float offcenter)
 {
 	if (u != nullptr)
 		cudaFree(u);
 
 	cudaMalloc((void**)&u, N * sizeof(float));
-	InitU << <(N + 511) / 512, 512 >> > (u, N, du, offcenter);
+	InitU <<<(N + 511) / 512, 512 >>> (u, N, du, offcenter);
 }
 
 void InitializeBeta_Agent(float *& beta, const int V, const float startAngle)
@@ -124,15 +154,25 @@ void InitializeBeta_Agent(float *& beta, const int V, const float startAngle)
 		cudaFree(beta);
 
 	cudaMalloc((void**)&beta, V * sizeof(float));
-	InitBeta << < (V + 511) / 512, 512 >> > (beta, V, startAngle);
+	InitBeta <<< (V + 511) / 512, 512 >>> (beta, V, startAngle);
 }
 
 void ForwardProjectionBilinear_Agent(float *& image, float * &sinogram, const float* u, const float* beta, const mango::Config & config)
 {
-	dim3 grid((config.detEltCount + 7) / 8, (config.views + 7) / 8);
+	dim3 grid((config.detEltCount*config.oversampleSize + 7) / 8, (config.views + 7) / 8);
 	dim3 block(8, 8);
 
-	ForwardProjectionBilinear_device<<<grid, block>>>(image, sinogram, u, beta, config.imgDim, config.sliceCount, config.detEltCount, config.views, config.pixelSize, config.sid, config.sdd);
+	ForwardProjectionBilinear_device<<<grid, block>>>(image, sinogram, u, beta, config.imgDim, config.sliceCount, config.detEltCount*config.oversampleSize, config.views, config.pixelSize, config.sid, config.sdd);
+
+	cudaDeviceSynchronize();
+}
+
+void BinSinogram(float* &sinogram_large, float* &sinogram, const mango::Config& config)
+{
+	dim3 grid((config.detEltCount + 7) / 8, (config.views + 7) / 8);
+	dim3 block(8, 8);
+	
+	BinSinogram <<<grid, block >>> (sinogram_large, sinogram, config.detEltCount, config.views, config.sliceCount, config.oversampleSize);
 
 	cudaDeviceSynchronize();
 }

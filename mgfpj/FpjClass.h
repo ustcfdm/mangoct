@@ -20,22 +20,24 @@ namespace mango
 		/*********************************************************
 		* image parameters
 		*********************************************************/
-		unsigned	imgDim;					// number of rows/cols of reconstructed images
-		float		pixelSize;				// image pixel size [mm]
-		unsigned	sliceCount;				// number of slice in each image file
+		int		imgDim;					// number of rows/cols of reconstructed images
+		float	pixelSize;				// image pixel size [mm]
+		int		sliceCount;				// number of slice in each image file
 
 		/*********************************************************
 		* geometry and detector parameters
 		*********************************************************/
-		float		sid;					// source to isocenter distance [mm]
-		float		sdd;					// source to detector distance [mm]
+		float	sid;					// source to isocenter distance [mm]
+		float	sdd;					// source to detector distance [mm]
 
-		float		startAngle = 0;			// angle position of source for the first view [degree]
-		unsigned	detEltCount;			// number of detector elements
-		unsigned	views;					// number of views
+		float	startAngle = 0;			// angle position of source for the first view [degree]
+		int		detEltCount;			// number of detector elements
+		int		views;					// number of views
 
-		float		detEltSize;				// physical size of detector element [mm]
-		float		detOffCenter;			// the position (coordinate) of center of detector
+		float	detEltSize;				// physical size of detector element [mm]
+		float	detOffCenter;			// the position (coordinate) of center of detector
+
+		int		oversampleSize = 1;		// oversample size
 
 	};
 
@@ -54,7 +56,8 @@ namespace mango
 
 	private:
 		float* image = nullptr;
-		float* sinogram = nullptr;
+		float* sinogram_large = nullptr;	// sinogram for oversampling
+		float* sinogram = nullptr;			// sinogram for final output
 
 	public:
 		FpjClass();

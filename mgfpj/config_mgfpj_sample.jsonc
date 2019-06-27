@@ -51,5 +51,8 @@
   // the physical size of detector element size [mm]
   "DetectorElementSize": 0.7,
   // the position (coordinate) of detector center [mm]
-  "DetectorOffcenter": 35
+  "DetectorOffcenter": 35,
+
+  // oversample sinogram by increasing the number of detector elements by the factor of number below
+  "OversampleSize":  2
 }

@@ -129,7 +129,7 @@ void mango::FpjClass::ReadConfigFile(const char * filename)
 
 
 #pragma region image parameters
-	config.imgDim = doc["ImageDimension"].GetUint();
+	config.imgDim = doc["ImageDimension"].GetInt();
 
 	// get pixel size
 	if (doc.HasMember("PixelSize"))
@@ -146,7 +146,7 @@ void mango::FpjClass::ReadConfigFile(const char * filename)
 		exit(1);
 	}
 
-	config.sliceCount = doc["SliceCount"].GetUint();
+	config.sliceCount = doc["SliceCount"].GetInt();
 
 #pragma endregion
 
@@ -159,23 +159,30 @@ void mango::FpjClass::ReadConfigFile(const char * filename)
 	{
 		config.startAngle = doc["StartAngle"].GetFloat();
 	}
-	config.detEltCount = doc["DetectorElementCount"].GetUint();
-	config.views = doc["Views"].GetUint();
+	config.detEltCount = doc["DetectorElementCount"].GetInt();
+	config.views = doc["Views"].GetInt();
 
 	config.detEltSize = doc["DetectorElementSize"].GetFloat();
 	config.detOffCenter = doc["DetectorOffcenter"].GetFloat();
+
+	if (doc.HasMember("OversampleSize"))
+	{
+		config.oversampleSize = doc["OversampleSize"].GetInt();
+	}
 #pragma endregion
 }
 
 void mango::FpjClass::InitParam()
 {
-	InitializeU_Agent(u, config.detEltCount, config.detEltSize, config.detOffCenter);
+	InitializeU_Agent(u, config.detEltCount*config.oversampleSize, config.detEltSize/config.oversampleSize, config.detOffCenter);
 	InitializeBeta_Agent(beta, config.views, config.startAngle);
 
 	cudaDeviceSynchronize();
 
 	MallocManaged_Agent(image, config.imgDim*config.imgDim*config.sliceCount * sizeof(float));
 	MallocManaged_Agent(sinogram, config.detEltCount*config.views*config.sliceCount * sizeof(float));
+	MallocManaged_Agent(sinogram_large, config.detEltCount * config.oversampleSize * config.views * config.sliceCount * sizeof(float));
+
 }
 
 void mango::FpjClass::ReadImageFile(const char * filename)
@@ -205,10 +212,13 @@ void mango::FpjClass::SaveSinogram(const char * filename)
 		exit(4);
 	}
 	fwrite(sinogram, sizeof(float), config.detEltCount * config.views * config.sliceCount, fp);
+
 	fclose(fp);
 }
 
 void mango::FpjClass::ForwardProjectionBilinear()
 {
-	ForwardProjectionBilinear_Agent(image, sinogram, u, beta, config);
+	ForwardProjectionBilinear_Agent(image, sinogram_large, u, beta, config);
+
+	BinSinogram(sinogram_large, sinogram, config);
 }
