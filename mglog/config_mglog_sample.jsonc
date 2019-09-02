@@ -47,6 +47,6 @@
   *********************************************************/
   "DetectorWidth": 5120,
   "DetectorHeight": 64,
-  "OffsetToFirstImage": 2368,
-  "Gap": 64
+  "OffsetToFirstImage": 3456,
+  "Gap": 384
 }
