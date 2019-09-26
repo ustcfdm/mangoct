@@ -308,13 +308,14 @@ __global__ void ConvolveSinogram_device(float* sgm_flt, const float* sgm, float*
 	{
 		for (int slice = 0; slice < S; slice++)
 		{
-			sgm_flt[row*N + col + slice * N*V] = 0;
+			// temporary variable to speed up
+			float sgm_flt_local = 0;
 
 			for (int i = 0; i < N; i++)
 			{
-				sgm_flt[row*N + col + slice * N*V] += sgm[row*N + i + slice * N*H] * reconKernel[N - 1 - col + i];
+				sgm_flt_local += sgm[row*N + i + slice * N*H] * reconKernel[N - 1 - col + i];
 			}
-			sgm_flt[row*N + col + slice * N*V] *= du;
+			sgm_flt[row*N + col + slice * N*V] = sgm_flt_local * du;
 		}
 
 	}
@@ -350,7 +351,9 @@ __global__ void BackprojectPixelDriven_device(float* sgm, float* img, float* u, 
 
 		for (int slice = 0; slice < S; slice++)
 		{
-			img[row*M + col + slice * M*M] = 0;
+
+			// temporary local variable to speed up
+			float img_local = 0;
 
 			for (int view = 0; view < V; view++)
 			{
@@ -360,16 +363,16 @@ __global__ void BackprojectPixelDriven_device(float* sgm, float* img, float* u, 
 				k = floorf((u0 - u[0]) / du);
 				if (k<0 || k + 1>N - 1)
 				{
-					img[row*M + col + slice * M*M] = 0;
+					img_local = 0;
 					break;
 				}
 
 				w = (u0 - u[k]) / du;
 
-				img[row*M + col + slice * M*M] += sid / U / U * (w*sgm[view*N + k + 1 + slice * N*V] + (1 - w)*sgm[view*N + k + slice * N*V]);
+				img_local += sid / U / U * (w*sgm[view*N + k + 1 + slice * N*V] + (1 - w)*sgm[view*N + k + slice * N*V]);
 
 			}
-			img[row*M + col + slice * M*M] *= PI / V;
+			img[row*M + col + slice * M*M] = img_local * PI / V;
 		}
 	}
 }
