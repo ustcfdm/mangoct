@@ -229,6 +229,11 @@ void mango::FbpClass::ReadConfigFile(const char * filename)
 			config.kernelParam.push_back(doc["Polynomial"][i].GetFloat());
 		}
 	}
+	else if (doc.HasMember("Delta"))
+	{
+		config.kernelName = "Delta";
+		config.kernelParam.push_back(doc["Delta"].GetFloat());
+	}
 	else if (doc.HasMember("Hilbert"))
 	{
 		config.kernelName = "Hilbert";

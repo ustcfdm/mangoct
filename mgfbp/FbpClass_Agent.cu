@@ -45,6 +45,21 @@ __global__ void InitReconKernel_Hamming(float* reconKernel, const int N, const f
 	}
 }
 
+__global__ void InitReconKernel_Delta(float* reconKernel, const int N, const float du, const float t)
+{
+	int tid = threadIdx.x + blockDim.x * blockIdx.x;
+	if (tid < 2 * N - 1)
+	{
+		// the center element index is N-1
+		int n = tid - (N - 1);
+
+		if (n == 0)
+			reconKernel[tid] = t;
+		else
+			reconKernel[tid] = 0;
+	}
+}
+
 __global__ void InitReconKernel_Quadratic(float* reconKernel, const int N, const float du, const int paramNum, const float p1, const float p2, const float p3)
 {
 	int idx = threadIdx.x + blockDim.x * blockIdx.x;
@@ -443,6 +458,10 @@ void InitializeReconKernel_Agent(float* &reconKernel, const int N, const float d
 	if (kernelName == "HammingFilter")
 	{
 		InitReconKernel_Hamming <<<(2 * N - 1 + 511) / 512, 512>>> (reconKernel, N, du, kernelParam[0]);
+	}
+	if (kernelName == "Delta")
+	{
+		InitReconKernel_Delta <<<(2 * N - 1 + 511) / 512, 512 >>> (reconKernel, N, du, kernelParam[0]);
 	}
 	else if (kernelName == "QuadraticFilter")
 	{

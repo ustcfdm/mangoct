@@ -23,7 +23,7 @@
 	*********************************************************/
 
   // number of detector elements
-  "SinogramWidth": 732,
+  "SinogramWidth": 1280,
   // number of frames
   "SinogramHeight": 1510,
   // number of views for reconstruction
@@ -32,9 +32,9 @@
   "SliceCount": 1,
 
   // the physical size of detector element size [mm]
-  "DetectorElementSize": 0.7,
+  "DetectorElementSize": 0.4,
   // the position (coordinate) of detector center [mm]
-  "DetectorOffcenter": 32.5,
+  "DetectorOffcenter": 0,
 
   // source to isocenter distance [mm]
   "SourceIsocenterDistance": 539,
@@ -54,28 +54,24 @@
   /* pixel size or image size, just use one of them */
 
   // image pixel size [mm]
-  "PixelSize": 0.43,
+  // "PixelSize": 0.43,
 
   // image size [mm]
-  // "ImageSize": 10,
+  "ImageSize": 200,
 
   // rotate the image (positive counterclockwise) [degree]
-  "ImageRotation": 120,
+  "ImageRotation": 0,
   // image center [x(mm), y(mm)]
-  "ImageCenter": [ -17, -3.5 ],
+  "ImageCenter": [0, 0],
 
   /* reconstruction kernel, avaliable list:
   *  1. "HammingFilter": t + (1-t)*cos(pi*k/ 2*kn), 1 for ramp kernel, 0 for consine kernel, others are in-between
   *  2. "QuadraticFilter": (for bone-plus kernel) tow parameters for t and h, three parameters for a, b, c
   *  3. "Polynomial": an*k^n + ... + a1*k + a0, (n <= 6)
+  *     (For Bone plus kernel: [ -15.9236, -2.1540, 3.1106, 2.3872, 1.0000 ], rebin detector element to 0.7 mm
   *  4. "Hilbert": 1 or -1 (phase contrast, 1 or -1 for right or left direction)
   *  5. "Hilbert_angle": temporary test of differential phase contrast along angle direction
+  *  6. "Delta": x (x is a number), convolve with a Delta function, the value is x
   */
-  //"HammingFilter": 0.5
-  //"QuadraticFilter": [ 0.42, 0 ]
-  //"Polynomial": [ -15.9236, -2.1540, 3.1106, 2.3872, 1.0000 ]
-  //"Hilbert": 1,
-
-
-  "Hilbert_angle": 1
+  "Delta": 1
 }
