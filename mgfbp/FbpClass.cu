@@ -111,7 +111,7 @@ void mango::FbpClass::ReadConfigFile(const char * filename)
 	}
 	if (!fs::exists(outDir))
 	{
-		fprintf(stderr, "Output directory %s does not exist!\n", config.inputDir.c_str());
+		fprintf(stderr, "Output directory %s does not exist!\n", config.outputDir.c_str());
 		exit(1);
 	}
 
