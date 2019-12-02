@@ -71,7 +71,9 @@
   *     (For Bone plus kernel: [ -15.9236, -2.1540, 3.1106, 2.3872, 1.0000 ], rebin detector element to 0.7 mm
   *  4. "Hilbert": 1 or -1 (phase contrast, 1 or -1 for right or left direction)
   *  5. "Hilbert_angle": temporary test of differential phase contrast along angle direction
-  *  6. "Delta": x (x is a number), convolve with a Delta function, the value is x
+  *  6.  "GaussianApodizedRamp": delta (delta=8 match MDCT), Ramp kernel apodized by a gaussian kernel (exp(-n^2/2/delta^2)), delta is in number of pixels
+  *  7. "Delta": x (x is a number), convolve with a Delta function, the value is x
   */
-  "Delta": 1
+
+  "GaussianApodizedRamp": 8
 }
