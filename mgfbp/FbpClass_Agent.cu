@@ -569,25 +569,30 @@ void FilterSinogram_Agent(float * sgm, float* sgm_flt, float* reconKernel, float
 		float du = config.detEltSize;
 		float * reconKernel_ramp;
 		cudaMalloc((void**)&reconKernel_ramp, (2 * config.sgmWidth - 1)*sizeof(float));
-		InitReconKernel_Hamming << <(2 * config.sgmWidth - 1 + 511) / 512, 512 >> > (reconKernel_ramp, config.sgmWidth, du, 1);
+		InitReconKernel_Hamming <<<(2 * config.sgmWidth - 1 + 511) / 512, 512 >>> (reconKernel_ramp, config.sgmWidth, du, 1);
 
 		cudaDeviceSynchronize();
 
 		//intermidiate filtration result is saved in sgm_flt_ramp
 		float *sgm_flt_ramp;
-		MallocManaged_Agent(sgm_flt_ramp, config.sgmWidth*config.views*config.sliceCount * sizeof(float));
+		//MallocManaged_Agent(sgm_flt_ramp, config.sgmWidth*config.views*config.sliceCount * sizeof(float));
+		cudaMalloc((void**)& sgm_flt_ramp, config.sgmWidth * config.views * config.sliceCount * sizeof(float));
 		
-		ConvolveSinogram_device << <grid, block >> > (sgm_flt_ramp, sgm, reconKernel_ramp, config.sgmWidth, config.sgmHeight, config.views, config.sliceCount, u, config.detEltSize);
+		ConvolveSinogram_device <<<grid, block >>> (sgm_flt_ramp, sgm, reconKernel_ramp, config.sgmWidth, config.sgmHeight, config.views, config.sliceCount, u, config.detEltSize);
 		cudaDeviceSynchronize();
 		//the height of the filtered sinogram shrinks to number of views, so the convolution parameters need to be adjusted accordingly
-		ConvolveSinogram_device << <grid, block >> > (sgm_flt, sgm_flt_ramp, reconKernel, config.sgmWidth, config.views, config.views, config.sliceCount, u, config.detEltSize);
+		ConvolveSinogram_device <<<grid, block >>> (sgm_flt, sgm_flt_ramp, reconKernel, config.sgmWidth, config.views, config.views, config.sliceCount, u, config.detEltSize);
+		cudaDeviceSynchronize();
+
+		// free temporary memory
+		cudaFree(reconKernel_ramp);
+		cudaFree(sgm_flt_ramp);
 	}
 	else
 	{
-		ConvolveSinogram_device << <grid, block >> > (sgm_flt, sgm, reconKernel, config.sgmWidth, config.sgmHeight, config.views, config.sliceCount, u, config.detEltSize);
+		ConvolveSinogram_device <<<grid, block>>> (sgm_flt, sgm, reconKernel, config.sgmWidth, config.sgmHeight, config.views, config.sliceCount, u, config.detEltSize);
+		cudaDeviceSynchronize();
 	}
-
-	cudaDeviceSynchronize();
 }
 
 void BackprojectPixelDriven_Agent(float * sgm_flt, float * img, float * u, float* beta, mango::Config & config)
