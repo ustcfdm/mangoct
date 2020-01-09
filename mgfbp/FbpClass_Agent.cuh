@@ -22,7 +22,8 @@ void InitializeU_Agent(float* &u, const int N, const float du, const float offce
 // beta: array of view angles [radius]
 // V: number of views
 // rotation: rotate the reconstructed image [degree]
-void InitializeBeta_Agent(float* &beta, const int V, const float rotation);
+// totalScanAngle: total scan angle for short scan [degree]
+void InitializeBeta_Agent(float* &beta, const int V, const float rotation, const float totalScanAngle);
 
 // Initialize reconstruction kernel
 // reconKernel: array of reconstruction kernel

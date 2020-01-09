@@ -146,6 +146,11 @@ void mango::FbpClass::ReadConfigFile(const char * filename)
 	config.views = doc["Views"].GetUint();
 	config.sliceCount = doc["SliceCount"].GetUint();
 
+	if (doc.HasMember("TotalScanAngle"))
+		config.totalScanAngle = doc["TotalScanAngle"].GetFloat();
+	else
+		config.totalScanAngle = 360.0f;
+
 	config.detEltSize = doc["DetectorElementSize"].GetFloat();
 	config.detOffCenter = doc["DetectorOffcenter"].GetFloat();
 
@@ -261,7 +266,7 @@ void mango::FbpClass::InitParam()
 {
 	InitializeU_Agent(u, config.sgmWidth, config.detEltSize, config.detOffCenter);
 
-	InitializeBeta_Agent(beta, config.views, config.imgRot);
+	InitializeBeta_Agent(beta, config.views, config.imgRot, config.totalScanAngle);
 
 	InitializeReconKernel_Agent(reconKernel, config.sgmWidth, config.detEltSize, config.kernelName, config.kernelParam);
 

@@ -24,6 +24,8 @@ namespace mango
 		unsigned	views;					// number of views for reconstruction
 		unsigned	sliceCount;				// number of slice in each sinogram file
 
+		float		totalScanAngle;			// total scan angle for short scan
+
 		float		detEltSize;				// physical size of detector element [mm]
 		float		detOffCenter;			// the position (coordinate) of center of detector
 
