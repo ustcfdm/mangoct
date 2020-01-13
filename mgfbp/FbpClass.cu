@@ -6,6 +6,7 @@
 
 mango::Config mango::FbpClass::config;
 float* mango::FbpClass::u = nullptr;
+float* mango::FbpClass::v = nullptr;
 float* mango::FbpClass::beta = nullptr;
 float* mango::FbpClass::reconKernel = nullptr;
 
@@ -157,6 +158,17 @@ void mango::FbpClass::ReadConfigFile(const char * filename)
 	config.sid = doc["SourceIsocenterDistance"].GetFloat();
 	config.sdd = doc["SourceDetectorDistance"].GetFloat();
 
+	// for cone beam reconstruction
+	if (doc.HasMember("SliceThickness"))
+		config.sliceThickness = doc["SliceThickness"].GetFloat();
+	else
+		config.sliceThickness = 1;
+
+	if (doc.HasMember("SliceOffCenter"))
+		config.sliceOffcenter = doc["SliceOffCenter"].GetFloat();
+	else
+		config.sliceOffcenter = 0;
+
 	// ========================================================================================
 	// reconstruction parameters
 	// ========================================================================================
@@ -179,6 +191,15 @@ void mango::FbpClass::ReadConfigFile(const char * filename)
 		config.doBeamHardeningCorr = true;
 	}
 
+	if (doc.HasMember("ConeBeam"))
+		config.coneBeam = doc["ConeBeam"].GetBool();
+	else
+		config.coneBeam = false; 
+
+	if (config.coneBeam)
+		printf("This is a CONE beam reconstruction ...\n");
+	else
+		printf("This is a FAN beam reconstruction ...\n");
 
 	config.imgDim = doc["ImageDimension"].GetUint();
 
@@ -201,6 +222,28 @@ void mango::FbpClass::ReadConfigFile(const char * filename)
 
 	config.xCenter = doc["ImageCenter"][0].GetFloat();
 	config.yCenter = doc["ImageCenter"][1].GetFloat();
+
+	// for cone beam reconstruction
+	if (doc.HasMember("ImageSliceThickness") && config.coneBeam)
+		config.imgSliceThickness = doc["ImageSliceThickness"].GetFloat();
+	else
+		config.imgSliceThickness = config.sliceThickness; 
+
+	if (doc.HasMember("ImageSliceCount") && config.coneBeam)
+	{
+		config.imgSliceCount = doc["ImageSliceCount"].GetUint();
+	}	
+	else
+	{
+		config.imgSliceCount = config.sliceCount;
+	}
+		
+	
+	if (doc.HasMember("ImageCenterZ") && config.coneBeam)
+		config.zCenter = doc["ImageCenterZ"].GetFloat();
+	else
+		config.zCenter = config.sliceOffcenter;
+
 
 	// reconstruction kernel
 	if (doc.HasMember("HammingFilter"))
@@ -266,6 +309,8 @@ void mango::FbpClass::InitParam()
 {
 	InitializeU_Agent(u, config.sgmWidth, config.detEltSize, config.detOffCenter);
 
+	InitializeU_Agent(v, config.sliceCount, config.sliceThickness, config.sliceOffcenter);
+
 	InitializeBeta_Agent(beta, config.views, config.imgRot, config.totalScanAngle);
 
 	InitializeReconKernel_Agent(reconKernel, config.sgmWidth, config.detEltSize, config.kernelName, config.kernelParam);
@@ -274,7 +319,7 @@ void mango::FbpClass::InitParam()
 
 	MallocManaged_Agent(sinogram, config.sgmWidth*config.sgmHeight*config.sliceCount * sizeof(float));
 	MallocManaged_Agent(sinogram_filter, config.sgmWidth*config.views*config.sliceCount * sizeof(float));
-	MallocManaged_Agent(image, config.imgDim*config.imgDim*config.sliceCount * sizeof(float));
+	MallocManaged_Agent(image, config.imgDim*config.imgDim*config.imgSliceCount * sizeof(float));
 }
 
 void mango::FbpClass::ReadSinogramFile(const char * filename)
@@ -322,7 +367,7 @@ void mango::FbpClass::SaveImage(const char * filename)
 		fprintf(stderr, "Cannot save to file %s!\n", filename);
 		exit(4);
 	}
-	fwrite(image, sizeof(float), config.imgDim * config.imgDim * config.sliceCount, fp);
+	fwrite(image, sizeof(float), config.imgDim * config.imgDim * config.imgSliceCount, fp);
 	fclose(fp);
 }
 
@@ -333,5 +378,5 @@ void mango::FbpClass::FilterSinogram()
 
 void mango::FbpClass::BackprojectPixelDriven()
 {
-	BackprojectPixelDriven_Agent(sinogram_filter, image, u, beta, config);
+	BackprojectPixelDriven_Agent(sinogram_filter, image, u, v, beta, config);
 }

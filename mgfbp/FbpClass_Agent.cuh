@@ -41,4 +41,4 @@ void CorrectBeamHardening_Agent(float* sgm, mango::Config & config);
 void FilterSinogram_Agent(float* sgm, float* sgm_flt, float* reconKernel, float* u, mango::Config& config);
 
 // Backproject the image using pixel-driven method
-void BackprojectPixelDriven_Agent(float* sgm_flt, float* img, float* u, float* beta, mango::Config& config);
+void BackprojectPixelDriven_Agent(float* sgm_flt, float* img, float* u, float *v, float* beta, mango::Config& config);

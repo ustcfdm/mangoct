@@ -33,6 +33,7 @@ namespace mango
 		float	startAngle = 0;			// angle position of source for the first view [degree]
 		int		detEltCount;			// number of detector elements
 		int		views;					// number of views
+		float	totalScanAngle;			// total scan angle for short scan [degree]
 
 		float	detEltSize;				// physical size of detector element [mm]
 		float	detOffCenter;			// the position (coordinate) of center of detector

@@ -30,9 +30,14 @@
   "Views": 1501,
   // number of slices in each sinogram file
   "SliceCount": 1,
+  // (optional) slice thickness for cone beam reconstruction [mm]
+  "SliceThinkness": 6,
+  // (optional) slice offcenter distance [mm]
+  "SliceOffCenter": 0,
+
   //(optional) total scan angle for short scan. Set scan angle to negtive to change rotation direction
-  "TotalScanAngle": 360,
-  
+  "TotalScanAngle": 300,
+
   // the physical size of detector element size [mm]
   "DetectorElementSize": 0.4,
   // the position (coordinate) of detector center [mm]
@@ -50,6 +55,8 @@
   // Beam hardening correction (optional), support 10 parameters [s = p0 + p1*s + p2*s^2 + p3*s^3 + ...]
   //"BeamHardeningCorrection": [ 0, 1, 2, 3, 4, 5 ],
 
+  "ConeBeam":  false,
+
   // image dimension (integer)
   "ImageDimension": 512,
 
@@ -60,6 +67,13 @@
 
   // image size [mm]
   "ImageSize": 200,
+
+  // (optional) recon image slice thickness [mm]
+  "ImageSliceThickness": 2,
+  // (optional) recon image slice count
+  "ImageSliceCount": 2,
+  // (optional) recon image slice center in Z direction [mm]
+  "ImageCenterZ":  0,
 
   // rotate the image (positive counterclockwise) [degree]
   "ImageRotation": 0,
@@ -73,7 +87,7 @@
   *     (For Bone plus kernel: [ -15.9236, -2.1540, 3.1106, 2.3872, 1.0000 ], rebin detector element to 0.7 mm
   *  4. "Hilbert": 1 or -1 (phase contrast, 1 or -1 for right or left direction)
   *  5. "Hilbert_angle": temporary test of differential phase contrast along angle direction
-  *  6. "GaussianApodizedRamp": delta (delta=1 match MDCT if sinogram pixel size 0.4 mm), Ramp kernel apodized by a gaussian kernel (exp(-n^2/2/delta^2)), delta is in number of pixels
+  *  6.  "GaussianApodizedRamp": delta (delta=1 match MDCT if sinogram pixel size 0.4 mm), Ramp kernel apodized by a gaussian kernel (exp(-n^2/2/delta^2)), delta is in number of pixels
   *  7. "Delta": x (x is a number), convolve with a Delta function, the value is x
   */
 

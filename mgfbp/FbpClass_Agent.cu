@@ -238,9 +238,11 @@ __global__ void InitReconKernel_Hilbert(float* reconKernel, const int N, const f
 // H: height
 // V: views
 // S: slice
+// sliceThickness: mm
+// sliceOffcenter: mm
 // sdd: source to detector distance
 // totalScanAngle
-__global__ void WeightSinogram_device(float* sgm, const float* u, const int N, const int H, const int V, const int S, float sdd, float totalScanAngle)
+__global__ void WeightSinogram_device(float* sgm, const float* u, const int N, const int H, const int V, const int S, const float sliceThickness, const float sliceOffcenter, float sdd, float totalScanAngle)
 {
 	int col = threadIdx.x + blockDim.x * blockIdx.x;
 	int row = threadIdx.y + blockDim.y * blockIdx.y;
@@ -249,15 +251,17 @@ __global__ void WeightSinogram_device(float* sgm, const float* u, const int N, c
 	{
 		for (int i = 0; i < S; i++)
 		{
-			sgm[row*N + col + i * N*H] *= sdd * sdd / sqrtf(u[col] * u[col] + sdd * sdd);
+			float v = sliceThickness * (i - (float(S) / 2.0f + 0.5)) + sliceOffcenter;
+			sgm[row*N + col + i * N*H] *= sdd * sdd / sqrtf(u[col] * u[col] + sdd * sdd + v * v);
 			//the loop is to include all the slices since there may be more than one slice
 		}
 
 		if (360.0f - abs(totalScanAngle) > 0.001f)
 		{
-			float beta = (totalScanAngle/ 180.0f * PI ) / float(V) * float(row) ;
-			float gamma =  atan(u[col] / sdd);
-			float gamma_max = totalScanAngle * PI / 180.0f - PI;
+			//adding abs function to deal with the case when totalScanAngle is negative
+			float beta = abs(totalScanAngle/ 180.0f * PI ) / float(V) * float(row) ;
+			float gamma = abs(totalScanAngle) / totalScanAngle * atan(u[col] / sdd);
+			float gamma_max = abs(totalScanAngle) * PI / 180.0f - PI;
 
 			//calculation of the parker weighting
 			float weighting = 0;
@@ -391,18 +395,24 @@ __global__ void ConvolveSinogram_device(float* sgm_flt, const float* sgm, float*
 // sgm: sinogram data
 // img: image data
 // U: each detector element position [mm]
+// u: detector pixel array
+// v: detector pixel array in z axis
 // beta: view angle [radius]
 // N: number of detector elements
 // V: number of views
 // totalScanAngle: degrees
 // S: number of slices
+// coneBeam: whether the recon is conbeam recon or not
 // M: image dimension
+// imgS: image slice count
 // sdd: source to detector distance [mm]
 // sid: source to isocenter distance [mm]
 // du: detector element size [mm]
+// dv: detector element height [mm]
 // dx: image pixel size [mm]
-// (xc, yc): image center position [mm, mm]
-__global__ void BackprojectPixelDriven_device(float* sgm, float* img, float* u, float* beta, const int N, const int V, const float totalScanAngle, const int S, const int M, const float sdd, const float sid, const float du, const float dx, const float xc, const float yc)
+// dz: image slice thickness [mm]
+// (xc, yc, zc): image center position [mm, mm, mm]
+__global__ void BackprojectPixelDriven_device(float* sgm, float* img, float* u, float* v, float* beta, const int N, const int V, const float totalScanAngle, const int S,bool coneBeam, const int M, const int imgS, const float sdd, const float sid, const float du, const float dv, const float dx, const float dz, const float xc, const float yc, const float zc)
 {
 	int col = threadIdx.x + blockDim.x * blockIdx.x;
 	int row = threadIdx.y + blockDim.y * blockIdx.y;
@@ -412,21 +422,37 @@ __global__ void BackprojectPixelDriven_device(float* sgm, float* img, float* u, 
 		float x = (col - (M - 1) / 2.0f)*dx + xc;
 		float y = ((M - 1) / 2.0f - row)*dx + yc;
 
-		float U, u0;
+		float z; 
+
+		float U, u0, v0;
+		float mag_factor;
 		float w;
 		int k;
 
-		for (int slice = 0; slice < S; slice++)
+		float w_z;//weight for cbct
+		int k_z;//index for cbct
+
+		float lower_row_val, upper_row_val;
+
+		for (int slice = 0; slice < imgS; slice++)
 		{
+
+			z = (slice - (float(imgS) - 1.0f) / 2.0f) * dz + zc;
 
 			// temporary local variable to speed up
 			float img_local = 0;
 
 			for (int view = 0; view < V; view++)
 			{
-				U = sid - x * cosf(beta[view]) - y * sinf(beta[view]);
-				u0 = sdd * (x*sinf(beta[view]) - y * cosf(beta[view])) / U;
+				U = sid - x * cosf(beta[view]) - y * sinf(beta[view]) ;
 
+				//calculate the magnification
+				mag_factor = sdd / U;
+
+				// find u0 
+				u0 = mag_factor * (x*sinf(beta[view]) - y * cosf(beta[view])) ;
+				
+				
 				k = floorf((u0 - u[0]) / du);
 				if (k<0 || k + 1>N - 1)
 				{
@@ -436,15 +462,37 @@ __global__ void BackprojectPixelDriven_device(float* sgm, float* img, float* u, 
 
 				w = (u0 - u[k]) / du;
 
-				img_local += sid / U / U * (w*sgm[view*N + k + 1 + slice * N*V] + (1 - w)*sgm[view*N + k + slice * N*V]);
+				// for cone beam ct, we also need to find v0
+				if (coneBeam)
+				{
+					v0 = mag_factor * z;
+					// weight for cbct recon
+					k_z = floorf((v0 - v[0]) / dv);
+					if (k_z<0 || k_z + 1>S - 1)
+					{
+						img_local = 0;
+						break;
+					}
 
+					w_z = (v0 - v[k_z]) / dv;
+
+					lower_row_val = (w*sgm[view*N + k + 1 + k_z * N*V] + (1 - w)*sgm[view*N + k + k_z * N*V]);
+					upper_row_val = (w*sgm[view*N + k + 1 + (k_z + 1) * N*V] + (1 - w)*sgm[view*N + k + (k_z + 1) * N*V]);
+
+					img_local += sid / U / U * (w_z*upper_row_val + (1 - w_z)*lower_row_val);
+				}
+					
+				else
+				{
+					img_local += sid / U / U * (w*sgm[view*N + k + 1 + slice * N*V] + (1 - w)*sgm[view*N + k + slice * N*V]);
+				}
 			}
 
 			//judge whether the scan is a full scan or a short scan
 			if (360.0f - abs(totalScanAngle) < 0.001f)
 				img[row*M + col + slice * M*M] = img_local * PI / V;
 			else
-				img[row*M + col + slice * M*M] = img_local * totalScanAngle / 180.0f * PI / V;
+				img[row*M + col + slice * M*M] = img_local * abs(totalScanAngle) / 180.0f * PI / V;
 
 			
 		}
@@ -605,7 +653,7 @@ void FilterSinogram_Agent(float * sgm, float* sgm_flt, float* reconKernel, float
 	}
 	// Common attenuation imaging
 	else
-		WeightSinogram_device <<<grid, block >> > (sgm, u, config.sgmWidth, config.sgmHeight, config.views, config.sliceCount, config.sdd, config.totalScanAngle);
+		WeightSinogram_device <<<grid, block >> > (sgm, u, config.sgmWidth, config.sgmHeight, config.views, config.sliceCount, config.sliceThickness, config.sliceOffcenter, config.sdd, config.totalScanAngle);
 	
 	cudaDeviceSynchronize();
 
@@ -643,7 +691,7 @@ void FilterSinogram_Agent(float * sgm, float* sgm_flt, float* reconKernel, float
 	}
 }
 
-void BackprojectPixelDriven_Agent(float * sgm_flt, float * img, float * u, float* beta, mango::Config & config)
+void BackprojectPixelDriven_Agent(float * sgm_flt, float * img, float * u, float *v, float* beta, mango::Config & config)
 {
 	dim3 grid((config.imgDim + 15) / 16, (config.imgDim + 15) / 16);
 	dim3 block(16, 16);
@@ -656,7 +704,7 @@ void BackprojectPixelDriven_Agent(float * sgm_flt, float * img, float * u, float
 	// Common attenuation imaging
 	else
 	{
-		BackprojectPixelDriven_device <<<grid, block>>> (sgm_flt, img, u, beta, config.sgmWidth, config.views, config.totalScanAngle, config.sliceCount, config.imgDim, config.sdd, config.sid, config.detEltSize, config.pixelSize, config.xCenter, config.yCenter);
+		BackprojectPixelDriven_device <<<grid, block>>> (sgm_flt, img, u, v, beta, config.sgmWidth, config.views, config.totalScanAngle, config.sliceCount,config.coneBeam, config.imgDim, config.imgSliceCount, config.sdd, config.sid, config.detEltSize,config.sliceThickness, config.pixelSize,config.imgSliceThickness, config.xCenter, config.yCenter,config.zCenter);
 	}
 
 	cudaDeviceSynchronize();

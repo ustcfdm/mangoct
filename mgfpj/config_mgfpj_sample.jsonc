@@ -47,6 +47,8 @@
   "DetectorElementCount": 854,
   // number of views for reconstruction
   "Views": 1501,
+  // (optional) total scan angle for short scan. Set scan angle to negtive to change rotation direction
+  "TotalScanAngle": 300,
 
   // the physical size of detector element size [mm]
   "DetectorElementSize": 0.7,
@@ -54,5 +56,5 @@
   "DetectorOffcenter": 35,
 
   // oversample sinogram by increasing the number of detector elements by the factor of number below
-  "OversampleSize":  2
+  "OversampleSize": 2
 }
