@@ -1,6 +1,6 @@
 #include "FpjClass_Agent.cuh"
 #include <stdio.h>
-
+#include "stdafx.h"
 
 #define PI 3.1415926536f
 #define STEPSIZE 0.2f
@@ -155,6 +155,51 @@ void InitializeBeta_Agent(float *& beta, const int V, const float startAngle, co
 
 	cudaMalloc((void**)&beta, V * sizeof(float));
 	InitBeta <<< (V + 511) / 512, 512 >>> (beta, V, startAngle, totalScanAngle);
+}
+
+void InitializeNonuniformBeta_Agent(float* &beta, const int V, const float rotation, const std::string& scanAngleFile)
+{
+	namespace fs = std::experimental::filesystem;
+	namespace js = rapidjson;
+
+	if (beta != nullptr)
+		cudaFree(beta);
+
+	cudaMallocManaged((void**)&beta, V * sizeof(float));
+	std::ifstream ifs(scanAngleFile);
+	if (!ifs)
+	{
+		printf("Cannot find angle information file '%s'!\n", scanAngleFile);
+		exit(-2);
+	}
+	rapidjson::IStreamWrapper isw(ifs);
+	rapidjson::Document doc;
+	doc.ParseStream<js::kParseCommentsFlag | js::kParseTrailingCommasFlag>(isw);
+	js::Value scan_angle_jsonc_value;
+	if (doc.HasMember("ScanAngle"))
+	{
+
+		scan_angle_jsonc_value = doc["ScanAngle"];
+
+		if (scan_angle_jsonc_value.Size() != V)
+		{
+			printf("Number of scan angles in the file does not equal to the number of views!\n");
+			exit(-2);
+		}
+
+		for (unsigned i = 0; i < scan_angle_jsonc_value.Size(); i++)
+		{
+			beta[i] = rotation / 180.0f*PI + scan_angle_jsonc_value[i].GetFloat() / 180.0*PI;
+		}
+
+	}
+	else
+	{
+		printf("Did not find ScanAngle member in jsonc file!\n");
+		exit(-2);
+	}
+
+	cudaDeviceSynchronize();
 }
 
 void ForwardProjectionBilinear_Agent(float *& image, float * &sinogram, const float* u, const float* beta, const mango::Config & config)

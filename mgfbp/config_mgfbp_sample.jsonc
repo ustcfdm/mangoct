@@ -37,6 +37,9 @@
 
   //(optional) total scan angle for short scan. Set scan angle to negtive to change rotation direction
   "TotalScanAngle": 300,
+  //(optional) scan angle array for nonuniform scan angles
+  // Scan angles are saved in an external jason file
+  "ScanAngleFile": "scan_angle.jsonc",
 
   // the physical size of detector element size [mm]
   "DetectorElementSize": 0.4,
@@ -55,7 +58,7 @@
   // Beam hardening correction (optional), support 10 parameters [s = p0 + p1*s + p2*s^2 + p3*s^3 + ...]
   //"BeamHardeningCorrection": [ 0, 1, 2, 3, 4, 5 ],
 
-  "ConeBeam":  false,
+  "ConeBeam": false,
 
   // image dimension (integer)
   "ImageDimension": 512,
@@ -73,7 +76,7 @@
   // (optional) recon image slice count
   "ImageSliceCount": 2,
   // (optional) recon image slice center in Z direction [mm]
-  "ImageCenterZ":  0,
+  "ImageCenterZ": 0,
 
   // rotate the image (positive counterclockwise) [degree]
   "ImageRotation": 0,

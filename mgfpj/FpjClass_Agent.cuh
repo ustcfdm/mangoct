@@ -17,6 +17,13 @@ void InitializeU_Agent(float* &u, const int N, const float du, const float offce
 // V: number of views
 void InitializeBeta_Agent(float* &beta, const int V, const float startAngle, const float totalScanAngle);
 
+// Initialize beta from an external jsonc file
+// The purpose is for non uniform beta distribution
+// V: number of views
+// rotation: rotate the reconstructed image [degree]
+// scanAngleFile: name of the jsonc file to save the angles 
+void InitializeNonuniformBeta_Agent(float* &beta, const int V, const float rotation, const std::string& scanAngleFile);
+
 // Forward projection, using bilinear interpolation
 void ForwardProjectionBilinear_Agent(float* &image, float* &sinogram, const float* u, const float* beta, const mango::Config& config);
 

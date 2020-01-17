@@ -169,6 +169,17 @@ void mango::FbpClass::ReadConfigFile(const char * filename)
 	else
 		config.sliceOffcenter = 0;
 
+	// scan angle file info for nonuniform scan angles
+	if (doc.HasMember("ScanAngleFile"))
+	{
+		config.nonuniformScanAngle = true;
+		config.scanAngleFile = doc["ScanAngleFile"].GetString();
+	}
+	else
+	{
+		config.nonuniformScanAngle = false;
+	}
+
 	// ========================================================================================
 	// reconstruction parameters
 	// ========================================================================================
@@ -311,7 +322,18 @@ void mango::FbpClass::InitParam()
 
 	InitializeU_Agent(v, config.sliceCount, config.sliceThickness, config.sliceOffcenter);
 
-	InitializeBeta_Agent(beta, config.views, config.imgRot, config.totalScanAngle);
+	if (config.nonuniformScanAngle == true)
+	{
+		InitializeNonuniformBeta_Agent(beta, config.views, config.imgRot, config.scanAngleFile);
+		config.totalScanAngle = (beta[config.views - 1] - beta[0] + beta[1] - beta[0]) / 3.1415926f * 180;
+	}
+	else
+	{
+		InitializeBeta_Agent(beta, config.views, config.imgRot, config.totalScanAngle);
+	}
+	
+
+
 
 	InitializeReconKernel_Agent(reconKernel, config.sgmWidth, config.detEltSize, config.kernelName, config.kernelParam);
 

@@ -27,6 +27,8 @@ namespace mango
 		float		sliceOffcenter = 0;		//slice offcenter distance for cone beam recon [mm]
 
 		float		totalScanAngle;			// total scan angle for short scan
+		bool		nonuniformScanAngle;	// whether the scan angles are nonuniform
+		std::string		scanAngleFile;		// name of the jsonc file to save the scan angle information
 
 		float		detEltSize;				// physical size of detector element [mm]
 		float		detOffCenter;			// the position (coordinate) of center of detector

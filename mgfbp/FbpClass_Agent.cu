@@ -1,6 +1,6 @@
 #include "FbpClass_Agent.cuh"
 #include <stdio.h>
-
+#include "stdafx.h"
 #define PI 3.1415926536f
 
 __global__ void InitU(float* u, const int N, const float du, const float offcenter)
@@ -412,10 +412,15 @@ __global__ void ConvolveSinogram_device(float* sgm_flt, const float* sgm, float*
 // dx: image pixel size [mm]
 // dz: image slice thickness [mm]
 // (xc, yc, zc): image center position [mm, mm, mm]
-__global__ void BackprojectPixelDriven_device(float* sgm, float* img, float* u, float* v, float* beta, const int N, const int V, const float totalScanAngle, const int S,bool coneBeam, const int M, const int imgS, const float sdd, const float sid, const float du, const float dv, const float dx, const float dz, const float xc, const float yc, const float zc)
+__global__ void BackprojectPixelDriven_device(float* sgm, float* img, float* u, float* v, float* beta, const int N, const int V, const int S,bool coneBeam, const int M, const int imgS, const float sdd, const float sid, const float dx, const float dz, const float xc, const float yc, const float zc)
 {
 	int col = threadIdx.x + blockDim.x * blockIdx.x;
 	int row = threadIdx.y + blockDim.y * blockIdx.y;
+
+	float totalScanAngle = beta[V - 1] - beta[0];
+	float du = u[1] - u[0];
+	float dv = v[1] - v[0];
+
 
 	if (col < M && row < M)
 	{
@@ -431,6 +436,7 @@ __global__ void BackprojectPixelDriven_device(float* sgm, float* img, float* u, 
 
 		float w_z;//weight for cbct
 		int k_z;//index for cbct
+		float delta_beta;// delta_beta for the integral calculation (nonuniform scan angle)
 
 		float lower_row_val, upper_row_val;
 
@@ -444,6 +450,15 @@ __global__ void BackprojectPixelDriven_device(float* sgm, float* img, float* u, 
 
 			for (int view = 0; view < V; view++)
 			{
+				//calculation of delta_beta for the integral calculation
+
+				if (view == 0)
+					delta_beta = abs( beta[1] - beta[0]);
+				else if (view == V - 1)
+					delta_beta = abs(beta[view] - beta[view - 1]);
+				else
+					delta_beta = abs(beta[view + 1] - beta[view - 1]) / 2.0f;
+
 				U = sid - x * cosf(beta[view]) - y * sinf(beta[view]) ;
 
 				//calculate the magnification
@@ -479,20 +494,20 @@ __global__ void BackprojectPixelDriven_device(float* sgm, float* img, float* u, 
 					lower_row_val = (w*sgm[view*N + k + 1 + k_z * N*V] + (1 - w)*sgm[view*N + k + k_z * N*V]);
 					upper_row_val = (w*sgm[view*N + k + 1 + (k_z + 1) * N*V] + (1 - w)*sgm[view*N + k + (k_z + 1) * N*V]);
 
-					img_local += sid / U / U * (w_z*upper_row_val + (1 - w_z)*lower_row_val);
+					img_local += sid / U / U * (w_z*upper_row_val + (1 - w_z)*lower_row_val) * delta_beta;
 				}
 					
 				else
 				{
-					img_local += sid / U / U * (w*sgm[view*N + k + 1 + slice * N*V] + (1 - w)*sgm[view*N + k + slice * N*V]);
+					img_local += sid / U / U * (w*sgm[view*N + k + 1 + slice * N*V] + (1 - w)*sgm[view*N + k + slice * N*V]) * delta_beta;
 				}
 			}
 
 			//judge whether the scan is a full scan or a short scan
 			if (360.0f - abs(totalScanAngle) < 0.001f)
-				img[row*M + col + slice * M*M] = img_local * PI / V;
+				img[row*M + col + slice * M*M] = img_local /2.0f;
 			else
-				img[row*M + col + slice * M*M] = img_local * abs(totalScanAngle) / 180.0f * PI / V;
+				img[row*M + col + slice * M*M] = img_local;
 
 			
 		}
@@ -571,6 +586,50 @@ void InitializeBeta_Agent(float* &beta, const int V, const float rotation, const
 
 	cudaMalloc((void**)&beta, V * sizeof(float));
 	InitBeta <<< (V + 511) / 512, 512>>> (beta, V, rotation, totalScanAngle);
+}
+
+void InitializeNonuniformBeta_Agent(float* &beta, const int V, const float rotation, const std::string& scanAngleFile)
+{
+	namespace fs = std::experimental::filesystem;
+	namespace js = rapidjson;
+
+	if (beta != nullptr)
+		cudaFree(beta);
+
+	cudaMallocManaged((void**)&beta, V * sizeof(float));
+	std::ifstream ifs(scanAngleFile);
+	if (!ifs)
+	{
+		printf("Cannot find angle information file '%s'!\n", scanAngleFile);
+		exit(-2);
+	}
+	rapidjson::IStreamWrapper isw(ifs);
+	rapidjson::Document doc;
+	doc.ParseStream<js::kParseCommentsFlag | js::kParseTrailingCommasFlag>(isw);
+	js::Value scan_angle_jsonc_value;
+	if (doc.HasMember("ScanAngle"))
+	{
+
+		scan_angle_jsonc_value = doc["ScanAngle"];
+
+		if (scan_angle_jsonc_value.Size() != V)
+		{
+			printf("Number of scan angles in the file does not equal to the number of views!\n");
+			exit(-2);
+		}
+
+		for (unsigned i = 0; i < scan_angle_jsonc_value.Size(); i++)
+		{
+			beta[i] = rotation /180.0f*PI + scan_angle_jsonc_value[i].GetFloat()/180.0*PI;
+		}
+
+	}
+	else
+	{
+		printf("Did not find ScanAngle member in jsonc file!\n");
+	}
+
+	cudaDeviceSynchronize();
 }
 
 void InitializeReconKernel_Agent(float* &reconKernel, const int N, const float du, const std::string& kernelName, const std::vector<float>& kernelParam)
@@ -704,7 +763,7 @@ void BackprojectPixelDriven_Agent(float * sgm_flt, float * img, float * u, float
 	// Common attenuation imaging
 	else
 	{
-		BackprojectPixelDriven_device <<<grid, block>>> (sgm_flt, img, u, v, beta, config.sgmWidth, config.views, config.totalScanAngle, config.sliceCount,config.coneBeam, config.imgDim, config.imgSliceCount, config.sdd, config.sid, config.detEltSize,config.sliceThickness, config.pixelSize,config.imgSliceThickness, config.xCenter, config.yCenter,config.zCenter);
+		BackprojectPixelDriven_device <<<grid, block>>> (sgm_flt, img, u, v, beta, config.sgmWidth, config.views, config.sliceCount,config.coneBeam, config.imgDim, config.imgSliceCount, config.sdd, config.sid, config.pixelSize,config.imgSliceThickness, config.xCenter, config.yCenter,config.zCenter);
 	}
 
 	cudaDeviceSynchronize();

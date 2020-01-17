@@ -25,6 +25,13 @@ void InitializeU_Agent(float* &u, const int N, const float du, const float offce
 // totalScanAngle: total scan angle for short scan [degree]
 void InitializeBeta_Agent(float* &beta, const int V, const float rotation, const float totalScanAngle);
 
+// Initialize beta from an external jsonc file
+// The purpose is for non uniform beta distribution
+// V: number of views
+// rotation: rotate the reconstructed image [degree]
+// scanAngleFile: name of the jsonc file to save the angles 
+void InitializeNonuniformBeta_Agent(float* &beta, const int V, const float rotation, const std::string& scanAngleFile);
+
 // Initialize reconstruction kernel
 // reconKernel: array of reconstruction kernel
 // N: number of detector elements

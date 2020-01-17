@@ -50,6 +50,9 @@
   // (optional) total scan angle for short scan. Set scan angle to negtive to change rotation direction
   "TotalScanAngle": 300,
 
+  // (optional) scan angle file for nonuniform scan angles
+  "ScanAngleFile":  "scan_angle_file_name.jsonc",
+
   // the physical size of detector element size [mm]
   "DetectorElementSize": 0.7,
   // the position (coordinate) of detector center [mm]
