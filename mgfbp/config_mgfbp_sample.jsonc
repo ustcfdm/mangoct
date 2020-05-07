@@ -30,14 +30,14 @@
   "Views": 1501,
   // number of slices in each sinogram file
   "SliceCount": 1,
-  // (optional) slice thickness for cone beam reconstruction [mm]
+  // (FOR CONE BEAM; OPTIONAL) slice thickness for cone beam reconstruction [mm]
   "SliceThinkness": 6,
-  // (optional) slice offcenter distance [mm]
+  // (FOR CONE BEAM; OPTIONAL) slice offcenter distance [mm]
   "SliceOffCenter": 0,
 
-  //(optional) total scan angle for short scan. Set scan angle to negtive to change rotation direction
+  //(OPTIONAL) total scan angle for short scan. Set scan angle to be negtive to change rotation direction
   "TotalScanAngle": 300,
-  //(optional) scan angle array for nonuniform scan angles
+  //(OPTIONAL) scan angle array for nonuniform scan angles
   // Scan angles are saved in an external jason file
   "ScanAngleFile": "scan_angle.jsonc",
 
@@ -71,11 +71,11 @@
   // image size [mm]
   "ImageSize": 200,
 
-  // (optional) recon image slice thickness [mm]
+  // (FOR CONE BEAM; OPTIONAL) recon image slice thickness [mm]
   "ImageSliceThickness": 2,
-  // (optional) recon image slice count
+  // (FOR CONE BEAM; OPTIONAL) recon image slice count
   "ImageSliceCount": 2,
-  // (optional) recon image slice center in Z direction [mm]
+  // (FOR CONE BEAM; OPTIONAL) recon image slice center in Z direction [mm]
   "ImageCenterZ": 0,
 
   // rotate the image (positive counterclockwise) [degree]
