@@ -183,7 +183,7 @@ void InitializeNonuniformBeta_Agent(float* &beta, const int V, const float rotat
 
 		if (scan_angle_jsonc_value.Size() != V)
 		{
-			printf("Number of scan angles in the file does not equal to the number of views!\n");
+			printf("Number of scan angles is %d while the number of Views is %d!\n",scan_angle_jsonc_value.Size(),V);
 			exit(-2);
 		}
 

@@ -325,13 +325,25 @@ void mango::FbpClass::InitParam()
 	if (config.nonuniformScanAngle == true)
 	{
 		InitializeNonuniformBeta_Agent(beta, config.views, config.imgRot, config.scanAngleFile);
-		config.totalScanAngle = (beta[config.views - 1] - beta[0] + beta[1] - beta[0]) / 3.1415926f * 180;
+		config.totalScanAngle = (beta[config.views - 1] - beta[0])/float(config.views)*float(config.views + 1)/ 3.1415926f * 180;
+		//It is not easy to define the total scan angle for a non uniform scan. 
+		//This equation is just one method. 
 	}
 	else
 	{
 		InitializeBeta_Agent(beta, config.views, config.imgRot, config.totalScanAngle);
 	}
-	
+
+	if (360.0f - abs(config.totalScanAngle) < 0.01f)
+	{
+		config.shortScan = false;
+		printf("This is a full scan...\n");
+	}
+	else
+	{
+		config.shortScan = true;
+		printf("This is a short scan with scan angle = %.2f degrees...\n", abs(config.totalScanAngle));
+	}
 
 
 
@@ -395,7 +407,7 @@ void mango::FbpClass::SaveImage(const char * filename)
 
 void mango::FbpClass::FilterSinogram()
 {
-	FilterSinogram_Agent(sinogram, sinogram_filter, reconKernel, u, config);
+	FilterSinogram_Agent(sinogram, sinogram_filter, reconKernel, u, config,beta);
 }
 
 void mango::FbpClass::BackprojectPixelDriven()

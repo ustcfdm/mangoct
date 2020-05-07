@@ -28,6 +28,7 @@ namespace mango
 
 		float		totalScanAngle;			// total scan angle for short scan
 		bool		nonuniformScanAngle;	// whether the scan angles are nonuniform
+		bool		shortScan;				// whether the scan is a short scan
 		std::string		scanAngleFile;		// name of the jsonc file to save the scan angle information
 
 		float		detEltSize;				// physical size of detector element [mm]

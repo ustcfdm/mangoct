@@ -51,7 +51,11 @@
   "TotalScanAngle": 300,
 
   // (optional) scan angle file for nonuniform scan angles
-  "ScanAngleFile":  "scan_angle_file_name.jsonc",
+  // the previous TotalScanAngle term will be null if this term is uncommented
+  // the unit of the scan angles is degree
+  // the number of angles should be consistent with the Views
+  // check the sample file for more info
+  "ScanAngleFile":  "scan_angle_file_sample.jsonc",
 
   // the physical size of detector element size [mm]
   "DetectorElementSize": 0.7,

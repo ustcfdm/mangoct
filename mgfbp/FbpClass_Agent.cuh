@@ -45,7 +45,7 @@ void MallocManaged_Agent(float* &p, const int size);
 void CorrectBeamHardening_Agent(float* sgm, mango::Config & config);
 
 // Filter the sinogram data
-void FilterSinogram_Agent(float* sgm, float* sgm_flt, float* reconKernel, float* u, mango::Config& config);
+void FilterSinogram_Agent(float* sgm, float* sgm_flt, float* reconKernel, float* u, mango::Config& config, float*beta);
 
 // Backproject the image using pixel-driven method
 void BackprojectPixelDriven_Agent(float* sgm_flt, float* img, float* u, float *v, float* beta, mango::Config& config);

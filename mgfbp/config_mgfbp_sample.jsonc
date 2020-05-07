@@ -58,6 +58,8 @@
   // Beam hardening correction (optional), support 10 parameters [s = p0 + p1*s + p2*s^2 + p3*s^3 + ...]
   //"BeamHardeningCorrection": [ 0, 1, 2, 3, 4, 5 ],
 
+  // Whether the cone beam recon is needed
+  // in case of "false", all other items relted to cone beam recon will be null 
   "ConeBeam": false,
 
   // image dimension (integer)

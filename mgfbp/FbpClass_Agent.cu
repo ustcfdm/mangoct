@@ -242,7 +242,7 @@ __global__ void InitReconKernel_Hilbert(float* reconKernel, const int N, const f
 // sliceOffcenter: mm
 // sdd: source to detector distance
 // totalScanAngle
-__global__ void WeightSinogram_device(float* sgm, const float* u, const int N, const int H, const int V, const int S, const float sliceThickness, const float sliceOffcenter, float sdd, float totalScanAngle)
+__global__ void WeightSinogram_device(float* sgm, const float* u, const int N, const int H, const int V, const int S, const float sliceThickness, const float sliceOffcenter, float sdd, float totalScanAngle, bool shortScan, float *betaArray)
 {
 	int col = threadIdx.x + blockDim.x * blockIdx.x;
 	int row = threadIdx.y + blockDim.y * blockIdx.y;
@@ -256,11 +256,16 @@ __global__ void WeightSinogram_device(float* sgm, const float* u, const int N, c
 			//the loop is to include all the slices since there may be more than one slice
 		}
 
-		if (360.0f - abs(totalScanAngle) > 0.001f)
+		if (shortScan)
 		{
 			//adding abs function to deal with the case when totalScanAngle is negative
-			float beta = abs(totalScanAngle/ 180.0f * PI ) / float(V) * float(row) ;
-			float gamma = abs(totalScanAngle) / totalScanAngle * atan(u[col] / sdd);
+
+			float beta = abs(betaArray[row] - betaArray[0]);
+			float rotation_direction = abs(totalScanAngle) / (totalScanAngle);
+			float gamma = atan(u[col] / sdd) * rotation_direction;
+
+			//float beta = abs(totalScanAngle/ 180.0f * PI ) / float(V) * float(row) ;
+			//float gamma = abs(totalScanAngle) / totalScanAngle * atan(u[col] / sdd);
 			float gamma_max = abs(totalScanAngle) * PI / 180.0f - PI;
 
 			//calculation of the parker weighting
@@ -400,7 +405,7 @@ __global__ void ConvolveSinogram_device(float* sgm_flt, const float* sgm, float*
 // beta: view angle [radius]
 // N: number of detector elements
 // V: number of views
-// totalScanAngle: degrees
+// totalScanAngle [rads]
 // S: number of slices
 // coneBeam: whether the recon is conbeam recon or not
 // M: image dimension
@@ -417,7 +422,7 @@ __global__ void BackprojectPixelDriven_device(float* sgm, float* img, float* u, 
 	int col = threadIdx.x + blockDim.x * blockIdx.x;
 	int row = threadIdx.y + blockDim.y * blockIdx.y;
 
-	float totalScanAngle = (beta[1] - beta[0]) * float(V);
+	float totalScanAngle = (beta[V-1] - beta[0])/float(V)*float(V+1);
 	float du = u[1] - u[0];
 	float dv = v[1] - v[0];
 
@@ -594,6 +599,7 @@ void InitializeBeta_Agent(float* &beta, const int V, const float rotation, const
 }
 
 void InitializeNonuniformBeta_Agent(float* &beta, const int V, const float rotation, const std::string& scanAngleFile)
+//unit of beta is RADs
 {
 	namespace fs = std::experimental::filesystem;
 	namespace js = rapidjson;
@@ -619,7 +625,7 @@ void InitializeNonuniformBeta_Agent(float* &beta, const int V, const float rotat
 
 		if (scan_angle_jsonc_value.Size() != V)
 		{
-			printf("Number of scan angles in the file does not equal to the number of views!\n");
+			printf("Number of scan angles is %d while the number of Views is %d!\n", scan_angle_jsonc_value.Size(), V);
 			exit(-2);
 		}
 
@@ -701,7 +707,7 @@ void CorrectBeamHardening_Agent(float* sgm, mango::Config & config)
 
 }
 
-void FilterSinogram_Agent(float * sgm, float* sgm_flt, float* reconKernel, float* u, mango::Config & config)
+void FilterSinogram_Agent(float * sgm, float* sgm_flt, float* reconKernel, float* u, mango::Config & config, float* beta)
 {
 	// Step 1: weight the sinogram
 	dim3 grid((config.sgmWidth + 15) / 16, (config.sgmHeight + 15) / 16);
@@ -717,7 +723,7 @@ void FilterSinogram_Agent(float * sgm, float* sgm_flt, float* reconKernel, float
 	}
 	// Common attenuation imaging
 	else
-		WeightSinogram_device <<<grid, block >> > (sgm, u, config.sgmWidth, config.sgmHeight, config.views, config.sliceCount, config.sliceThickness, config.sliceOffcenter, config.sdd, config.totalScanAngle);
+		WeightSinogram_device <<<grid, block >> > (sgm, u, config.sgmWidth, config.sgmHeight, config.views, config.sliceCount, config.sliceThickness, config.sliceOffcenter, config.sdd, config.totalScanAngle, config.shortScan, beta);
 	
 	cudaDeviceSynchronize();
 
