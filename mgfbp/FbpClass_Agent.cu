@@ -417,12 +417,11 @@ __global__ void ConvolveSinogram_device(float* sgm_flt, const float* sgm, float*
 // dx: image pixel size [mm]
 // dz: image slice thickness [mm]
 // (xc, yc, zc): image center position [mm, mm, mm]
-__global__ void BackprojectPixelDriven_device(float* sgm, float* img, float* u, float* v, float* beta, const int N, const int V, const int S,bool coneBeam, const int M, const int imgS, const float sdd, const float sid, const float dx, const float dz, const float xc, const float yc, const float zc)
+__global__ void BackprojectPixelDriven_device(float* sgm, float* img, float* u, float* v, float* beta, bool shortScan, const int N, const int V, const int S,bool coneBeam, const int M, const int imgS, const float sdd, const float sid, const float dx, const float dz, const float xc, const float yc, const float zc)
 {
 	int col = threadIdx.x + blockDim.x * blockIdx.x;
 	int row = threadIdx.y + blockDim.y * blockIdx.y;
 
-	float totalScanAngle = (beta[V-1] - beta[0])/float(V)*float(V+1);
 	float du = u[1] - u[0];
 	float dv = v[1] - v[0];
 
@@ -509,15 +508,14 @@ __global__ void BackprojectPixelDriven_device(float* sgm, float* img, float* u, 
 			}
 
 			//judge whether the scan is a full scan or a short scan
-			if (abs(2* 3.14159265359f - abs(totalScanAngle)) < 0.0001f)
+			if (shortScan)
 			{
 				//printf("this is a full scan");
-				img[row*M + col + slice * M*M] = img_local /2.0f;
+				img[row*M + col + slice * M*M] = img_local;
 
 			}
-				
 			else
-				img[row*M + col + slice * M*M] = img_local;
+				img[row*M + col + slice * M*M] = img_local /2.0f;
 
 			
 		}
@@ -774,7 +772,7 @@ void BackprojectPixelDriven_Agent(float * sgm_flt, float * img, float * u, float
 	// Common attenuation imaging
 	else
 	{
-		BackprojectPixelDriven_device <<<grid, block>>> (sgm_flt, img, u, v, beta, config.sgmWidth, config.views, config.sliceCount,config.coneBeam, config.imgDim, config.imgSliceCount, config.sdd, config.sid, config.pixelSize,config.imgSliceThickness, config.xCenter, config.yCenter,config.zCenter);
+		BackprojectPixelDriven_device <<<grid, block>>> (sgm_flt, img, u, v, beta, config.shortScan, config.sgmWidth, config.views, config.sliceCount,config.coneBeam, config.imgDim, config.imgSliceCount, config.sdd, config.sid, config.pixelSize,config.imgSliceThickness, config.xCenter, config.yCenter,config.zCenter);
 	}
 
 	cudaDeviceSynchronize();
