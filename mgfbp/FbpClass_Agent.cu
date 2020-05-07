@@ -417,7 +417,7 @@ __global__ void BackprojectPixelDriven_device(float* sgm, float* img, float* u, 
 	int col = threadIdx.x + blockDim.x * blockIdx.x;
 	int row = threadIdx.y + blockDim.y * blockIdx.y;
 
-	float totalScanAngle = beta[V - 1] - beta[0];
+	float totalScanAngle = (beta[1] - beta[0]) * float(V);
 	float du = u[1] - u[0];
 	float dv = v[1] - v[0];
 
@@ -504,8 +504,13 @@ __global__ void BackprojectPixelDriven_device(float* sgm, float* img, float* u, 
 			}
 
 			//judge whether the scan is a full scan or a short scan
-			if (360.0f - abs(totalScanAngle) < 0.001f)
+			if (abs(2* 3.14159265359f - abs(totalScanAngle)) < 0.0001f)
+			{
+				//printf("this is a full scan");
 				img[row*M + col + slice * M*M] = img_local /2.0f;
+
+			}
+				
 			else
 				img[row*M + col + slice * M*M] = img_local;
 
