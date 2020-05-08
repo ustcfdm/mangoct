@@ -258,8 +258,11 @@ __global__ void WeightSinogram_device(float* sgm, const float* u, const int N, c
 
 		if (shortScan)
 		{
-			//adding abs function to deal with the case when totalScanAngle is negative
+			//this beta is different from the betaArray
+			//To calculate the parker weighting, beta should begin with zero degree
+			//while the betaArray includes the start rotation angle
 
+			//adding abs function to deal with the case when totalScanAngle is negative
 			float beta = abs(betaArray[row] - betaArray[0]);
 			float rotation_direction = abs(totalScanAngle) / (totalScanAngle);
 			float gamma = atan(u[col] / sdd) * rotation_direction;
