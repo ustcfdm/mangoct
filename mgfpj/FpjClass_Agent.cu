@@ -5,6 +5,15 @@
 #define PI 3.1415926536f
 #define STEPSIZE 0.2f
 
+__global__ void InitDistance(float *distance_array, const float distance, const int V)
+{
+	int tid = threadIdx.x + blockDim.x * blockIdx.x;
+	if (tid < V)
+	{
+		distance_array[tid] = distance;
+	}
+}
+
 __global__ void InitU(float* u, const int N, const float du, const float offcenter)
 {
 	int tid = threadIdx.x + blockDim.x * blockIdx.x;
@@ -34,15 +43,20 @@ __global__ void InitBeta(float* beta, const int V, const float startAngle, const
 // dx: image pixel size [mm]
 // sid: source to isocenter distance
 // sdd: source to detector distance
-__global__ void ForwardProjectionBilinear_device(float* img, float* sgm, const float* u, const float* beta, int M, int S, int N, int V, float dx, float sid, float sdd)
+__global__ void ForwardProjectionBilinear_device(float* img, float* sgm, const float* u, const float* beta, int M, int S, int N, int V, float dx, const float* sid_array, const float* sdd_array)
 {
 	int col = threadIdx.x + blockDim.x * blockIdx.x;
 	int row = threadIdx.y + blockDim.y * blockIdx.y;
+
 
 	if (col < N && row < V)
 	{
 		// half of image side length
 		float D = M * dx / 2;
+
+		//get the sid and sdd for a given view
+		float sid = sid_array[row];
+		float sdd = sdd_array[row];
 
 		// current source position
 		float xs = sid * cosf(beta[row]);
@@ -139,6 +153,105 @@ __global__ void BinSinogram(float* sgm_large, float* sgm, int N, int V, int S, i
 	}
 }
 
+void InitializeDistance_Agent(float* &distance_array, const float distance, const int V)
+{
+	if (distance_array != nullptr)
+		cudaFree(distance_array);
+
+	cudaMalloc((void**)&distance_array, V * sizeof(float));
+	InitDistance << <(V + 511) / 512, 512 >> > (distance_array, distance, V);
+}
+
+void InitializeNonuniformSDD_Agent(float* &distance_array, const int V, const std::string& distanceFile)
+{
+	namespace fs = std::experimental::filesystem;
+	namespace js = rapidjson;
+
+	if (distance_array != nullptr)
+		cudaFree(distance_array);
+
+	cudaMallocManaged((void**)&distance_array, V * sizeof(float));
+	std::ifstream ifs(distanceFile);
+	if (!ifs)
+	{
+		printf("Cannot find SDD information file '%s'!\n", distanceFile.c_str());
+		exit(-2);
+	}
+	rapidjson::IStreamWrapper isw(ifs);
+	rapidjson::Document doc;
+	doc.ParseStream<js::kParseCommentsFlag | js::kParseTrailingCommasFlag>(isw);
+	js::Value distance_jsonc_value;
+	if (doc.HasMember("SourceDetectorDistance"))
+	{
+
+		distance_jsonc_value = doc["SourceDetectorDistance"];
+
+		if (distance_jsonc_value.Size() != V)
+		{
+			printf("Number of sdd values is %d while the number of Views is %d!\n", distance_jsonc_value.Size(), V);
+			exit(-2);
+		}
+
+		for (unsigned i = 0; i < distance_jsonc_value.Size(); i++)
+		{
+			distance_array[i] = distance_jsonc_value[i].GetFloat();
+		}
+
+	}
+	else
+	{
+		printf("Did not find SourceDetectorDistance member in jsonc file!\n");
+		exit(-2);
+	}
+
+	cudaDeviceSynchronize();
+}
+
+void InitializeNonuniformSID_Agent(float* &distance_array, const int V, const std::string& distanceFile)
+{
+	namespace fs = std::experimental::filesystem;
+	namespace js = rapidjson;
+
+	if (distance_array != nullptr)
+		cudaFree(distance_array);
+
+	cudaMallocManaged((void**)&distance_array, V * sizeof(float));
+	std::ifstream ifs(distanceFile);
+	if (!ifs)
+	{
+		printf("Cannot find SID information file '%s'!\n", distanceFile.c_str());
+		exit(-2);
+	}
+	rapidjson::IStreamWrapper isw(ifs);
+	rapidjson::Document doc;
+	doc.ParseStream<js::kParseCommentsFlag | js::kParseTrailingCommasFlag>(isw);
+	js::Value distance_jsonc_value;
+	if (doc.HasMember("SourceIsocenterDistance"))
+	{
+
+		distance_jsonc_value = doc["SourceIsocenterDistance"];
+
+		if (distance_jsonc_value.Size() != V)
+		{
+			printf("Number of sid values is %d while the number of Views is %d!\n", distance_jsonc_value.Size(), V);
+			exit(-2);
+		}
+
+		for (unsigned i = 0; i < distance_jsonc_value.Size(); i++)
+		{
+			distance_array[i] = distance_jsonc_value[i].GetFloat();
+		}
+
+	}
+	else
+	{
+		printf("Did not find SourceIsocenterDistance member in jsonc file!\n");
+		exit(-2);
+	}
+
+	cudaDeviceSynchronize();
+}
+
 void InitializeU_Agent(float* &u, const int N, const float du, const float offcenter)
 {
 	if (u != nullptr)
@@ -169,7 +282,7 @@ void InitializeNonuniformBeta_Agent(float* &beta, const int V, const float rotat
 	std::ifstream ifs(scanAngleFile);
 	if (!ifs)
 	{
-		printf("Cannot find angle information file '%s'!\n", scanAngleFile);
+		printf("Cannot find angle information file '%s'!\n", scanAngleFile.c_str());
 		exit(-2);
 	}
 	rapidjson::IStreamWrapper isw(ifs);
@@ -202,12 +315,12 @@ void InitializeNonuniformBeta_Agent(float* &beta, const int V, const float rotat
 	cudaDeviceSynchronize();
 }
 
-void ForwardProjectionBilinear_Agent(float *& image, float * &sinogram, const float* u, const float* beta, const mango::Config & config)
+void ForwardProjectionBilinear_Agent(float *& image, float * &sinogram, const float* sid_array, const float* sdd_array, const float* u, const float* beta, const mango::Config & config)
 {
 	dim3 grid((config.detEltCount*config.oversampleSize + 7) / 8, (config.views + 7) / 8);
 	dim3 block(8, 8);
 
-	ForwardProjectionBilinear_device<<<grid, block>>>(image, sinogram, u, beta, config.imgDim, config.sliceCount, config.detEltCount*config.oversampleSize, config.views, config.pixelSize, config.sid, config.sdd);
+	ForwardProjectionBilinear_device<<<grid, block>>>(image, sinogram, u, beta, config.imgDim, config.sliceCount, config.detEltCount*config.oversampleSize, config.views, config.pixelSize, sid_array, sdd_array);
 
 	cudaDeviceSynchronize();
 }

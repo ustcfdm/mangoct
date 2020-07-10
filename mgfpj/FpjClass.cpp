@@ -3,6 +3,8 @@
 #include "stdafx.h"
 
 mango::Config mango::FpjClass::config;
+float* mango::FpjClass::sdd_array = nullptr;
+float* mango::FpjClass::sid_array = nullptr;
 float* mango::FpjClass::u = nullptr;
 float* mango::FpjClass::beta = nullptr;
 
@@ -153,7 +155,28 @@ void mango::FpjClass::ReadConfigFile(const char * filename)
 
 #pragma region  geometry and detector parameters
 	config.sid = doc["SourceIsocenterDistance"].GetFloat();
+
+	if (doc.HasMember("SIDFile"))
+	{
+		config.nonuniformSID = true;
+		config.sidFile = doc["SIDFile"].GetString();
+	}
+	else
+	{
+		config.nonuniformSID = false;
+	}
+
 	config.sdd = doc["SourceDetectorDistance"].GetFloat();
+
+	if (doc.HasMember("SDDFile"))
+	{
+		config.nonuniformSDD = true;
+		config.sddFile = doc["SDDFile"].GetString();
+	}
+	else
+	{
+		config.nonuniformSDD = false;
+	}
 
 	if (doc.HasMember("StartAngle"))
 	{
@@ -194,6 +217,24 @@ void mango::FpjClass::ReadConfigFile(const char * filename)
 
 void mango::FpjClass::InitParam()
 {
+	if (config.nonuniformSDD == true)
+	{
+		InitializeNonuniformSDD_Agent(sdd_array, config.views, config.sddFile);
+	}
+	else
+	{
+		InitializeDistance_Agent(sdd_array, config.sdd, config.views);
+	}
+
+	if (config.nonuniformSID == true)
+	{
+		InitializeNonuniformSID_Agent(sid_array, config.views, config.sidFile);
+	}
+	else
+	{
+		InitializeDistance_Agent(sid_array, config.sid, config.views);
+	}
+
 	InitializeU_Agent(u, config.detEltCount*config.oversampleSize, config.detEltSize/config.oversampleSize, config.detOffCenter);
 	if (config.nonuniformScanAngle == true)
 	{
@@ -246,7 +287,7 @@ void mango::FpjClass::SaveSinogram(const char * filename)
 
 void mango::FpjClass::ForwardProjectionBilinear()
 {
-	ForwardProjectionBilinear_Agent(image, sinogram_large, u, beta, config);
+	ForwardProjectionBilinear_Agent(image, sinogram_large,sid_array,sdd_array, u, beta, config);
 
 	BinSinogram(sinogram_large, sinogram, config);
 }

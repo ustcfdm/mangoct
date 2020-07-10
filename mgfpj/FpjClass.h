@@ -28,14 +28,18 @@ namespace mango
 		* geometry and detector parameters
 		*********************************************************/
 		float	sid;					// source to isocenter distance [mm]
+		bool	nonuniformSID;			// whether the sids are nonuniform across views
+		std::string		sidFile;		// name of the jsonc file of explicit sids
 		float	sdd;					// source to detector distance [mm]
+		bool	nonuniformSDD;			// whether the sdds are nonuniform across views
+		std::string		sddFile;		// name of the jsonc file of explicit sdds
 
 		float	startAngle = 0;			// angle position of source for the first view [degree]
 		int		detEltCount;			// number of detector elements
 		int		views;					// number of views
 		float	totalScanAngle;			// total scan angle for short scan [degree]
-		bool		nonuniformScanAngle;	// whether the scan angles are nonuniform
-		std::string		scanAngleFile;		// name of the jsonc file to save the scan angle information
+		bool		nonuniformScanAngle;	// whether the scan angles are nonuniform across views
+		std::string		scanAngleFile;		// name of the jsonc file of explicit scan angle values
 
 		float	detEltSize;				// physical size of detector element [mm]
 		float	detOffCenter;			// the position (coordinate) of center of detector
@@ -51,6 +55,10 @@ namespace mango
 		static Config config;
 
 	private:
+		// array of sdds across views [mm]
+		static float* sdd_array;
+		// array of sids across views [mm]
+		static float* sid_array;
 		// array of detector element coordinate
 		static float* u;
 		// array of each view angle [radius]

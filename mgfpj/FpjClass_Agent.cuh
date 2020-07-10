@@ -5,6 +5,18 @@
 
 #include "FpjClass.h"
 
+// Initialize sdd or sid, the array of sdd or sid across views
+// V: number of views
+void InitializeDistance_Agent(float* &distance_array, const float distance, const int V);
+
+// Initialize nonuniform sdd, the array of sdd across views
+// V: number of views
+void InitializeNonuniformSDD_Agent(float* &distance_array, const int V, const std::string& distanceFile);
+
+// Initialize nonuniform sid, the array of sid across views
+// V: number of views
+void InitializeNonuniformSID_Agent(float* &distance_array, const int V, const std::string& distanceFile);
+
 // Initialize u, the array of each detector element coordiante
 // u: array of detector elements
 // N: number of detector elements
@@ -25,7 +37,7 @@ void InitializeBeta_Agent(float* &beta, const int V, const float startAngle, con
 void InitializeNonuniformBeta_Agent(float* &beta, const int V, const float rotation, const std::string& scanAngleFile);
 
 // Forward projection, using bilinear interpolation
-void ForwardProjectionBilinear_Agent(float* &image, float* &sinogram, const float* u, const float* beta, const mango::Config& config);
+void ForwardProjectionBilinear_Agent(float* &image, float* &sinogram, const float* sid_array, const float* sdd_array, const float* u, const float* beta, const mango::Config& config);
 
 // Bin the sinogram data along detector direction
 void BinSinogram(float* &sinogram_large, float* &sinogram, const mango::Config& config);

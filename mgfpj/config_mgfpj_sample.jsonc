@@ -38,8 +38,12 @@
 
   // source to isocenter distance [mm]
   "SourceIsocenterDistance": 539,
+  // (OPTIONAL; for nonuniform SID)
+  "SIDFile": "sid_file_sample.jsonc",
   // source to detector distance [mm]
   "SourceDetectorDistance": 949,
+    // (OPTIONAL; for nonuniform SDD)
+    "SDDFile": "sdd_file_sample.jsonc",
 
   // start angle (positive counterclockwise) [degree]
   "StartAngle": 90,
