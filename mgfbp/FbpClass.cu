@@ -5,6 +5,8 @@
 
 
 mango::Config mango::FbpClass::config;
+float* mango::FbpClass::sid_array = nullptr;
+float* mango::FbpClass::sdd_array = nullptr;
 float* mango::FbpClass::u = nullptr;
 float* mango::FbpClass::v = nullptr;
 float* mango::FbpClass::beta = nullptr;
@@ -156,7 +158,30 @@ void mango::FbpClass::ReadConfigFile(const char * filename)
 	config.detOffCenter = doc["DetectorOffcenter"].GetFloat();
 
 	config.sid = doc["SourceIsocenterDistance"].GetFloat();
+
+	if (doc.HasMember("SIDFile"))
+	{
+		printf("--nonuniform SID--");
+		config.nonuniformSID = true;
+		config.sidFile = doc["SIDFile"].GetString();
+	}
+	else
+	{
+		config.nonuniformSID = false;
+	}
+
 	config.sdd = doc["SourceDetectorDistance"].GetFloat();
+
+	if (doc.HasMember("SDDFile"))
+	{
+		printf("--nonuniform SDD--");
+		config.nonuniformSDD = true;
+		config.sddFile = doc["SDDFile"].GetString();
+	}
+	else
+	{
+		config.nonuniformSDD = false;
+	}
 
 	// for cone beam reconstruction
 	if (doc.HasMember("SliceThickness"))
@@ -208,9 +233,9 @@ void mango::FbpClass::ReadConfigFile(const char * filename)
 		config.coneBeam = false; 
 
 	if (config.coneBeam)
-		printf("This is a CONE beam reconstruction ...\n");
+		printf("--CONE beam--");
 	else
-		printf("This is a FAN beam reconstruction ...\n");
+		printf("--FAN beam--");
 
 	config.imgDim = doc["ImageDimension"].GetUint();
 
@@ -318,12 +343,31 @@ void mango::FbpClass::ReadConfigFile(const char * filename)
 
 void mango::FbpClass::InitParam()
 {
+
+	if (config.nonuniformSDD == true)
+	{
+		InitializeNonuniformSDD_Agent(sdd_array, config.views, config.sddFile);
+	}
+	else
+	{
+		InitializeDistance_Agent(sdd_array, config.sdd, config.views);
+	}
+
+	if (config.nonuniformSID == true)
+	{
+		InitializeNonuniformSID_Agent(sid_array, config.views, config.sidFile);
+	}
+	else
+	{
+		InitializeDistance_Agent(sid_array, config.sid, config.views);
+	}
 	InitializeU_Agent(u, config.sgmWidth, config.detEltSize, config.detOffCenter);
 
 	InitializeU_Agent(v, config.sliceCount, config.sliceThickness, config.sliceOffcenter);
 
 	if (config.nonuniformScanAngle == true)
 	{
+		printf("--nonuniform scan angle--");
 		InitializeNonuniformBeta_Agent(beta, config.views, config.imgRot, config.scanAngleFile);
 		config.totalScanAngle = (beta[config.views - 1] - beta[0])/float(config.views)*float(config.views + 1)/ 3.1415926f * 180;
 		//It is not easy to define the total scan angle for a non uniform scan. 
@@ -337,12 +381,12 @@ void mango::FbpClass::InitParam()
 	if (360.0f - abs(config.totalScanAngle) < 0.01f)
 	{
 		config.shortScan = false;
-		printf("This is a full scan...\n");
+		printf("--FULL scan--\n");
 	}
 	else
 	{
 		config.shortScan = true;
-		printf("This is a short scan with scan angle = %.2f degrees...\n", abs(config.totalScanAngle));
+		printf("--SHORT scan (scan angle = %.2f degrees)--\n", abs(config.totalScanAngle));
 	}
 
 
@@ -412,5 +456,5 @@ void mango::FbpClass::FilterSinogram()
 
 void mango::FbpClass::BackprojectPixelDriven()
 {
-	BackprojectPixelDriven_Agent(sinogram_filter, image, u, v, beta, config);
+	BackprojectPixelDriven_Agent(sinogram_filter, image, sdd_array,sid_array, u, v, beta, config);
 }

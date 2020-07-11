@@ -35,7 +35,11 @@ namespace mango
 		float		detOffCenter;			// the position (coordinate) of center of detector
 
 		float		sid;					// source to isocenter distance [mm]
+		bool nonuniformSID;					// whether the sid is nonuniform or not
+		std::string sidFile;					// file of the nonuniform sid values
 		float		sdd;					// source to detector distance [mm]
+		bool nonuniformSDD;					// whether the sdd is nonuniform or not
+		std::string sddFile;					// file of the nonuniform sdd values
 
 		/*********************************************************
 		* reconstruction parameters
@@ -68,6 +72,10 @@ namespace mango
 		static Config config;
 
 	private:
+		// array of sdd
+		static float* sdd_array;
+		//array of sid
+		static float* sid_array;
 		// array of detector element coordinate
 		static float* u;
 		// array of detector element in z direction

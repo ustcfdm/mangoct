@@ -158,6 +158,7 @@ void mango::FpjClass::ReadConfigFile(const char * filename)
 
 	if (doc.HasMember("SIDFile"))
 	{
+		printf("--nonuniform SID--");
 		config.nonuniformSID = true;
 		config.sidFile = doc["SIDFile"].GetString();
 	}
@@ -170,6 +171,7 @@ void mango::FpjClass::ReadConfigFile(const char * filename)
 
 	if (doc.HasMember("SDDFile"))
 	{
+		printf("--nonuniform SDD--");
 		config.nonuniformSDD = true;
 		config.sddFile = doc["SDDFile"].GetString();
 	}
@@ -194,12 +196,22 @@ void mango::FpjClass::ReadConfigFile(const char * filename)
 
 	if (doc.HasMember("ScanAngleFile"))
 	{
+		printf("--nonuniform scan angle--");
 		config.nonuniformScanAngle = true;
 		config.scanAngleFile = doc["ScanAngleFile"].GetString();
 	}
 	else
 	{
 		config.nonuniformScanAngle = false;
+	}
+
+	if (abs(config.totalScanAngle - 360.0f) < 0.001f)
+	{
+		printf("--FULL scan--\n");
+	}
+	else
+	{
+		printf("--SHORT scan (%.1f degrees)--\n", config.totalScanAngle);
 	}
 
 	config.detEltCount = doc["DetectorElementCount"].GetInt();

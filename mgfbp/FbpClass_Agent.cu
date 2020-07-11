@@ -3,6 +3,16 @@
 #include "stdafx.h"
 #define PI 3.1415926536f
 
+
+__global__ void InitDistance(float *distance_array, const float distance, const int V)
+{
+	int tid = threadIdx.x + blockDim.x * blockIdx.x;
+	if (tid < V)
+	{
+		distance_array[tid] = distance;
+	}
+}
+
 __global__ void InitU(float* u, const int N, const float du, const float offcenter)
 {
 	int tid = threadIdx.x + blockDim.x * blockIdx.x;
@@ -420,7 +430,8 @@ __global__ void ConvolveSinogram_device(float* sgm_flt, const float* sgm, float*
 // dx: image pixel size [mm]
 // dz: image slice thickness [mm]
 // (xc, yc, zc): image center position [mm, mm, mm]
-__global__ void BackprojectPixelDriven_device(float* sgm, float* img, float* u, float* v, float* beta, bool shortScan, const int N, const int V, const int S,bool coneBeam, const int M, const int imgS, const float sdd, const float sid, const float dx, const float dz, const float xc, const float yc, const float zc)
+__global__ void BackprojectPixelDriven_device(float* sgm, float* img, float* u, float* v, float* beta, bool shortScan, const int N, const int V,\
+	const int S,bool coneBeam, const int M, const int imgS, float* sdd_array, float* sid_array, const float dx, const float dz, const float xc, const float yc, const float zc)
 {
 	int col = threadIdx.x + blockDim.x * blockIdx.x;
 	int row = threadIdx.y + blockDim.y * blockIdx.y;
@@ -457,8 +468,9 @@ __global__ void BackprojectPixelDriven_device(float* sgm, float* img, float* u, 
 
 			for (int view = 0; view < V; view++)
 			{
+				float sid = sid_array[view];
+				float sdd = sdd_array[view];
 				//calculation of delta_beta for the integral calculation
-
 				if (view == 0)
 					delta_beta = abs( beta[1] - beta[0]);
 				else if (view == V - 1)
@@ -525,6 +537,119 @@ __global__ void BackprojectPixelDriven_device(float* sgm, float* img, float* u, 
 	}
 }
 
+__global__ void BackprojectPixelDriven_pmatrix_device(float* sgm, float* img, float* u, float* v, float* beta,float*pmatrix,\
+	bool shortScan, const int N, const int V, const int S, bool coneBeam, const int M, const int imgS, const float sdd, const float sid, const float dx, const float dz, const float xc, const float yc, const float zc)
+{
+	int col = threadIdx.x + blockDim.x * blockIdx.x;
+	int row = threadIdx.y + blockDim.y * blockIdx.y;
+
+	float du = u[1] - u[0];
+	float dv = v[1] - v[0];
+
+
+	if (col < M && row < M)
+	{
+		float x = (col - (M - 1) / 2.0f)*dx + xc;
+		float y = ((M - 1) / 2.0f - row)*dx + yc;
+
+		float z;
+
+		float U, u0, v0;
+		float mag_factor;
+		float w;
+		int k;
+
+		float w_z;//weight for cbct
+		int k_z;//index for cbct
+		float delta_beta;// delta_beta for the integral calculation (nonuniform scan angle)
+
+		float lower_row_val, upper_row_val;
+
+		for (int slice = 0; slice < imgS; slice++)
+		{
+
+			z = (slice - (float(imgS) - 1.0f) / 2.0f) * dz + zc;
+
+			// temporary local variable to speed up
+			float img_local = 0;
+
+			for (int view = 0; view < V; view++)
+			{
+				//calculation of delta_beta for the integral calculation
+				if (view == 0)
+					delta_beta = abs(beta[1] - beta[0]);
+				else if (view == V - 1)
+					delta_beta = abs(beta[view] - beta[view - 1]);
+				else
+					delta_beta = abs(beta[view + 1] - beta[view - 1]) / 2.0f;
+
+				int pos_in_matrix = 12 * V;
+				float k_u_divide_mag = pmatrix[pos_in_matrix] * x + pmatrix[pos_in_matrix +1] * y + pmatrix[pos_in_matrix +2] * z + pmatrix[pos_in_matrix +3] * 1;
+				float k_z_divide_mag = pmatrix[pos_in_matrix +4] * x + pmatrix[pos_in_matrix + 5] * y + pmatrix[pos_in_matrix + 6] * z + pmatrix[pos_in_matrix + 7] * 1;
+				float one_divide_mag = pmatrix[pos_in_matrix +8] * x + pmatrix[pos_in_matrix + 9] * y + pmatrix[pos_in_matrix + 10] * z + pmatrix[pos_in_matrix + 11] * 1;
+
+				k = k_u_divide_mag / one_divide_mag;
+				k_z = k_z_divide_mag / one_divide_mag;
+
+				U = sid - x * cosf(beta[view]) - y * sinf(beta[view]);
+
+				//calculate the magnification
+				mag_factor = sdd / U;
+
+				// find u0 
+				u0 = mag_factor * (x*sinf(beta[view]) - y * cosf(beta[view]));
+
+
+				k = floorf((u0 - u[0]) / du);
+				if (k<0 || k + 1>N - 1)
+				{
+					img_local = 0;
+					break;
+				}
+
+				w = (u0 - u[k]) / du;
+
+				// for cone beam ct, we also need to find v0
+				if (coneBeam)
+				{
+					v0 = mag_factor * z;
+					// weight for cbct recon
+					k_z = floorf((v0 - v[0]) / dv);
+					if (k_z<0 || k_z + 1>S - 1)
+					{
+						img_local = 0;
+						break;
+					}
+
+					w_z = (v0 - v[k_z]) / dv;
+
+					lower_row_val = (w*sgm[view*N + k + 1 + k_z * N*V] + (1 - w)*sgm[view*N + k + k_z * N*V]);
+					upper_row_val = (w*sgm[view*N + k + 1 + (k_z + 1) * N*V] + (1 - w)*sgm[view*N + k + (k_z + 1) * N*V]);
+
+					img_local += sid / U / U * (w_z*upper_row_val + (1 - w_z)*lower_row_val) * delta_beta;
+				}
+
+				else
+				{
+					img_local += sid / U / U * (w*sgm[view*N + k + 1 + slice * N*V] + (1 - w)*sgm[view*N + k + slice * N*V]) * delta_beta;
+				}
+			}
+
+			//judge whether the scan is a full scan or a short scan
+			if (shortScan)
+			{
+				//printf("this is a full scan");
+				img[row*M + col + slice * M*M] = img_local;
+
+			}
+			else
+				img[row*M + col + slice * M*M] = img_local / 2.0f;
+
+
+		}
+	}
+}
+
 
 // backproject the image using pixel-driven method for Hilbert kernel (for phase contrast imaging)
 // sgm: sinogram data
@@ -581,6 +706,106 @@ __global__ void BackprojectPixelDrivenHilbert_device(float* sgm, float* img, flo
 }
 
 
+void InitializeDistance_Agent(float* &distance_array, const float distance, const int V)
+{
+	if (distance_array != nullptr)
+		cudaFree(distance_array);
+
+	cudaMalloc((void**)&distance_array, V * sizeof(float));
+	InitDistance << <(V + 511) / 512, 512 >> > (distance_array, distance, V);
+}
+
+void InitializeNonuniformSDD_Agent(float* &distance_array, const int V, const std::string& distanceFile)
+{
+	namespace fs = std::experimental::filesystem;
+	namespace js = rapidjson;
+
+	if (distance_array != nullptr)
+		cudaFree(distance_array);
+
+	cudaMallocManaged((void**)&distance_array, V * sizeof(float));
+	std::ifstream ifs(distanceFile);
+	if (!ifs)
+	{
+		printf("Cannot find SDD information file '%s'!\n", distanceFile.c_str());
+		exit(-2);
+	}
+	rapidjson::IStreamWrapper isw(ifs);
+	rapidjson::Document doc;
+	doc.ParseStream<js::kParseCommentsFlag | js::kParseTrailingCommasFlag>(isw);
+	js::Value distance_jsonc_value;
+	if (doc.HasMember("SourceDetectorDistance"))
+	{
+
+		distance_jsonc_value = doc["SourceDetectorDistance"];
+
+		if (distance_jsonc_value.Size() != V)
+		{
+			printf("Number of sdd values is %d while the number of Views is %d!\n", distance_jsonc_value.Size(), V);
+			exit(-2);
+		}
+
+		for (unsigned i = 0; i < distance_jsonc_value.Size(); i++)
+		{
+			distance_array[i] = distance_jsonc_value[i].GetFloat();
+		}
+
+	}
+	else
+	{
+		printf("Did not find SourceDetectorDistance member in jsonc file!\n");
+		exit(-2);
+	}
+
+	cudaDeviceSynchronize();
+}
+
+void InitializeNonuniformSID_Agent(float* &distance_array, const int V, const std::string& distanceFile)
+{
+	namespace fs = std::experimental::filesystem;
+	namespace js = rapidjson;
+
+	if (distance_array != nullptr)
+		cudaFree(distance_array);
+
+	cudaMallocManaged((void**)&distance_array, V * sizeof(float));
+	std::ifstream ifs(distanceFile);
+	if (!ifs)
+	{
+		printf("Cannot find SID information file '%s'!\n", distanceFile.c_str());
+		exit(-2);
+	}
+	rapidjson::IStreamWrapper isw(ifs);
+	rapidjson::Document doc;
+	doc.ParseStream<js::kParseCommentsFlag | js::kParseTrailingCommasFlag>(isw);
+	js::Value distance_jsonc_value;
+	if (doc.HasMember("SourceIsocenterDistance"))
+	{
+
+		distance_jsonc_value = doc["SourceIsocenterDistance"];
+
+		if (distance_jsonc_value.Size() != V)
+		{
+			printf("Number of sid values is %d while the number of Views is %d!\n", distance_jsonc_value.Size(), V);
+			exit(-2);
+		}
+
+		for (unsigned i = 0; i < distance_jsonc_value.Size(); i++)
+		{
+			distance_array[i] = distance_jsonc_value[i].GetFloat();
+		}
+
+	}
+	else
+	{
+		printf("Did not find SourceIsocenterDistance member in jsonc file!\n");
+		exit(-2);
+	}
+
+	cudaDeviceSynchronize();
+}
+
+
 void InitializeU_Agent(float* &u, const int N, const float du, const float offcenter)
 {
 	if (u != nullptr)
@@ -612,7 +837,7 @@ void InitializeNonuniformBeta_Agent(float* &beta, const int V, const float rotat
 	std::ifstream ifs(scanAngleFile);
 	if (!ifs)
 	{
-		printf("Cannot find angle information file '%s'!\n", scanAngleFile);
+		printf("Cannot find angle information file '%s'!\n", scanAngleFile.c_str());
 		exit(-2);
 	}
 	rapidjson::IStreamWrapper isw(ifs);
@@ -762,7 +987,7 @@ void FilterSinogram_Agent(float * sgm, float* sgm_flt, float* reconKernel, float
 	}
 }
 
-void BackprojectPixelDriven_Agent(float * sgm_flt, float * img, float * u, float *v, float* beta, mango::Config & config)
+void BackprojectPixelDriven_Agent(float * sgm_flt, float * img, float* sdd_array, float* sid_array, float * u, float *v, float* beta, mango::Config & config)
 {
 	dim3 grid((config.imgDim + 15) / 16, (config.imgDim + 15) / 16);
 	dim3 block(16, 16);
@@ -770,12 +995,14 @@ void BackprojectPixelDriven_Agent(float * sgm_flt, float * img, float * u, float
 	// Hilbert kernel for phase contrast imaging
 	if (config.kernelName == "Hilbert" || config.kernelName=="Hilbert_angle")
 	{
-		BackprojectPixelDrivenHilbert_device << <grid, block >> > (sgm_flt, img, u, beta, config.sgmWidth, config.views, config.sliceCount, config.imgDim, config.sdd, config.sid, config.detEltSize, config.pixelSize, config.xCenter, config.yCenter);
+		BackprojectPixelDrivenHilbert_device << <grid, block >> > (sgm_flt, img, u, beta, config.sgmWidth, config.views,\
+			config.sliceCount, config.imgDim, config.sdd, config.sid, config.detEltSize, config.pixelSize, config.xCenter, config.yCenter);
 	}
 	// Common attenuation imaging
 	else
 	{
-		BackprojectPixelDriven_device <<<grid, block>>> (sgm_flt, img, u, v, beta, config.shortScan, config.sgmWidth, config.views, config.sliceCount,config.coneBeam, config.imgDim, config.imgSliceCount, config.sdd, config.sid, config.pixelSize,config.imgSliceThickness, config.xCenter, config.yCenter,config.zCenter);
+		BackprojectPixelDriven_device <<<grid, block>>> (sgm_flt, img, u, v, beta, config.shortScan, config.sgmWidth, config.views,\
+			config.sliceCount,config.coneBeam, config.imgDim, config.imgSliceCount, sdd_array, sid_array, config.pixelSize,config.imgSliceThickness, config.xCenter, config.yCenter,config.zCenter);
 	}
 
 	cudaDeviceSynchronize();
