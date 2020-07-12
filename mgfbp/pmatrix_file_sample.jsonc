@@ -1,0 +1,7 @@
+{
+    "PMatrix": [0,1,2]
+    // 1D array of the p matrix
+    // p matrix should be expanded along the rows
+    //the number of elements should be the 12 times views
+
+}

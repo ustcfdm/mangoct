@@ -36,10 +36,13 @@ namespace mango
 
 		float		sid;					// source to isocenter distance [mm]
 		bool nonuniformSID;					// whether the sid is nonuniform or not
-		std::string sidFile;					// file of the nonuniform sid values
+		std::string sidFile;				// file of the nonuniform sid values
 		float		sdd;					// source to detector distance [mm]
 		bool nonuniformSDD;					// whether the sdd is nonuniform or not
-		std::string sddFile;					// file of the nonuniform sdd values
+		std::string sddFile;				// file of the nonuniform sdd values
+
+		bool pmatrixFlag;					// whether the pmatrix is applied
+		std::string pmatrixFile;			// file of the pmatrix
 
 		/*********************************************************
 		* reconstruction parameters
@@ -76,6 +79,8 @@ namespace mango
 		static float* sdd_array;
 		//array of sid
 		static float* sid_array;
+		//array of pmatrix
+		static float* pmatrix_array;
 		// array of detector element coordinate
 		static float* u;
 		// array of detector element in z direction

@@ -57,7 +57,9 @@
 
   /*********************************************************
 	* reconstruction parameters
-	*********************************************************/
+  *********************************************************/
+  // (OPTIONAL; for recon with pmatrix)
+  "PMatrixFile": "pmatrix_file_sample.jsonc",
 
   // Beam hardening correction (optional), support 10 parameters [s = p0 + p1*s + p2*s^2 + p3*s^3 + ...]
   //"BeamHardeningCorrection": [ 0, 1, 2, 3, 4, 5 ],

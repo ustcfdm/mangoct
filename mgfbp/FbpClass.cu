@@ -7,6 +7,7 @@
 mango::Config mango::FbpClass::config;
 float* mango::FbpClass::sid_array = nullptr;
 float* mango::FbpClass::sdd_array = nullptr;
+float* mango::FbpClass::pmatrix_array = nullptr;
 float* mango::FbpClass::u = nullptr;
 float* mango::FbpClass::v = nullptr;
 float* mango::FbpClass::beta = nullptr;
@@ -181,6 +182,18 @@ void mango::FbpClass::ReadConfigFile(const char * filename)
 	else
 	{
 		config.nonuniformSDD = false;
+	}
+
+	// for recon with pmatrix
+	if (doc.HasMember("PMatrixFile"))
+	{
+		printf("--pmatrix applied--");
+		config.pmatrixFlag = true;
+		config.pmatrixFile = doc["PMatrixFile"].GetString();
+	}
+	else
+	{
+		config.pmatrixFlag = false;
 	}
 
 	// for cone beam reconstruction
@@ -361,6 +374,15 @@ void mango::FbpClass::InitParam()
 	{
 		InitializeDistance_Agent(sid_array, config.sid, config.views);
 	}
+
+	if (config.pmatrixFlag == true)
+	{
+		InitializePMatrix_Agent(pmatrix_array,config.views, config.pmatrixFile);
+	}
+	{
+		;
+	}
+
 	InitializeU_Agent(u, config.sgmWidth, config.detEltSize, config.detOffCenter);
 
 	InitializeU_Agent(v, config.sliceCount, config.sliceThickness, config.sliceOffcenter);
@@ -456,5 +478,5 @@ void mango::FbpClass::FilterSinogram()
 
 void mango::FbpClass::BackprojectPixelDriven()
 {
-	BackprojectPixelDriven_Agent(sinogram_filter, image, sdd_array,sid_array, u, v, beta, config);
+	BackprojectPixelDriven_Agent(sinogram_filter, image, sdd_array,sid_array, pmatrix_array, u, v, beta, config);
 }

@@ -431,7 +431,8 @@ __global__ void ConvolveSinogram_device(float* sgm_flt, const float* sgm, float*
 // dz: image slice thickness [mm]
 // (xc, yc, zc): image center position [mm, mm, mm]
 __global__ void BackprojectPixelDriven_device(float* sgm, float* img, float* u, float* v, float* beta, bool shortScan, const int N, const int V,\
-	const int S,bool coneBeam, const int M, const int imgS, float* sdd_array, float* sid_array, const float dx, const float dz, const float xc, const float yc, const float zc)
+	const int S,bool coneBeam, const int M, const int imgS, float* sdd_array, float* sid_array, const float dx, const float dz,\
+	const float xc, const float yc, const float zc)
 {
 	int col = threadIdx.x + blockDim.x * blockIdx.x;
 	int row = threadIdx.y + blockDim.y * blockIdx.y;
@@ -537,28 +538,21 @@ __global__ void BackprojectPixelDriven_device(float* sgm, float* img, float* u, 
 	}
 }
 
-__global__ void BackprojectPixelDriven_pmatrix_device(float* sgm, float* img, float* u, float* v, float* beta,float*pmatrix,\
-	bool shortScan, const int N, const int V, const int S, bool coneBeam, const int M, const int imgS, const float sdd, const float sid, const float dx, const float dz, const float xc, const float yc, const float zc)
+__global__ void BackprojectPixelDriven_pmatrix_device(float* sgm, float* img, float* u, float* v, float* beta,float* pmatrix,\
+	bool shortScan, const int N, const int V, const int S, bool coneBeam, const int M, const int imgS, float* sdd_array, float* sid_array,\
+	const float dx, const float dz, const float xc, const float yc, const float zc)
 {
 	int col = threadIdx.x + blockDim.x * blockIdx.x;
 	int row = threadIdx.y + blockDim.y * blockIdx.y;
-
-	float du = u[1] - u[0];
-	float dv = v[1] - v[0];
-
 
 	if (col < M && row < M)
 	{
 		float x = (col - (M - 1) / 2.0f)*dx + xc;
 		float y = ((M - 1) / 2.0f - row)*dx + yc;
-
 		float z;
-
-		float U, u0, v0;
-		float mag_factor;
+		float U;
 		float w;
 		int k;
-
 		float w_z;//weight for cbct
 		int k_z;//index for cbct
 		float delta_beta;// delta_beta for the integral calculation (nonuniform scan angle)
@@ -575,6 +569,8 @@ __global__ void BackprojectPixelDriven_pmatrix_device(float* sgm, float* img, fl
 
 			for (int view = 0; view < V; view++)
 			{
+				float sid = sid_array[view];
+				float sdd = sdd_array[view];
 				//calculation of delta_beta for the integral calculation
 				if (view == 0)
 					delta_beta = abs(beta[1] - beta[0]);
@@ -583,45 +579,38 @@ __global__ void BackprojectPixelDriven_pmatrix_device(float* sgm, float* img, fl
 				else
 					delta_beta = abs(beta[view + 1] - beta[view - 1]) / 2.0f;
 
-				int pos_in_matrix = 12 * V;
+				//use pmatrix to calculate the corresponding index on the detector
+				int pos_in_matrix = 12 * view;
 				float k_u_divide_mag = pmatrix[pos_in_matrix] * x + pmatrix[pos_in_matrix +1] * y + pmatrix[pos_in_matrix +2] * z + pmatrix[pos_in_matrix +3] * 1;
-				float k_z_divide_mag = pmatrix[pos_in_matrix +4] * x + pmatrix[pos_in_matrix + 5] * y + pmatrix[pos_in_matrix + 6] * z + pmatrix[pos_in_matrix + 7] * 1;
+				
 				float one_divide_mag = pmatrix[pos_in_matrix +8] * x + pmatrix[pos_in_matrix + 9] * y + pmatrix[pos_in_matrix + 10] * z + pmatrix[pos_in_matrix + 11] * 1;
 
-				k = k_u_divide_mag / one_divide_mag;
-				k_z = k_z_divide_mag / one_divide_mag;
+				float k_f = k_u_divide_mag / one_divide_mag;//float number of k
+				k = floorf(k_f);
 
 				U = sid - x * cosf(beta[view]) - y * sinf(beta[view]);
 
-				//calculate the magnification
-				mag_factor = sdd / U;
-
-				// find u0 
-				u0 = mag_factor * (x*sinf(beta[view]) - y * cosf(beta[view]));
-
-
-				k = floorf((u0 - u[0]) / du);
 				if (k<0 || k + 1>N - 1)
 				{
 					img_local = 0;
 					break;
 				}
 
-				w = (u0 - u[k]) / du;
+				w = k_f - k;
 
 				// for cone beam ct, we also need to find v0
 				if (coneBeam)
 				{
-					v0 = mag_factor * z;
-					// weight for cbct recon
-					k_z = floorf((v0 - v[0]) / dv);
+					float k_z_divide_mag = pmatrix[pos_in_matrix + 4] * x + pmatrix[pos_in_matrix + 5] * y + pmatrix[pos_in_matrix + 6] * z + pmatrix[pos_in_matrix + 7] * 1;
+					float k_z_f = k_z_divide_mag / one_divide_mag;//float number of k_z
+					k_z = floorf(k_z_f);
 					if (k_z<0 || k_z + 1>S - 1)
 					{
 						img_local = 0;
 						break;
 					}
 
-					w_z = (v0 - v[k_z]) / dv;
+					w_z = k_z_f - k_z;
 
 					lower_row_val = (w*sgm[view*N + k + 1 + k_z * N*V] + (1 - w)*sgm[view*N + k + k_z * N*V]);
 					upper_row_val = (w*sgm[view*N + k + 1 + (k_z + 1) * N*V] + (1 - w)*sgm[view*N + k + (k_z + 1) * N*V]);
@@ -643,7 +632,9 @@ __global__ void BackprojectPixelDriven_pmatrix_device(float* sgm, float* img, fl
 
 			}
 			else
+			{
 				img[row*M + col + slice * M*M] = img_local / 2.0f;
+			}
 
 
 		}
@@ -727,7 +718,7 @@ void InitializeNonuniformSDD_Agent(float* &distance_array, const int V, const st
 	std::ifstream ifs(distanceFile);
 	if (!ifs)
 	{
-		printf("Cannot find SDD information file '%s'!\n", distanceFile.c_str());
+		printf("\nCannot find SDD information file '%s'!\n", distanceFile.c_str());
 		exit(-2);
 	}
 	rapidjson::IStreamWrapper isw(ifs);
@@ -741,7 +732,7 @@ void InitializeNonuniformSDD_Agent(float* &distance_array, const int V, const st
 
 		if (distance_jsonc_value.Size() != V)
 		{
-			printf("Number of sdd values is %d while the number of Views is %d!\n", distance_jsonc_value.Size(), V);
+			printf("\nNumber of sdd values is %d while the number of Views is %d!\n", distance_jsonc_value.Size(), V);
 			exit(-2);
 		}
 
@@ -753,7 +744,7 @@ void InitializeNonuniformSDD_Agent(float* &distance_array, const int V, const st
 	}
 	else
 	{
-		printf("Did not find SourceDetectorDistance member in jsonc file!\n");
+		printf("\nDid not find SourceDetectorDistance member in jsonc file!\n");
 		exit(-2);
 	}
 
@@ -772,7 +763,7 @@ void InitializeNonuniformSID_Agent(float* &distance_array, const int V, const st
 	std::ifstream ifs(distanceFile);
 	if (!ifs)
 	{
-		printf("Cannot find SID information file '%s'!\n", distanceFile.c_str());
+		printf("\nCannot find SID information file '%s'!\n", distanceFile.c_str());
 		exit(-2);
 	}
 	rapidjson::IStreamWrapper isw(ifs);
@@ -786,7 +777,7 @@ void InitializeNonuniformSID_Agent(float* &distance_array, const int V, const st
 
 		if (distance_jsonc_value.Size() != V)
 		{
-			printf("Number of sid values is %d while the number of Views is %d!\n", distance_jsonc_value.Size(), V);
+			printf("\nNumber of sid values is %d while the number of Views is %d!\n", distance_jsonc_value.Size(), V);
 			exit(-2);
 		}
 
@@ -798,9 +789,65 @@ void InitializeNonuniformSID_Agent(float* &distance_array, const int V, const st
 	}
 	else
 	{
-		printf("Did not find SourceIsocenterDistance member in jsonc file!\n");
+		printf("\nDid not find SourceIsocenterDistance member in jsonc file!\n");
 		exit(-2);
 	}
+
+	cudaDeviceSynchronize();
+}
+
+void InitializePMatrix_Agent(float* &pmatrix_array, const int V, const std::string& pmatrixFile)
+{
+	namespace fs = std::experimental::filesystem;
+	namespace js = rapidjson;
+
+	if (pmatrix_array != nullptr)
+		cudaFree(pmatrix_array);
+	
+	//cudaMallocManaged((void**)&pmatrix_array, 12 * V * sizeof(float));
+	cudaMalloc((void**)&pmatrix_array, 12 * V * sizeof(float));
+	//cudaMallocManaged somehow does not work for this function
+	//so cudaMalloc and cudaMemcpy is used
+
+	
+	float* pmatrix_array_cpu = new float[12 * V];
+
+
+	std::ifstream ifs(pmatrixFile);
+	if (!ifs)
+	{
+		printf("\nCannot find pmatrix information file '%s'!\n", pmatrixFile.c_str());
+		exit(-2);
+	}
+	rapidjson::IStreamWrapper isw(ifs);
+	rapidjson::Document doc;
+	doc.ParseStream<js::kParseCommentsFlag | js::kParseTrailingCommasFlag>(isw);
+	js::Value pmatrix_jsonc_value;
+	if (doc.HasMember("PMatrix"))
+	{
+
+		pmatrix_jsonc_value = doc["PMatrix"];
+
+		if (pmatrix_jsonc_value.Size() != 12 * V)
+		{
+			printf("\nNumber of pmatrix elements is %d while the 12 times number of Views is %d!\n", pmatrix_jsonc_value.Size(), 12 * V);
+			exit(-2);
+		}
+
+		for (unsigned i = 0; i < 12 * V; i++)
+		{
+			//printf("\n%d: %f",i, pmatrix_jsonc_value[i].GetFloat());
+			pmatrix_array_cpu[i] = pmatrix_jsonc_value[i].GetFloat();
+		}
+
+	}
+	else
+	{
+		printf("\nDid not find 'PMatrix' member in jsonc file!\n");
+		exit(-2);
+	}
+
+	cudaMemcpy(pmatrix_array, pmatrix_array_cpu, 12 * V * sizeof(float), cudaMemcpyHostToDevice);
 
 	cudaDeviceSynchronize();
 }
@@ -987,7 +1034,7 @@ void FilterSinogram_Agent(float * sgm, float* sgm_flt, float* reconKernel, float
 	}
 }
 
-void BackprojectPixelDriven_Agent(float * sgm_flt, float * img, float* sdd_array, float* sid_array, float * u, float *v, float* beta, mango::Config & config)
+void BackprojectPixelDriven_Agent(float * sgm_flt, float * img, float* sdd_array, float* sid_array, float* pmatrix_array, float * u, float *v, float* beta, mango::Config & config)
 {
 	dim3 grid((config.imgDim + 15) / 16, (config.imgDim + 15) / 16);
 	dim3 block(16, 16);
@@ -999,10 +1046,17 @@ void BackprojectPixelDriven_Agent(float * sgm_flt, float * img, float* sdd_array
 			config.sliceCount, config.imgDim, config.sdd, config.sid, config.detEltSize, config.pixelSize, config.xCenter, config.yCenter);
 	}
 	// Common attenuation imaging
-	else
+	else if (config.pmatrixFlag == false)
 	{
 		BackprojectPixelDriven_device <<<grid, block>>> (sgm_flt, img, u, v, beta, config.shortScan, config.sgmWidth, config.views,\
-			config.sliceCount,config.coneBeam, config.imgDim, config.imgSliceCount, sdd_array, sid_array, config.pixelSize,config.imgSliceThickness, config.xCenter, config.yCenter,config.zCenter);
+			config.sliceCount,config.coneBeam, config.imgDim, config.imgSliceCount, sdd_array, sid_array, config.pixelSize,config.imgSliceThickness,\
+			config.xCenter, config.yCenter,config.zCenter);
+	}
+	else if (config.pmatrixFlag == true)
+	{
+		BackprojectPixelDriven_pmatrix_device << <grid, block >> > (sgm_flt, img, u, v, beta, pmatrix_array, config.shortScan, config.sgmWidth, config.views, \
+			config.sliceCount, config.coneBeam, config.imgDim, config.imgSliceCount, sdd_array, sid_array, config.pixelSize, config.imgSliceThickness, \
+			config.xCenter, config.yCenter, config.zCenter);
 	}
 
 	cudaDeviceSynchronize();
