@@ -31,6 +31,11 @@
   // number of slices in each image file
   "SliceCount": 1,
 
+  // (OPTIONAL) Whether the cone beam recon is needed
+  // in case of "false", all other items relted to cone beam recon will be null
+  "ConeBeam": false,
+  // (OPTIONAL; for cone beam) image slice thickness [mm]
+  "ImageSliceThickness": 0.43,
 
   /*********************************************************
 	* geometry and detector parameters
@@ -42,8 +47,8 @@
   "SIDFile": "sid_file_sample.jsonc",
   // source to detector distance [mm]
   "SourceDetectorDistance": 949,
-    // (OPTIONAL; for nonuniform SDD)
-    "SDDFile": "sdd_file_sample.jsonc",
+  // (OPTIONAL; for nonuniform SDD)
+  "SDDFile": "sdd_file_sample.jsonc",
 
   // start angle (positive counterclockwise) [degree]
   "StartAngle": 90,
@@ -53,6 +58,8 @@
   "Views": 1501,
   // (optional) total scan angle for short scan. Set scan angle to negtive to change rotation direction
   "TotalScanAngle": 300,
+  // (OPTIONAL; for cone beam) detector Z elemtment count
+  "DetectorZElementCount": 6,
 
   // (optional) scan angle file for nonuniform scan angles
   // the previous TotalScanAngle term will be null if this term is uncommented
@@ -65,6 +72,13 @@
   "DetectorElementSize": 0.7,
   // the position (coordinate) of detector center [mm]
   "DetectorOffcenter": 35,
+  // (OPTIONAL; file detector offcenter array)
+  "DetectorOffCenterFile": "offcenter_file_sample",
+
+  // (OPTIONAL; for cone beam) detector elemtment height [mm]
+  "DetectorElementHeight": 0.8,
+  // (OPTIONAL; for cone beam) detector elemtment height [mm]
+  "DetectorZOffcenter": 0,
 
   // oversample sinogram by increasing the number of detector elements by the factor of number below
   "OversampleSize": 2

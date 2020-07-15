@@ -5,6 +5,8 @@
 mango::Config mango::FpjClass::config;
 float* mango::FpjClass::sdd_array = nullptr;
 float* mango::FpjClass::sid_array = nullptr;
+float* mango::FpjClass::offcenter_array = nullptr;
+float* mango::FpjClass::v = nullptr;
 float* mango::FpjClass::u = nullptr;
 float* mango::FpjClass::beta = nullptr;
 
@@ -150,6 +152,11 @@ void mango::FpjClass::ReadConfigFile(const char * filename)
 
 	config.sliceCount = doc["SliceCount"].GetInt();
 
+	if (doc.HasMember("ConeBeam"))
+	{
+		config.coneBeam = doc["ConeBeam"].GetBool();
+	}
+
 #pragma endregion
 
 
@@ -207,11 +214,11 @@ void mango::FpjClass::ReadConfigFile(const char * filename)
 
 	if (abs(config.totalScanAngle - 360.0f) < 0.001f)
 	{
-		printf("--FULL scan--\n");
+		printf("--FULL scan--");
 	}
 	else
 	{
-		printf("--SHORT scan (%.1f degrees)--\n", config.totalScanAngle);
+		printf("--SHORT scan (%.1f degrees)--", config.totalScanAngle);
 	}
 
 	config.detEltCount = doc["DetectorElementCount"].GetInt();
@@ -220,9 +227,47 @@ void mango::FpjClass::ReadConfigFile(const char * filename)
 	config.detEltSize = doc["DetectorElementSize"].GetFloat();
 	config.detOffCenter = doc["DetectorOffcenter"].GetFloat();
 
+	if (doc.HasMember("DetectorOffCenterFile"))
+	{
+		printf("--nonuniform offcenter--");
+		config.nonuniformOffCenter = true;
+		config.offCenterFile = doc["DetectorOffCenterFile"].GetString();
+	}
+	else
+	{
+		config.nonuniformOffCenter = false;
+	}
+
 	if (doc.HasMember("OversampleSize"))
 	{
 		config.oversampleSize = doc["OversampleSize"].GetInt();
+	}
+#pragma endregion
+
+#pragma region cone beam parameters
+	if (config.coneBeam == true)
+	{
+		printf("--CONE beam--");
+		if (doc.HasMember("ImageSliceThickness"))
+		{
+			config.sliceThickness = doc["ImageSliceThickness"].GetFloat();
+		}
+		if (doc.HasMember("DetectorZElementCount"))
+		{
+			config.detZEltCount = doc["DetectorZElementCount"].GetInt();
+		}
+		if (doc.HasMember("DetectorElementHeight"))
+		{
+			config.detEltHeight = doc["DetectorElementHeight"].GetFloat();
+		}
+		if (doc.HasMember("DetectorZOffcenter"))
+		{
+			config.detZoffCenter = doc["DetectorZOffcenter"].GetFloat();
+		}
+	}
+	else
+	{
+		config.detZEltCount = config.sliceCount;
 	}
 #pragma endregion
 }
@@ -247,6 +292,21 @@ void mango::FpjClass::InitParam()
 		InitializeDistance_Agent(sid_array, config.sid, config.views);
 	}
 
+	if (config.nonuniformOffCenter == true)
+	{
+		InitializeNonuniformOffCenter_Agent(offcenter_array, config.views, config.offCenterFile);
+		config.detOffCenter = offcenter_array[0];
+	}
+	else
+	{
+		InitializeDistance_Agent(offcenter_array, config.detOffCenter, config.views);
+	}
+
+	if (config.coneBeam == true)
+	{
+		InitializeU_Agent(v, config.detZEltCount, config.detEltHeight, config.detZoffCenter);
+	}
+
 	InitializeU_Agent(u, config.detEltCount*config.oversampleSize, config.detEltSize/config.oversampleSize, config.detOffCenter);
 	if (config.nonuniformScanAngle == true)
 	{
@@ -261,8 +321,8 @@ void mango::FpjClass::InitParam()
 	cudaDeviceSynchronize();
 
 	MallocManaged_Agent(image, config.imgDim*config.imgDim*config.sliceCount * sizeof(float));
-	MallocManaged_Agent(sinogram, config.detEltCount*config.views*config.sliceCount * sizeof(float));
-	MallocManaged_Agent(sinogram_large, config.detEltCount * config.oversampleSize * config.views * config.sliceCount * sizeof(float));
+	MallocManaged_Agent(sinogram, config.detEltCount*config.views * sizeof(float));// the size of the sinogram is limited to one slice and will be saved slice by slice
+	MallocManaged_Agent(sinogram_large, config.detEltCount * config.oversampleSize *config.views  * sizeof(float));// the size of the sinogram is limited to one slice and will be saved slice by slice
 
 }
 
@@ -292,14 +352,35 @@ void mango::FpjClass::SaveSinogram(const char * filename)
 		fprintf(stderr, "Cannot save to file %s!\n", filename);
 		exit(4);
 	}
-	fwrite(sinogram, sizeof(float), config.detEltCount * config.views * config.sliceCount, fp);
+	fwrite(sinogram, sizeof(float), config.detEltCount * config.views * config.detZEltCount, fp);
 
 	fclose(fp);
 }
 
 void mango::FpjClass::ForwardProjectionBilinear()
 {
-	ForwardProjectionBilinear_Agent(image, sinogram_large,sid_array,sdd_array, u, beta, config);
+	ForwardProjectionBilinear_Agent(image, sinogram_large,sid_array,sdd_array, offcenter_array, u, v, beta, config, 0);
 
 	BinSinogram(sinogram_large, sinogram, config);
+}
+
+
+void mango::FpjClass::ForwardProjectionBilinearAndSave(const char* filename)
+{
+	printf("\nProcessing slice# ");
+	for (int z_idx = 0; z_idx < config.detZEltCount; z_idx++)
+	{
+		if (z_idx != 0)
+		{
+			printf("\b\b\b\b\b\b\b");
+		}
+		printf("%3d/%3d", z_idx + 1, config.detZEltCount);
+		ForwardProjectionBilinear_Agent(image, sinogram_large, sid_array, sdd_array, offcenter_array, u, v, beta, config, z_idx);
+
+		BinSinogram(sinogram_large, sinogram, config);
+
+		cudaDeviceSynchronize();
+
+		SaveSinogramSlice(filename, sinogram, z_idx, config);
+	}	
 }

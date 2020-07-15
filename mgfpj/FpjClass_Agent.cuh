@@ -17,6 +17,8 @@ void InitializeNonuniformSDD_Agent(float* &distance_array, const int V, const st
 // V: number of views
 void InitializeNonuniformSID_Agent(float* &distance_array, const int V, const std::string& distanceFile);
 
+void InitializeNonuniformOffCenter_Agent(float* &offcenter_array, const int V, const std::string& offCenterFile);
+
 // Initialize u, the array of each detector element coordiante
 // u: array of detector elements
 // N: number of detector elements
@@ -37,10 +39,14 @@ void InitializeBeta_Agent(float* &beta, const int V, const float startAngle, con
 void InitializeNonuniformBeta_Agent(float* &beta, const int V, const float rotation, const std::string& scanAngleFile);
 
 // Forward projection, using bilinear interpolation
-void ForwardProjectionBilinear_Agent(float* &image, float* &sinogram, const float* sid_array, const float* sdd_array, const float* u, const float* beta, const mango::Config& config);
+void ForwardProjectionBilinear_Agent(float* &image, float* &sinogram, const float* sid_array, const float* sdd_array, const float* offcenter_array,\
+	const float* u,const float* v, const float* beta, const mango::Config& config, int z_element_idx);
 
 // Bin the sinogram data along detector direction
 void BinSinogram(float* &sinogram_large, float* &sinogram, const mango::Config& config);
+
+// Save one slice of the sinogram data
+void SaveSinogramSlice(const char * filename, float*&sinogram_slice, int z_element_idx, const mango::Config& config);
 
 // Malloc the memory as a given size
 void MallocManaged_Agent(float* &p, const int size);

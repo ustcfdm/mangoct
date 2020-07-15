@@ -27,16 +27,13 @@ int main(int argc, char* argv[])
 
 		for (size_t i = 0; i < mg::FpjClass::config.inputFiles.size(); i++)
 		{
-			printf("    Forward projection %s ...", mg::FpjClass::config.inputFiles[i].c_str());
+			printf("    \nForward projection %s ...", mg::FpjClass::config.inputFiles[i].c_str());
 
 			fpj.ReadImageFile((inDir / mg::FpjClass::config.inputFiles[i]).string().c_str());
 
-			fpj.ForwardProjectionBilinear();
+			fpj.ForwardProjectionBilinearAndSave((outDir / mg::FpjClass::config.outputFiles[i]).string().c_str());
 
-			fpj.SaveSinogram((outDir / mg::FpjClass::config.outputFiles[i]).string().c_str());
-
-
-			printf("\b\b\b\t->\tSaved to file %s\n", mg::FpjClass::config.outputFiles[i].c_str());
+			printf("\n->\tSaved to file %s\n", mg::FpjClass::config.outputFiles[i].c_str());
 		}
 	}
 	return 0;
