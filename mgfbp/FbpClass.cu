@@ -7,6 +7,7 @@
 mango::Config mango::FbpClass::config;
 float* mango::FbpClass::sid_array = nullptr;
 float* mango::FbpClass::sdd_array = nullptr;
+float* mango::FbpClass::offcenter_array = nullptr;
 float* mango::FbpClass::pmatrix_array = nullptr;
 float* mango::FbpClass::u = nullptr;
 float* mango::FbpClass::v = nullptr;
@@ -158,6 +159,17 @@ void mango::FbpClass::ReadConfigFile(const char * filename)
 	config.detEltSize = doc["DetectorElementSize"].GetFloat();
 	config.detOffCenter = doc["DetectorOffcenter"].GetFloat();
 
+	if (doc.HasMember("DetectorOffCenterFile"))
+	{
+		printf("--nonuniform offcenter--");
+		config.nonuniformOffCenter = true;
+		config.offCenterFile = doc["DetectorOffCenterFile"].GetString();
+	}
+	else
+	{
+		config.nonuniformOffCenter = false;
+	}
+
 	config.sid = doc["SourceIsocenterDistance"].GetFloat();
 
 	if (doc.HasMember("SIDFile"))
@@ -200,7 +212,7 @@ void mango::FbpClass::ReadConfigFile(const char * filename)
 	if (doc.HasMember("SliceThickness"))
 		config.sliceThickness = doc["SliceThickness"].GetFloat();
 	else
-		config.sliceThickness = 1;
+		config.sliceThickness = 0;
 
 	if (doc.HasMember("SliceOffCenter"))
 		config.sliceOffcenter = doc["SliceOffCenter"].GetFloat();
@@ -375,6 +387,15 @@ void mango::FbpClass::InitParam()
 		InitializeDistance_Agent(sid_array, config.sid, config.views);
 	}
 
+	if (config.nonuniformOffCenter == true)
+	{
+		InitializeNonuniformOffCenter_Agent(offcenter_array, config.views, config.offCenterFile);
+	}
+	else
+	{
+		InitializeDistance_Agent(offcenter_array, config.detOffCenter, config.views);
+	}
+
 	if (config.pmatrixFlag == true)
 	{
 		InitializePMatrix_Agent(pmatrix_array,config.views, config.pmatrixFile);
@@ -383,7 +404,10 @@ void mango::FbpClass::InitParam()
 		;
 	}
 
-	InitializeU_Agent(u, config.sgmWidth, config.detEltSize, config.detOffCenter);
+	float* offcenter_array_cpu = new float[config.views];
+	cudaMemcpy(offcenter_array_cpu, offcenter_array, config.views * sizeof(float), cudaMemcpyDeviceToHost);
+	//printf("\n%.5f\n", offcenter_array_cpu[0]);
+	InitializeU_Agent(u, config.sgmWidth, config.detEltSize, offcenter_array_cpu[0]);
 
 	InitializeU_Agent(v, config.sliceCount, config.sliceThickness, config.sliceOffcenter);
 
@@ -419,7 +443,8 @@ void mango::FbpClass::InitParam()
 
 	MallocManaged_Agent(sinogram, config.sgmWidth*config.sgmHeight*config.sliceCount * sizeof(float));
 	MallocManaged_Agent(sinogram_filter, config.sgmWidth*config.views*config.sliceCount * sizeof(float));
-	MallocManaged_Agent(image, config.imgDim*config.imgDim*config.imgSliceCount * sizeof(float));
+	//MallocManaged_Agent(image, config.imgDim*config.imgDim*config.imgSliceCount * sizeof(float));
+	MallocManaged_Agent(image, config.imgDim*config.imgDim* sizeof(float));// recon slice by slice
 }
 
 void mango::FbpClass::ReadSinogramFile(const char * filename)
@@ -473,10 +498,30 @@ void mango::FbpClass::SaveImage(const char * filename)
 
 void mango::FbpClass::FilterSinogram()
 {
-	FilterSinogram_Agent(sinogram, sinogram_filter, reconKernel, u, config,beta);
+	FilterSinogram_Agent(sinogram, sinogram_filter, reconKernel, u, config,beta,sdd_array, offcenter_array);
 }
 
 void mango::FbpClass::BackprojectPixelDriven()
 {
-	BackprojectPixelDriven_Agent(sinogram_filter, image, sdd_array,sid_array, pmatrix_array, u, v, beta, config);
+	BackprojectPixelDriven_Agent(sinogram_filter, image, sdd_array,sid_array, offcenter_array, pmatrix_array, u, v, beta, config, 0);
+}
+
+void mango::FbpClass::BackprojectPixelDrivenAndSave(const char* filename)
+{
+	printf(" slice# ");
+	for (int z_idx = 0; z_idx < config.imgSliceCount; z_idx++)
+	{
+		if (z_idx != 0)
+		{
+			printf("\b\b\b\b\b\b\b");
+		}
+		printf("%3d/%3d", z_idx + 1, config.imgSliceCount);
+		BackprojectPixelDriven_Agent(sinogram_filter, image, sdd_array, sid_array, offcenter_array, pmatrix_array, u, v, beta, config, z_idx);
+
+		cudaDeviceSynchronize();
+
+		SaveReconImageSlice(filename, image, z_idx, config);
+
+		
+	}
 }

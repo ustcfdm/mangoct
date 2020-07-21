@@ -23,6 +23,8 @@ void InitializeNonuniformSDD_Agent(float* &distance_array, const int V, const st
 // V: number of views
 void InitializeNonuniformSID_Agent(float* &distance_array, const int V, const std::string& distanceFile);
 
+void InitializeNonuniformOffCenter_Agent(float* &distance_array, const int V, const std::string& distanceFile);
+
 void InitializePMatrix_Agent(float* &pmatrix_array, const int V, const std::string& pmatrixFile);
 
 // Initialize u, the array of each detector element coordiante
@@ -59,7 +61,10 @@ void MallocManaged_Agent(float* &p, const int size);
 void CorrectBeamHardening_Agent(float* sgm, mango::Config & config);
 
 // Filter the sinogram data
-void FilterSinogram_Agent(float* sgm, float* sgm_flt, float* reconKernel, float* u, mango::Config& config, float*beta);
+void FilterSinogram_Agent(float* sgm, float* sgm_flt, float* reconKernel, float* u, mango::Config& config, float*beta, float*sdd_array, float * offcenter_array);
 
 // Backproject the image using pixel-driven method
-void BackprojectPixelDriven_Agent(float* sgm_flt, float* img, float* sdd_array, float* sid_array, float* pmatrix_array, float* u, float *v, float* beta, mango::Config& config);
+void BackprojectPixelDriven_Agent(float* sgm_flt, float* img, float* sdd_array, float* sid_array, float* offcenter_array, float* pmatrix_array, float* u, float *v, float* beta, mango::Config& config, int z_idx);
+
+// Save reconstructed images slice by slice
+void SaveReconImageSlice(const char* filename, float* rec_image, int z_idx, const mango::Config& config);

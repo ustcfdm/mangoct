@@ -252,17 +252,22 @@ __global__ void InitReconKernel_Hilbert(float* reconKernel, const int N, const f
 // sliceOffcenter: mm
 // sdd: source to detector distance
 // totalScanAngle
-__global__ void WeightSinogram_device(float* sgm, const float* u, const int N, const int H, const int V, const int S, const float sliceThickness, const float sliceOffcenter, float sdd, float totalScanAngle, bool shortScan, float *betaArray)
+__global__ void WeightSinogram_device(float* sgm, const float* u, const int N, const int H, const int V, \
+	const int S, const float sliceThickness, const float sliceOffcenter, float* sdd_array, float totalScanAngle, bool shortScan, float *betaArray, float* offcenter_array)
 {
 	int col = threadIdx.x + blockDim.x * blockIdx.x;
 	int row = threadIdx.y + blockDim.y * blockIdx.y;
 
 	if (col < N && row < V)
 	{
+		float offcenter_bias = offcenter_array[row] - offcenter_array[0];
+		float u_actual = u[col] + offcenter_bias;//actual u value due to non uniform offcenter
+
+		float sdd = sdd_array[row];
 		for (int i = 0; i < S; i++)
 		{
 			float v = sliceThickness * (i - (float(S) / 2.0f + 0.5)) + sliceOffcenter;
-			sgm[row*N + col + i * N*H] *= sdd * sdd / sqrtf(u[col] * u[col] + sdd * sdd + v * v);
+			sgm[row*N + col + i * N*H] *= sdd * sdd / sqrtf((u_actual)*(u_actual) + sdd * sdd + v * v);
 			//the loop is to include all the slices since there may be more than one slice
 		}
 
@@ -275,7 +280,7 @@ __global__ void WeightSinogram_device(float* sgm, const float* u, const int N, c
 			//adding abs function to deal with the case when totalScanAngle is negative
 			float beta = abs(betaArray[row] - betaArray[0]);
 			float rotation_direction = abs(totalScanAngle) / (totalScanAngle);
-			float gamma = atan(u[col] / sdd) * rotation_direction;
+			float gamma = atan(u_actual / sdd) * rotation_direction;
 
 			//float beta = abs(totalScanAngle/ 180.0f * PI ) / float(V) * float(row) ;
 			//float gamma = abs(totalScanAngle) / totalScanAngle * atan(u[col] / sdd);
@@ -419,7 +424,7 @@ __global__ void ConvolveSinogram_device(float* sgm_flt, const float* sgm, float*
 // N: number of detector elements
 // V: number of views
 // totalScanAngle [rads]
-// S: number of slices
+// S: number of slices of the sinogram
 // coneBeam: whether the recon is conbeam recon or not
 // M: image dimension
 // imgS: image slice count
@@ -431,9 +436,10 @@ __global__ void ConvolveSinogram_device(float* sgm_flt, const float* sgm, float*
 // dz: image slice thickness [mm]
 // (xc, yc, zc): image center position [mm, mm, mm]
 __global__ void BackprojectPixelDriven_device(float* sgm, float* img, float* u, float* v, float* beta, bool shortScan, const int N, const int V,\
-	const int S,bool coneBeam, const int M, const int imgS, float* sdd_array, float* sid_array, const float dx, const float dz,\
-	const float xc, const float yc, const float zc)
+	const int S,bool coneBeam, const int M, const int imgS, float* sdd_array, float* sid_array, float* offcenter_array, const float dx, const float dz,\
+	const float xc, const float yc, const float zc, int imgS_idx)
 {
+
 	int col = threadIdx.x + blockDim.x * blockIdx.x;
 	int row = threadIdx.y + blockDim.y * blockIdx.y;
 
@@ -441,8 +447,9 @@ __global__ void BackprojectPixelDriven_device(float* sgm, float* img, float* u, 
 	float dv = v[1] - v[0];
 
 
-	if (col < M && row < M)
+	if (col < M && row < M && imgS_idx <= imgS)
 	{
+		
 		float x = (col - (M - 1) / 2.0f)*dx + xc;
 		float y = ((M - 1) / 2.0f - row)*dx + yc;
 
@@ -459,7 +466,7 @@ __global__ void BackprojectPixelDriven_device(float* sgm, float* img, float* u, 
 
 		float lower_row_val, upper_row_val;
 
-		for (int slice = 0; slice < imgS; slice++)
+		for (int slice = imgS_idx; slice < imgS_idx +1; slice++)
 		{
 
 			z = (slice - (float(imgS) - 1.0f) / 2.0f) * dz + zc;
@@ -469,6 +476,7 @@ __global__ void BackprojectPixelDriven_device(float* sgm, float* img, float* u, 
 
 			for (int view = 0; view < V; view++)
 			{
+				float offcenter_bias = offcenter_array[view] - offcenter_array[0];
 				float sid = sid_array[view];
 				float sdd = sdd_array[view];
 				//calculation of delta_beta for the integral calculation
@@ -488,17 +496,17 @@ __global__ void BackprojectPixelDriven_device(float* sgm, float* img, float* u, 
 				u0 = mag_factor * (x*sinf(beta[view]) - y * cosf(beta[view])) ;
 				
 				
-				k = floorf((u0 - u[0]) / du);
+				k = floorf((u0 - (u[0]+offcenter_bias)) / du);
 				if (k<0 || k + 1>N - 1)
 				{
 					img_local = 0;
 					break;
 				}
 
-				w = (u0 - u[k]) / du;
+				w = (u0 - (u[k] + offcenter_bias)) / du;
 
 				// for cone beam ct, we also need to find v0
-				if (coneBeam)
+				if (coneBeam && abs(dv)>0.00001f)
 				{
 					v0 = mag_factor * z;
 					// weight for cbct recon
@@ -527,11 +535,11 @@ __global__ void BackprojectPixelDriven_device(float* sgm, float* img, float* u, 
 			if (shortScan)
 			{
 				//printf("this is a full scan");
-				img[row*M + col + slice * M*M] = img_local;
+				img[row*M + col] = img_local;
 
 			}
 			else
-				img[row*M + col + slice * M*M] = img_local /2.0f;
+				img[row*M + col] = img_local /2.0f;
 
 			
 		}
@@ -540,12 +548,12 @@ __global__ void BackprojectPixelDriven_device(float* sgm, float* img, float* u, 
 
 __global__ void BackprojectPixelDriven_pmatrix_device(float* sgm, float* img, float* u, float* v, float* beta,float* pmatrix,\
 	bool shortScan, const int N, const int V, const int S, bool coneBeam, const int M, const int imgS, float* sdd_array, float* sid_array,\
-	const float dx, const float dz, const float xc, const float yc, const float zc)
+	const float dx, const float dz, const float xc, const float yc, const float zc, int imgS_idx)
 {
 	int col = threadIdx.x + blockDim.x * blockIdx.x;
 	int row = threadIdx.y + blockDim.y * blockIdx.y;
 
-	if (col < M && row < M)
+	if (col < M && row < M && imgS_idx <imgS)
 	{
 		float x = (col - (M - 1) / 2.0f)*dx + xc;
 		float y = ((M - 1) / 2.0f - row)*dx + yc;
@@ -559,7 +567,7 @@ __global__ void BackprojectPixelDriven_pmatrix_device(float* sgm, float* img, fl
 
 		float lower_row_val, upper_row_val;
 
-		for (int slice = 0; slice < imgS; slice++)
+		for (int slice = imgS_idx; slice < imgS_idx+1; slice++)
 		{
 
 			z = (slice - (float(imgS) - 1.0f) / 2.0f) * dz + zc;
@@ -628,12 +636,12 @@ __global__ void BackprojectPixelDriven_pmatrix_device(float* sgm, float* img, fl
 			if (shortScan)
 			{
 				//printf("this is a full scan");
-				img[row*M + col + slice * M*M] = img_local;
+				img[row*M + col] = img_local;
 
 			}
 			else
 			{
-				img[row*M + col + slice * M*M] = img_local / 2.0f;
+				img[row*M + col] = img_local / 2.0f;
 			}
 
 
@@ -656,12 +664,13 @@ __global__ void BackprojectPixelDriven_pmatrix_device(float* sgm, float* img, fl
 // du: detector element size [mm]
 // dx: image pixel size [mm]
 // (xc, yc): image center position [mm, mm]
-__global__ void BackprojectPixelDrivenHilbert_device(float* sgm, float* img, float* u, float* beta, const int N, const int V, const int S, const int M, const float sdd, const float sid, const float du, const float dx, const float xc, const float yc)
+__global__ void BackprojectPixelDrivenHilbert_device(float* sgm, float* img, float* u, float* beta, const int N, const int V, \
+	const int S, const int M, const float sdd, const float sid, const float du, const float dx, const float xc, const float yc, int imgS_idx)
 {
 	int col = threadIdx.x + blockDim.x * blockIdx.x;
 	int row = threadIdx.y + blockDim.y * blockIdx.y;
 
-	if (col < M && row < M)
+	if (col < M && row < M && imgS_idx < S)
 	{
 		float x = (col - (M - 1) / 2.0f)*dx + xc;
 		float y = ((M - 1) / 2.0f - row)*dx + yc;
@@ -670,9 +679,9 @@ __global__ void BackprojectPixelDrivenHilbert_device(float* sgm, float* img, flo
 		float w;
 		int k;
 
-		for (int slice = 0; slice < S; slice++)
+		for (int slice = imgS_idx; slice < imgS_idx+1; slice++)
 		{
-			img[row*M + col + slice * M*M] = 0;
+			img[row*M + col] = 0;
 
 			for (int view = 0; view < V; view++)
 			{
@@ -682,16 +691,16 @@ __global__ void BackprojectPixelDrivenHilbert_device(float* sgm, float* img, flo
 				k = floorf((u0 - u[0]) / du);
 				if (k<0 || k + 1>N - 1)
 				{
-					img[row*M + col + slice * M*M] = 0;
+					img[row*M + col] = 0;
 					break;
 				}
 
 				w = (u0 - u[k]) / du;
 
-				img[row*M + col + slice * M*M] += 1 / U * (w*sgm[view*N + k + 1 + slice * N*V] + (1 - w)*sgm[view*N + k + slice * N*V]);
+				img[row*M + col] += 1 / U * (w*sgm[view*N + k + 1 + slice * N*V] + (1 - w)*sgm[view*N + k + slice * N*V]);
 
 			}
-			img[row*M + col + slice * M*M] *= PI / V;
+			img[row*M + col] *= PI / V;
 		}
 	}
 }
@@ -714,7 +723,8 @@ void InitializeNonuniformSDD_Agent(float* &distance_array, const int V, const st
 	if (distance_array != nullptr)
 		cudaFree(distance_array);
 
-	cudaMallocManaged((void**)&distance_array, V * sizeof(float));
+	cudaMalloc((void**)&distance_array, V * sizeof(float));
+	float* distance_array_cpu = new float[V];
 	std::ifstream ifs(distanceFile);
 	if (!ifs)
 	{
@@ -738,7 +748,7 @@ void InitializeNonuniformSDD_Agent(float* &distance_array, const int V, const st
 
 		for (unsigned i = 0; i < distance_jsonc_value.Size(); i++)
 		{
-			distance_array[i] = distance_jsonc_value[i].GetFloat();
+			distance_array_cpu[i] = distance_jsonc_value[i].GetFloat();
 		}
 
 	}
@@ -747,7 +757,7 @@ void InitializeNonuniformSDD_Agent(float* &distance_array, const int V, const st
 		printf("\nDid not find SourceDetectorDistance member in jsonc file!\n");
 		exit(-2);
 	}
-
+	cudaMemcpy(distance_array, distance_array_cpu, V * sizeof(float), cudaMemcpyHostToDevice);
 	cudaDeviceSynchronize();
 }
 
@@ -759,7 +769,8 @@ void InitializeNonuniformSID_Agent(float* &distance_array, const int V, const st
 	if (distance_array != nullptr)
 		cudaFree(distance_array);
 
-	cudaMallocManaged((void**)&distance_array, V * sizeof(float));
+	cudaMalloc((void**)&distance_array, V * sizeof(float));
+	float* distance_array_cpu = new float[V];
 	std::ifstream ifs(distanceFile);
 	if (!ifs)
 	{
@@ -783,7 +794,7 @@ void InitializeNonuniformSID_Agent(float* &distance_array, const int V, const st
 
 		for (unsigned i = 0; i < distance_jsonc_value.Size(); i++)
 		{
-			distance_array[i] = distance_jsonc_value[i].GetFloat();
+			distance_array_cpu[i] = distance_jsonc_value[i].GetFloat();
 		}
 
 	}
@@ -792,7 +803,53 @@ void InitializeNonuniformSID_Agent(float* &distance_array, const int V, const st
 		printf("\nDid not find SourceIsocenterDistance member in jsonc file!\n");
 		exit(-2);
 	}
+	cudaMemcpy(distance_array, distance_array_cpu, V * sizeof(float), cudaMemcpyHostToDevice);
+	cudaDeviceSynchronize();
+}
 
+void InitializeNonuniformOffCenter_Agent(float* &distance_array, const int V, const std::string& distanceFile)
+{
+	namespace fs = std::experimental::filesystem;
+	namespace js = rapidjson;
+
+	if (distance_array != nullptr)
+		cudaFree(distance_array);
+
+	cudaMalloc((void**)&distance_array, V * sizeof(float));
+	float* distance_array_cpu = new float[V];
+	std::ifstream ifs(distanceFile);
+	if (!ifs)
+	{
+		printf("\nCannot find Offcenter information file '%s'!\n", distanceFile.c_str());
+		exit(-2);
+	}
+	rapidjson::IStreamWrapper isw(ifs);
+	rapidjson::Document doc;
+	doc.ParseStream<js::kParseCommentsFlag | js::kParseTrailingCommasFlag>(isw);
+	js::Value distance_jsonc_value;
+	if (doc.HasMember("OffcenterArray"))
+	{
+
+		distance_jsonc_value = doc["OffcenterArray"];
+
+		if (distance_jsonc_value.Size() != V)
+		{
+			printf("\nNumber of offcenter values is %d while the number of Views is %d!\n", distance_jsonc_value.Size(), V);
+			exit(-2);
+		}
+
+		for (unsigned i = 0; i < distance_jsonc_value.Size(); i++)
+		{
+			distance_array_cpu[i] = distance_jsonc_value[i].GetFloat();
+		}
+
+	}
+	else
+	{
+		printf("\nDid not find OffcenterArray member in jsonc file!\n");
+		exit(-2);
+	}
+	cudaMemcpy(distance_array, distance_array_cpu, V * sizeof(float), cudaMemcpyHostToDevice);
 	cudaDeviceSynchronize();
 }
 
@@ -880,7 +937,8 @@ void InitializeNonuniformBeta_Agent(float* &beta, const int V, const float rotat
 	if (beta != nullptr)
 		cudaFree(beta);
 
-	cudaMallocManaged((void**)&beta, V * sizeof(float));
+	cudaMalloc((void**)&beta, V * sizeof(float));
+	float* beta_cpu = new float[V];
 	std::ifstream ifs(scanAngleFile);
 	if (!ifs)
 	{
@@ -904,7 +962,7 @@ void InitializeNonuniformBeta_Agent(float* &beta, const int V, const float rotat
 
 		for (unsigned i = 0; i < scan_angle_jsonc_value.Size(); i++)
 		{
-			beta[i] = rotation /180.0f*PI + scan_angle_jsonc_value[i].GetFloat()/180.0*PI;
+			beta_cpu[i] = rotation /180.0f*PI + scan_angle_jsonc_value[i].GetFloat()/180.0*PI;
 		}
 
 	}
@@ -912,7 +970,7 @@ void InitializeNonuniformBeta_Agent(float* &beta, const int V, const float rotat
 	{
 		printf("Did not find ScanAngle member in jsonc file!\n");
 	}
-
+	cudaMemcpy(beta, beta_cpu, sizeof(float)*V, cudaMemcpyHostToDevice);
 	cudaDeviceSynchronize();
 }
 
@@ -980,7 +1038,7 @@ void CorrectBeamHardening_Agent(float* sgm, mango::Config & config)
 
 }
 
-void FilterSinogram_Agent(float * sgm, float* sgm_flt, float* reconKernel, float* u, mango::Config & config, float* beta)
+void FilterSinogram_Agent(float * sgm, float* sgm_flt, float* reconKernel, float* u, mango::Config & config, float* beta, float * sdd_array, float * offcenter_array)
 {
 	// Step 1: weight the sinogram
 	dim3 grid((config.sgmWidth + 15) / 16, (config.sgmHeight + 15) / 16);
@@ -996,7 +1054,8 @@ void FilterSinogram_Agent(float * sgm, float* sgm_flt, float* reconKernel, float
 	}
 	// Common attenuation imaging
 	else
-		WeightSinogram_device <<<grid, block >> > (sgm, u, config.sgmWidth, config.sgmHeight, config.views, config.sliceCount, config.sliceThickness, config.sliceOffcenter, config.sdd, config.totalScanAngle, config.shortScan, beta);
+		WeightSinogram_device <<<grid, block >> > (sgm, u, config.sgmWidth, config.sgmHeight, config.views, config.sliceCount, \
+			config.sliceThickness, config.sliceOffcenter, sdd_array, config.totalScanAngle, config.shortScan, beta, offcenter_array);
 	
 	cudaDeviceSynchronize();
 
@@ -1034,7 +1093,7 @@ void FilterSinogram_Agent(float * sgm, float* sgm_flt, float* reconKernel, float
 	}
 }
 
-void BackprojectPixelDriven_Agent(float * sgm_flt, float * img, float* sdd_array, float* sid_array, float* pmatrix_array, float * u, float *v, float* beta, mango::Config & config)
+void BackprojectPixelDriven_Agent(float * sgm_flt, float * img, float* sdd_array, float* sid_array, float* offcenter_array, float* pmatrix_array, float * u, float *v, float* beta, mango::Config & config, int z_idx)
 {
 	dim3 grid((config.imgDim + 15) / 16, (config.imgDim + 15) / 16);
 	dim3 block(16, 16);
@@ -1043,23 +1102,40 @@ void BackprojectPixelDriven_Agent(float * sgm_flt, float * img, float* sdd_array
 	if (config.kernelName == "Hilbert" || config.kernelName=="Hilbert_angle")
 	{
 		BackprojectPixelDrivenHilbert_device << <grid, block >> > (sgm_flt, img, u, beta, config.sgmWidth, config.views,\
-			config.sliceCount, config.imgDim, config.sdd, config.sid, config.detEltSize, config.pixelSize, config.xCenter, config.yCenter);
+			config.sliceCount, config.imgDim, config.sdd, config.sid, config.detEltSize, config.pixelSize, config.xCenter, config.yCenter, z_idx);
 	}
 	// Common attenuation imaging
 	else if (config.pmatrixFlag == false)
 	{
 		BackprojectPixelDriven_device <<<grid, block>>> (sgm_flt, img, u, v, beta, config.shortScan, config.sgmWidth, config.views,\
-			config.sliceCount,config.coneBeam, config.imgDim, config.imgSliceCount, sdd_array, sid_array, config.pixelSize,config.imgSliceThickness,\
-			config.xCenter, config.yCenter,config.zCenter);
+			config.sliceCount,config.coneBeam, config.imgDim, config.imgSliceCount, sdd_array, sid_array, offcenter_array, config.pixelSize,config.imgSliceThickness,\
+			config.xCenter, config.yCenter,config.zCenter, z_idx);
 	}
 	else if (config.pmatrixFlag == true)
 	{
 		BackprojectPixelDriven_pmatrix_device << <grid, block >> > (sgm_flt, img, u, v, beta, pmatrix_array, config.shortScan, config.sgmWidth, config.views, \
 			config.sliceCount, config.coneBeam, config.imgDim, config.imgSliceCount, sdd_array, sid_array, config.pixelSize, config.imgSliceThickness, \
-			config.xCenter, config.yCenter, config.zCenter);
+			config.xCenter, config.yCenter, config.zCenter, z_idx);
 	}
 
 	cudaDeviceSynchronize();
+}
+
+void SaveReconImageSlice(const char* filename, float* rec_image, int z_idx, const mango::Config& config)
+{
+	FILE* fp = NULL;
+	if (z_idx == 0)
+		fp = fopen(filename, "wb");
+	else
+		fp = fopen(filename, "ab");
+
+	if (fp == NULL)
+	{
+		fprintf(stderr, "Cannot save to file %s!\n", filename);
+		exit(4);
+	}
+	fwrite(rec_image, sizeof(float), config.imgDim*config.imgDim, fp);
+	fclose(fp);
 }
 
 

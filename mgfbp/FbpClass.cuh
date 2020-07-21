@@ -23,7 +23,7 @@ namespace mango
 		unsigned	sgmHeight;				// sinogram height (number of frames)
 		unsigned	views;					// number of views for reconstruction
 		unsigned	sliceCount;				// number of slice in each sinogram file
-		float		sliceThickness = 1;		// slice thickness of each slice for cone beam recon [mm]
+		float		sliceThickness = 0;		// slice thickness of each slice for cone beam recon [mm]
 		float		sliceOffcenter = 0;		//slice offcenter distance for cone beam recon [mm]
 
 		float		totalScanAngle;			// total scan angle for short scan
@@ -33,6 +33,8 @@ namespace mango
 
 		float		detEltSize;				// physical size of detector element [mm]
 		float		detOffCenter;			// the position (coordinate) of center of detector
+		bool		nonuniformOffCenter;	// whether the offcenter distance is non uniform
+		std::string		offCenterFile;		// name of the jsonc file to save the offcenter info
 
 		float		sid;					// source to isocenter distance [mm]
 		bool nonuniformSID;					// whether the sid is nonuniform or not
@@ -79,6 +81,8 @@ namespace mango
 		static float* sdd_array;
 		//array of sid
 		static float* sid_array;
+		//array of offcenter
+		static float* offcenter_array;
 		//array of pmatrix
 		static float* pmatrix_array;
 		// array of detector element coordinate
@@ -124,6 +128,9 @@ namespace mango
 
 		// Backproject the image using pixel-driven method
 		void BackprojectPixelDriven();
+
+		// Backproject the image using pixel-driven method and save slice by slice
+		void BackprojectPixelDrivenAndSave(const char* filename);
 
 	};
 
