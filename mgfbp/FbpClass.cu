@@ -71,7 +71,7 @@ std::vector<std::string> GetOutputFileNames(const std::vector<std::string>& inpu
 			auto pos = outputFile.find(replace[2 * i]);
 			if (pos == std::string::npos)
 			{
-				fprintf(stderr, "Did not find substring \"%s\" to be replaced!\n", replace[2 * i].c_str());
+				fprintf(stderr, "Did not find substring \"%s\" to be replaced!\n (Every sinogram file in the input folder should have this substring)\n", replace[2 * i].c_str());
 				exit(2);
 			}
 			outputFile.replace(pos, replace[2 * i].size(), replace[2 * i + 1]);
@@ -406,7 +406,7 @@ void mango::FbpClass::InitParam()
 
 	float* offcenter_array_cpu = new float[config.views];
 	cudaMemcpy(offcenter_array_cpu, offcenter_array, config.views * sizeof(float), cudaMemcpyDeviceToHost);
-	//printf("\n%.5f\n", offcenter_array_cpu[0]);
+
 	InitializeU_Agent(u, config.sgmWidth, config.detEltSize, offcenter_array_cpu[0]);
 
 	InitializeU_Agent(v, config.sliceCount, config.sliceThickness, config.sliceOffcenter);
@@ -506,7 +506,9 @@ void mango::FbpClass::BackprojectPixelDriven()
 	BackprojectPixelDriven_Agent(sinogram_filter, image, sdd_array,sid_array, offcenter_array, pmatrix_array, u, v, beta, config, 0);
 }
 
+//this function is to reconstruct and save the image slice by slice
 void mango::FbpClass::BackprojectPixelDrivenAndSave(const char* filename)
+
 {
 	printf(" slice# ");
 	for (int z_idx = 0; z_idx < config.imgSliceCount; z_idx++)

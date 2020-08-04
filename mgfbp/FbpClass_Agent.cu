@@ -253,7 +253,7 @@ __global__ void InitReconKernel_Hilbert(float* reconKernel, const int N, const f
 // sdd: source to detector distance
 // totalScanAngle
 __global__ void WeightSinogram_device(float* sgm, const float* u, const int N, const int H, const int V, \
-	const int S, const float sliceThickness, const float sliceOffcenter, float* sdd_array, float totalScanAngle, bool shortScan, float *betaArray, float* offcenter_array)
+	const int S, const float sliceThickness, const float sliceOffcenter, float* sdd_array, float totalScanAngle, bool shortScan, float *beta_array, float* offcenter_array)
 {
 	int col = threadIdx.x + blockDim.x * blockIdx.x;
 	int row = threadIdx.y + blockDim.y * blockIdx.y;
@@ -267,18 +267,18 @@ __global__ void WeightSinogram_device(float* sgm, const float* u, const int N, c
 		for (int i = 0; i < S; i++)
 		{
 			float v = sliceThickness * (i - (float(S) / 2.0f + 0.5)) + sliceOffcenter;
-			sgm[row*N + col + i * N*H] *= sdd * sdd / sqrtf((u_actual)*(u_actual) + sdd * sdd + v * v);
+			sgm[row*N + col + i * N*H] *= sdd * sdd / sqrtf((u_actual)*(u_actual)+sdd * sdd + v * v);
 			//the loop is to include all the slices since there may be more than one slice
 		}
 
 		if (shortScan)
 		{
-			//this beta is different from the betaArray
+			//this beta is different from the beta_array
 			//To calculate the parker weighting, beta should begin with zero degree
 			//while the betaArray includes the start rotation angle
 
 			//adding abs function to deal with the case when totalScanAngle is negative
-			float beta = abs(betaArray[row] - betaArray[0]);
+			float beta = abs(beta_array[row] - beta_array[0]);
 			float rotation_direction = abs(totalScanAngle) / (totalScanAngle);
 			float gamma = atan(u_actual / sdd) * rotation_direction;
 
@@ -435,8 +435,8 @@ __global__ void ConvolveSinogram_device(float* sgm_flt, const float* sgm, float*
 // dx: image pixel size [mm]
 // dz: image slice thickness [mm]
 // (xc, yc, zc): image center position [mm, mm, mm]
-__global__ void BackprojectPixelDriven_device(float* sgm, float* img, float* u, float* v, float* beta, bool shortScan, const int N, const int V,\
-	const int S,bool coneBeam, const int M, const int imgS, float* sdd_array, float* sid_array, float* offcenter_array, const float dx, const float dz,\
+__global__ void BackprojectPixelDriven_device(float* sgm, float* img, float* u, float* v, float* beta, bool shortScan, const int N, const int V, \
+	const int S, bool coneBeam, const int M, const int imgS, float* sdd_array, float* sid_array, float* offcenter_array, const float dx, const float dz, \
 	const float xc, const float yc, const float zc, int imgS_idx)
 {
 
@@ -449,11 +449,11 @@ __global__ void BackprojectPixelDriven_device(float* sgm, float* img, float* u, 
 
 	if (col < M && row < M && imgS_idx <= imgS)
 	{
-		
+
 		float x = (col - (M - 1) / 2.0f)*dx + xc;
 		float y = ((M - 1) / 2.0f - row)*dx + yc;
 
-		float z; 
+		float z;
 
 		float U, u0, v0;
 		float mag_factor;
@@ -466,7 +466,7 @@ __global__ void BackprojectPixelDriven_device(float* sgm, float* img, float* u, 
 
 		float lower_row_val, upper_row_val;
 
-		for (int slice = imgS_idx; slice < imgS_idx +1; slice++)
+		for (int slice = imgS_idx; slice < imgS_idx + 1; slice++)
 		{
 
 			z = (slice - (float(imgS) - 1.0f) / 2.0f) * dz + zc;
@@ -481,22 +481,22 @@ __global__ void BackprojectPixelDriven_device(float* sgm, float* img, float* u, 
 				float sdd = sdd_array[view];
 				//calculation of delta_beta for the integral calculation
 				if (view == 0)
-					delta_beta = abs( beta[1] - beta[0]);
+					delta_beta = abs(beta[1] - beta[0]);
 				else if (view == V - 1)
 					delta_beta = abs(beta[view] - beta[view - 1]);
 				else
 					delta_beta = abs(beta[view + 1] - beta[view - 1]) / 2.0f;
 
-				U = sid - x * cosf(beta[view]) - y * sinf(beta[view]) ;
+				U = sid - x * cosf(beta[view]) - y * sinf(beta[view]);
 
 				//calculate the magnification
 				mag_factor = sdd / U;
 
 				// find u0 
-				u0 = mag_factor * (x*sinf(beta[view]) - y * cosf(beta[view])) ;
-				
-				
-				k = floorf((u0 - (u[0]+offcenter_bias)) / du);
+				u0 = mag_factor * (x*sinf(beta[view]) - y * cosf(beta[view]));
+
+
+				k = floorf((u0 - (u[0] + offcenter_bias)) / du);
 				if (k<0 || k + 1>N - 1)
 				{
 					img_local = 0;
@@ -506,7 +506,7 @@ __global__ void BackprojectPixelDriven_device(float* sgm, float* img, float* u, 
 				w = (u0 - (u[k] + offcenter_bias)) / du;
 
 				// for cone beam ct, we also need to find v0
-				if (coneBeam && abs(dv)>0.00001f)
+				if (coneBeam && abs(dv) > 0.00001f)
 				{
 					v0 = mag_factor * z;
 					// weight for cbct recon
@@ -524,7 +524,7 @@ __global__ void BackprojectPixelDriven_device(float* sgm, float* img, float* u, 
 
 					img_local += sid / U / U * (w_z*upper_row_val + (1 - w_z)*lower_row_val) * delta_beta;
 				}
-					
+
 				else
 				{
 					img_local += sid / U / U * (w*sgm[view*N + k + 1 + slice * N*V] + (1 - w)*sgm[view*N + k + slice * N*V]) * delta_beta;
@@ -539,24 +539,28 @@ __global__ void BackprojectPixelDriven_device(float* sgm, float* img, float* u, 
 
 			}
 			else
-				img[row*M + col] = img_local /2.0f;
+				img[row*M + col] = img_local / 2.0f;
 
-			
+
 		}
 	}
 }
 
-__global__ void BackprojectPixelDriven_pmatrix_device(float* sgm, float* img, float* u, float* v, float* beta,float* pmatrix,\
-	bool shortScan, const int N, const int V, const int S, bool coneBeam, const int M, const int imgS, float* sdd_array, float* sid_array,\
+__global__ void BackprojectPixelDriven_pmatrix_device(float* sgm, float* img, float* u, float* v, float* beta, float* pmatrix, \
+	bool shortScan, const int N, const int V, const int S, bool coneBeam, const int M, const int imgS, float* sdd_array, float* sid_array, \
 	const float dx, const float dz, const float xc, const float yc, const float zc, int imgS_idx)
 {
 	int col = threadIdx.x + blockDim.x * blockIdx.x;
 	int row = threadIdx.y + blockDim.y * blockIdx.y;
 
-	if (col < M && row < M && imgS_idx <imgS)
+	if (col < M && row < M && imgS_idx < imgS)
 	{
-		float x = (col - (M - 1) / 2.0f)*dx + xc;
-		float y = ((M - 1) / 2.0f - row)*dx + yc;
+
+		float x_after_rotation = (col - (M - 1) / 2.0f)*dx + xc;
+		float y_after_rotation = ((M - 1) / 2.0f - row)*dx + yc;
+
+		float x = x_after_rotation * cos(beta[0]) + y_after_rotation * sin(beta[0]);//(col - (M - 1) / 2.0f)*dx + xc;
+		float y = y_after_rotation * cos(beta[0]) - x_after_rotation * sin(beta[0]);//((M - 1) / 2.0f - row)*dx + yc;
 		float z;
 		float U;
 		float w;
@@ -567,7 +571,7 @@ __global__ void BackprojectPixelDriven_pmatrix_device(float* sgm, float* img, fl
 
 		float lower_row_val, upper_row_val;
 
-		for (int slice = imgS_idx; slice < imgS_idx+1; slice++)
+		for (int slice = imgS_idx; slice < imgS_idx + 1; slice++)
 		{
 
 			z = (slice - (float(imgS) - 1.0f) / 2.0f) * dz + zc;
@@ -587,16 +591,22 @@ __global__ void BackprojectPixelDriven_pmatrix_device(float* sgm, float* img, fl
 				else
 					delta_beta = abs(beta[view + 1] - beta[view - 1]) / 2.0f;
 
+
+
 				//use pmatrix to calculate the corresponding index on the detector
 				int pos_in_matrix = 12 * view;
-				float k_u_divide_mag = pmatrix[pos_in_matrix] * x + pmatrix[pos_in_matrix +1] * y + pmatrix[pos_in_matrix +2] * z + pmatrix[pos_in_matrix +3] * 1;
-				
-				float one_divide_mag = pmatrix[pos_in_matrix +8] * x + pmatrix[pos_in_matrix + 9] * y + pmatrix[pos_in_matrix + 10] * z + pmatrix[pos_in_matrix + 11] * 1;
+				float k_u_divide_mag = pmatrix[pos_in_matrix] * x + pmatrix[pos_in_matrix + 1] * y + pmatrix[pos_in_matrix + 2] * z + pmatrix[pos_in_matrix + 3] * 1;
+				float one_divide_mag = pmatrix[pos_in_matrix + 8] * x + pmatrix[pos_in_matrix + 9] * y + pmatrix[pos_in_matrix + 10] * z + pmatrix[pos_in_matrix + 11] * 1;
 
 				float k_f = k_u_divide_mag / one_divide_mag;//float number of k
 				k = floorf(k_f);
 
-				U = sid - x * cosf(beta[view]) - y * sinf(beta[view]);
+				//the pmatrix is acquired with beta[0]=0
+				//however, in a real recon, the image need to be rotated
+				//we need to retrieve the beta value for the pmatrix recon
+				//for calculation of U
+				float beta_pmatrix = beta[view] - beta[0];
+				U = sid - x * cosf(beta_pmatrix) - y * sinf(beta_pmatrix);
 
 				if (k<0 || k + 1>N - 1)
 				{
@@ -679,7 +689,7 @@ __global__ void BackprojectPixelDrivenHilbert_device(float* sgm, float* img, flo
 		float w;
 		int k;
 
-		for (int slice = imgS_idx; slice < imgS_idx+1; slice++)
+		for (int slice = imgS_idx; slice < imgS_idx + 1; slice++)
 		{
 			img[row*M + col] = 0;
 
@@ -860,13 +870,13 @@ void InitializePMatrix_Agent(float* &pmatrix_array, const int V, const std::stri
 
 	if (pmatrix_array != nullptr)
 		cudaFree(pmatrix_array);
-	
+
 	//cudaMallocManaged((void**)&pmatrix_array, 12 * V * sizeof(float));
 	cudaMalloc((void**)&pmatrix_array, 12 * V * sizeof(float));
 	//cudaMallocManaged somehow does not work for this function
 	//so cudaMalloc and cudaMemcpy is used
 
-	
+
 	float* pmatrix_array_cpu = new float[12 * V];
 
 
@@ -916,7 +926,7 @@ void InitializeU_Agent(float* &u, const int N, const float du, const float offce
 		cudaFree(u);
 
 	cudaMalloc((void**)&u, N * sizeof(float));
-	InitU <<<(N + 511) / 512, 512>>> (u, N, du, offcenter);
+	InitU << <(N + 511) / 512, 512 >> > (u, N, du, offcenter);
 }
 
 void InitializeBeta_Agent(float* &beta, const int V, const float rotation, const float totalScanAngle)
@@ -925,7 +935,7 @@ void InitializeBeta_Agent(float* &beta, const int V, const float rotation, const
 		cudaFree(beta);
 
 	cudaMalloc((void**)&beta, V * sizeof(float));
-	InitBeta <<< (V + 511) / 512, 512>>> (beta, V, rotation, totalScanAngle);
+	InitBeta << < (V + 511) / 512, 512 >> > (beta, V, rotation, totalScanAngle);
 }
 
 void InitializeNonuniformBeta_Agent(float* &beta, const int V, const float rotation, const std::string& scanAngleFile)
@@ -962,7 +972,7 @@ void InitializeNonuniformBeta_Agent(float* &beta, const int V, const float rotat
 
 		for (unsigned i = 0; i < scan_angle_jsonc_value.Size(); i++)
 		{
-			beta_cpu[i] = rotation /180.0f*PI + scan_angle_jsonc_value[i].GetFloat()/180.0*PI;
+			beta_cpu[i] = rotation / 180.0f*PI + scan_angle_jsonc_value[i].GetFloat() / 180.0*PI;
 		}
 
 	}
@@ -983,11 +993,11 @@ void InitializeReconKernel_Agent(float* &reconKernel, const int N, const float d
 
 	if (kernelName == "HammingFilter")
 	{
-		InitReconKernel_Hamming <<<(2 * N - 1 + 511) / 512, 512>>> (reconKernel, N, du, kernelParam[0]);
+		InitReconKernel_Hamming << <(2 * N - 1 + 511) / 512, 512 >> > (reconKernel, N, du, kernelParam[0]);
 	}
 	if (kernelName == "Delta")
 	{
-		InitReconKernel_Delta <<<(2 * N - 1 + 511) / 512, 512 >>> (reconKernel, N, du, kernelParam[0]);
+		InitReconKernel_Delta << <(2 * N - 1 + 511) / 512, 512 >> > (reconKernel, N, du, kernelParam[0]);
 	}
 	else if (kernelName == "QuadraticFilter")
 	{
@@ -995,7 +1005,7 @@ void InitializeReconKernel_Agent(float* &reconKernel, const int N, const float d
 		if (kernelParam.size() == 3)
 			lastParam = kernelParam[2];
 
-		InitReconKernel_Quadratic <<<(2 * N - 1 + 511) / 512, 512>>> (reconKernel, N, du, int(kernelParam.size()), kernelParam[0], kernelParam[1], lastParam);
+		InitReconKernel_Quadratic << <(2 * N - 1 + 511) / 512, 512 >> > (reconKernel, N, du, int(kernelParam.size()), kernelParam[0], kernelParam[1], lastParam);
 	}
 	else if (kernelName == "Polynomial")
 	{
@@ -1009,11 +1019,11 @@ void InitializeReconKernel_Agent(float* &reconKernel, const int N, const float d
 		}
 
 		//InitReconKernel_Polynomial <<<(2 * N - 1 + 511) / 512, 512>>> (reconKernel, N, du, p[0], p[1], p[2], p[3], p[4], p[5], p[6]);
-		InitReconKernel_Polynomial <<<(2 * N - 1 + 511) / 512, 512>>> (reconKernel, N, du, p[6], p[5], p[4], p[3], p[2], p[1], p[0]);
+		InitReconKernel_Polynomial << <(2 * N - 1 + 511) / 512, 512 >> > (reconKernel, N, du, p[6], p[5], p[4], p[3], p[2], p[1], p[0]);
 	}
 	else if (kernelName == "Hilbert" || kernelName == "Hilbert_angle")
 	{
-		InitReconKernel_Hilbert <<<(2 * N - 1 + 511) / 512, 512>>> (reconKernel, N, du, kernelParam[0]);
+		InitReconKernel_Hilbert << <(2 * N - 1 + 511) / 512, 512 >> > (reconKernel, N, du, kernelParam[0]);
 	}
 	else if (kernelName == "GaussianApodizedRamp")
 	{
@@ -1032,7 +1042,7 @@ void CorrectBeamHardening_Agent(float* sgm, mango::Config & config)
 	dim3 grid((config.sgmWidth + 15) / 16, (config.sgmHeight + 15) / 16);
 	dim3 block(16, 16);
 
-	CorrectBeamHardening_device <<<grid, block >>> (sgm, config.sgmWidth, config.sgmHeight, config.sliceCount, config.beamHardening[0], config.beamHardening[1], config.beamHardening[2], config.beamHardening[3], config.beamHardening[4], config.beamHardening[5], config.beamHardening[6], config.beamHardening[7], config.beamHardening[8], config.beamHardening[9]);
+	CorrectBeamHardening_device << <grid, block >> > (sgm, config.sgmWidth, config.sgmHeight, config.sliceCount, config.beamHardening[0], config.beamHardening[1], config.beamHardening[2], config.beamHardening[3], config.beamHardening[4], config.beamHardening[5], config.beamHardening[6], config.beamHardening[7], config.beamHardening[8], config.beamHardening[9]);
 
 	cudaDeviceSynchronize();
 
@@ -1045,18 +1055,18 @@ void FilterSinogram_Agent(float * sgm, float* sgm_flt, float* reconKernel, float
 	dim3 block(16, 16);
 
 	// Hilbert kernel for phase contrast imaging
-	if (config.kernelName=="Hilbert")
-		WeightSinogramHilbert_device <<<grid, block >> > (sgm, u, config.sgmWidth, config.sgmHeight, config.sliceCount, config.sdd);
-	else if (config.kernelName=="Hilbert_angle")
+	if (config.kernelName == "Hilbert")
+		WeightSinogramHilbert_device << <grid, block >> > (sgm, u, config.sgmWidth, config.sgmHeight, config.sliceCount, config.sdd);
+	else if (config.kernelName == "Hilbert_angle")
 	{
 		printf("Kernel name: %s\n", config.kernelName);
 		WeightSinogramHilbert_angle_device << <grid, block >> > (sgm, u, config.sgmWidth, config.sgmHeight, config.sliceCount, config.sdd);
 	}
 	// Common attenuation imaging
 	else
-		WeightSinogram_device <<<grid, block >> > (sgm, u, config.sgmWidth, config.sgmHeight, config.views, config.sliceCount, \
+		WeightSinogram_device << <grid, block >> > (sgm, u, config.sgmWidth, config.sgmHeight, config.views, config.sliceCount, \
 			config.sliceThickness, config.sliceOffcenter, sdd_array, config.totalScanAngle, config.shortScan, beta, offcenter_array);
-	
+
 	cudaDeviceSynchronize();
 
 	// Step 2: convolve the sinogram
@@ -1066,8 +1076,8 @@ void FilterSinogram_Agent(float * sgm, float* sgm_flt, float* reconKernel, float
 		// first by the ramp filter, then by the gaussian filter
 		float du = config.detEltSize;
 		float * reconKernel_ramp;
-		cudaMalloc((void**)&reconKernel_ramp, (2 * config.sgmWidth - 1)*sizeof(float));
-		InitReconKernel_Hamming <<<(2 * config.sgmWidth - 1 + 511) / 512, 512 >>> (reconKernel_ramp, config.sgmWidth, du, 1);
+		cudaMalloc((void**)&reconKernel_ramp, (2 * config.sgmWidth - 1) * sizeof(float));
+		InitReconKernel_Hamming << <(2 * config.sgmWidth - 1 + 511) / 512, 512 >> > (reconKernel_ramp, config.sgmWidth, du, 1);
 
 		cudaDeviceSynchronize();
 
@@ -1075,11 +1085,11 @@ void FilterSinogram_Agent(float * sgm, float* sgm_flt, float* reconKernel, float
 		float *sgm_flt_ramp;
 		//MallocManaged_Agent(sgm_flt_ramp, config.sgmWidth*config.views*config.sliceCount * sizeof(float));
 		cudaMalloc((void**)& sgm_flt_ramp, config.sgmWidth * config.views * config.sliceCount * sizeof(float));
-		
-		ConvolveSinogram_device <<<grid, block >>> (sgm_flt_ramp, sgm, reconKernel_ramp, config.sgmWidth, config.sgmHeight, config.views, config.sliceCount, u, config.detEltSize);
+
+		ConvolveSinogram_device << <grid, block >> > (sgm_flt_ramp, sgm, reconKernel_ramp, config.sgmWidth, config.sgmHeight, config.views, config.sliceCount, u, config.detEltSize);
 		cudaDeviceSynchronize();
 		//the height of the filtered sinogram shrinks to number of views, so the convolution parameters need to be adjusted accordingly
-		ConvolveSinogram_device <<<grid, block >>> (sgm_flt, sgm_flt_ramp, reconKernel, config.sgmWidth, config.views, config.views, config.sliceCount, u, config.detEltSize);
+		ConvolveSinogram_device << <grid, block >> > (sgm_flt, sgm_flt_ramp, reconKernel, config.sgmWidth, config.views, config.views, config.sliceCount, u, config.detEltSize);
 		cudaDeviceSynchronize();
 
 		// free temporary memory
@@ -1088,7 +1098,7 @@ void FilterSinogram_Agent(float * sgm, float* sgm_flt, float* reconKernel, float
 	}
 	else
 	{
-		ConvolveSinogram_device <<<grid, block>>> (sgm_flt, sgm, reconKernel, config.sgmWidth, config.sgmHeight, config.views, config.sliceCount, u, config.detEltSize);
+		ConvolveSinogram_device << <grid, block >> > (sgm_flt, sgm, reconKernel, config.sgmWidth, config.sgmHeight, config.views, config.sliceCount, u, config.detEltSize);
 		cudaDeviceSynchronize();
 	}
 }
@@ -1099,19 +1109,19 @@ void BackprojectPixelDriven_Agent(float * sgm_flt, float * img, float* sdd_array
 	dim3 block(16, 16);
 
 	// Hilbert kernel for phase contrast imaging
-	if (config.kernelName == "Hilbert" || config.kernelName=="Hilbert_angle")
+	if (config.kernelName == "Hilbert" || config.kernelName == "Hilbert_angle")
 	{
-		BackprojectPixelDrivenHilbert_device << <grid, block >> > (sgm_flt, img, u, beta, config.sgmWidth, config.views,\
+		BackprojectPixelDrivenHilbert_device << <grid, block >> > (sgm_flt, img, u, beta, config.sgmWidth, config.views, \
 			config.sliceCount, config.imgDim, config.sdd, config.sid, config.detEltSize, config.pixelSize, config.xCenter, config.yCenter, z_idx);
 	}
 	// Common attenuation imaging
-	else if (config.pmatrixFlag == false)
+	else if (config.pmatrixFlag == false)// if pmatrix is not applied
 	{
-		BackprojectPixelDriven_device <<<grid, block>>> (sgm_flt, img, u, v, beta, config.shortScan, config.sgmWidth, config.views,\
-			config.sliceCount,config.coneBeam, config.imgDim, config.imgSliceCount, sdd_array, sid_array, offcenter_array, config.pixelSize,config.imgSliceThickness,\
-			config.xCenter, config.yCenter,config.zCenter, z_idx);
+		BackprojectPixelDriven_device << <grid, block >> > (sgm_flt, img, u, v, beta, config.shortScan, config.sgmWidth, config.views, \
+			config.sliceCount, config.coneBeam, config.imgDim, config.imgSliceCount, sdd_array, sid_array, offcenter_array, config.pixelSize, config.imgSliceThickness, \
+			config.xCenter, config.yCenter, config.zCenter, z_idx);
 	}
-	else if (config.pmatrixFlag == true)
+	else if (config.pmatrixFlag == true)// if pmatrix is applied
 	{
 		BackprojectPixelDriven_pmatrix_device << <grid, block >> > (sgm_flt, img, u, v, beta, pmatrix_array, config.shortScan, config.sgmWidth, config.views, \
 			config.sliceCount, config.coneBeam, config.imgDim, config.imgSliceCount, sdd_array, sid_array, config.pixelSize, config.imgSliceThickness, \
