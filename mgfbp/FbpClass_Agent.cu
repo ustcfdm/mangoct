@@ -387,6 +387,27 @@ __global__ void ConvolveSinogram_device(float* sgm_flt, const float* sgm, float*
 	}
 }
 
+// Copy the sinogram data from one array(pointer) to another array(pointer). This is for "None" kernel reconstruction.
+// sgm_flt: sinogram data after copy
+// sgm: initial sinogram data
+// N: sinogram width
+// H: sinogram height
+// V: number of views
+// S: number of slices
+__global__ void CopySinogram_device(float* sgm_flt, const float* sgm, const int N, const int H, const int V, const int S)
+{
+	int col = threadIdx.x + blockDim.x * blockIdx.x;
+	int row = threadIdx.y + blockDim.y * blockIdx.y;
+
+	if (col < N && row < V)
+	{
+		for (int slice = 0; slice < S; slice++)
+		{
+			sgm_flt[row * N + col + slice * N * V] = sgm[row * N + col + slice * N * V];
+		}
+	}
+}
+
 // backproject the image using pixel-driven method
 // sgm: sinogram data
 // img: image data
@@ -570,6 +591,10 @@ void InitializeReconKernel_Agent(float* &reconKernel, const int N, const float d
 	{
 		InitReconKernel_GaussianApodized << <(2 * N - 1 + 511) / 512, 512 >> > (reconKernel, N, du, kernelParam[0]);
 	}
+	else if (kernelName == "None")
+	{
+		// Do not need to do anything
+	}
 }
 
 void MallocManaged_Agent(float * &p, const int size)
@@ -603,6 +628,10 @@ void FilterSinogram_Agent(float * sgm, float* sgm_flt, float* reconKernel, float
 		printf("Kernel name: %s\n", config.kernelName);
 		WeightSinogramHilbert_angle_device << <grid, block >> > (sgm, u, config.sgmWidth, config.sgmHeight, config.sliceCount, config.sdd);
 	}
+	else if (config.kernelName == "None")
+	{
+		// Do not weight the sinogram(sgm)
+	}
 	// Common attenuation imaging
 	else
 		WeightSinogram_device <<<grid, block >> > (sgm, u, config.sgmWidth, config.sgmHeight, config.views, config.sliceCount, config.sdd, config.totalScanAngle);
@@ -635,6 +664,12 @@ void FilterSinogram_Agent(float * sgm, float* sgm_flt, float* reconKernel, float
 		// free temporary memory
 		cudaFree(reconKernel_ramp);
 		cudaFree(sgm_flt_ramp);
+	}
+	else if (config.kernelName == "None")
+	{
+		// Do not perfrom convolution, just directly copy the data
+		CopySinogram_device <<<grid, block >>> (sgm_flt, sgm, config.sgmWidth, config.sgmHeight, config.views, config.sliceCount);
+		cudaDeviceSynchronize();
 	}
 	else
 	{

@@ -75,7 +75,8 @@
   *  5. "Hilbert_angle": temporary test of differential phase contrast along angle direction
   *  6. "GaussianApodizedRamp": delta (delta=1 match MDCT if sinogram pixel size 0.4 mm), Ramp kernel apodized by a gaussian kernel (exp(-n^2/2/delta^2)), delta is in number of pixels
   *  7. "Delta": x (x is a number), convolve with a Delta function, the value is x
+  *  8. "None": x (Do not perform any convolution. x could be an arbitrary value. Keep in mind that the difference between "None" and "Delta" is that "None" does not perform weighting of sinogram.)
   */
 
-  "GaussianApodizedRamp": 1
+  "None": 0
 }

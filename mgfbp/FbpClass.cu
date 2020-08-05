@@ -254,6 +254,10 @@ void mango::FbpClass::ReadConfigFile(const char * filename)
 		config.kernelName = "GaussianApodizedRamp";
 		config.kernelParam.push_back(doc["GaussianApodizedRamp"].GetFloat());
 	}
+	else if (doc.HasMember("None"))
+	{
+		config.kernelName = "None";
+	}
 	else
 	{
 		fprintf(stderr, "Did not find reconstruction kernel! Please check your config file: %s.\n", filename);
