@@ -36,6 +36,9 @@ namespace mango
 		bool	nonuniformSDD;			// whether the sdds are nonuniform across views
 		std::string		sddFile;		// name of the jsonc file of explicit sdds
 
+		bool	nonZeroSwingAngle;		// swing of the detector in the axial plane
+		std::string		swingAngleFile;	// name of the jsonc file to save swing angles
+
 		float	startAngle = 0;			// angle position of source for the first view [degree]
 		int		detEltCount;			// number of detector elements
 		int		detZEltCount;			// (for bone beam) number of detector elements in Z direction
@@ -75,6 +78,8 @@ namespace mango
 		static float* u;
 		// array of each view angle [radius]
 		static float* beta;
+		// array of delta theta
+		static float* swing_angle_array;
 
 
 	private:

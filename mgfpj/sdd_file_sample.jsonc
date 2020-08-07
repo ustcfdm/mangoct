@@ -1,5 +1,5 @@
 {
-    "SourceDetectorDistance": [0,1,2]
+    "Value": [0,1,2]
     // just a sample
     //the number of distances in this file is actually not consistent with the Views
 

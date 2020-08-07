@@ -9,6 +9,8 @@ float* mango::FpjClass::offcenter_array = nullptr;
 float* mango::FpjClass::v = nullptr;
 float* mango::FpjClass::u = nullptr;
 float* mango::FpjClass::beta = nullptr;
+float* mango::FpjClass::swing_angle_array = nullptr;
+
 
 mango::FpjClass::FpjClass()
 {
@@ -187,6 +189,17 @@ void mango::FpjClass::ReadConfigFile(const char * filename)
 		config.nonuniformSDD = false;
 	}
 
+	if (doc.HasMember("SwingAngleFile"))
+	{
+		printf("--nonzero swing angle--");
+		config.nonZeroSwingAngle = true;
+		config.swingAngleFile = doc["SwingAngleFile"].GetString();
+	}
+	else
+	{
+		config.nonZeroSwingAngle = false;
+	}
+
 	if (doc.HasMember("StartAngle"))
 	{
 		config.startAngle = doc["StartAngle"].GetFloat();
@@ -276,7 +289,7 @@ void mango::FpjClass::InitParam()
 {
 	if (config.nonuniformSDD == true)
 	{
-		InitializeNonuniformSDD_Agent(sdd_array, config.views, config.sddFile);
+		InitializeNonuniformPara_Agent(sdd_array, config.views, config.sddFile);
 	}
 	else
 	{
@@ -285,7 +298,7 @@ void mango::FpjClass::InitParam()
 
 	if (config.nonuniformSID == true)
 	{
-		InitializeNonuniformSID_Agent(sid_array, config.views, config.sidFile);
+		InitializeNonuniformPara_Agent(sid_array, config.views, config.sidFile);
 	}
 	else
 	{
@@ -294,13 +307,26 @@ void mango::FpjClass::InitParam()
 
 	if (config.nonuniformOffCenter == true)
 	{
-		InitializeNonuniformOffCenter_Agent(offcenter_array, config.views, config.offCenterFile);
-		config.detOffCenter = offcenter_array[0];
+		InitializeNonuniformPara_Agent(offcenter_array, config.views, config.offCenterFile);
+		float*offcenter_array_cpu = new float[config.views];
+		cudaMemcpy(offcenter_array_cpu, offcenter_array, sizeof(float)*config.views, cudaMemcpyDeviceToHost);
+		config.detOffCenter = offcenter_array_cpu[0];
 	}
 	else
 	{
 		InitializeDistance_Agent(offcenter_array, config.detOffCenter, config.views);
 	}
+
+	if (config.nonZeroSwingAngle == true)
+	{
+		InitializeNonuniformPara_Agent(swing_angle_array, config.views, config.swingAngleFile);
+		// the same function of offcenter can be used to import swing angles
+	}
+	else
+	{
+		InitializeDistance_Agent(swing_angle_array, 0.0f, config.views);
+	}
+
 
 	if (config.coneBeam == true)
 	{
@@ -311,7 +337,9 @@ void mango::FpjClass::InitParam()
 	if (config.nonuniformScanAngle == true)
 	{
 		InitializeNonuniformBeta_Agent(beta, config.views, config.startAngle, config.scanAngleFile);
-		config.totalScanAngle = (beta[config.views - 1] - beta[0] + beta[1] - beta[0]) / 3.1415926f * 180;
+		float*beta_cpu = new float[config.views];
+		cudaMemcpy(beta_cpu, beta, sizeof(float)*config.views, cudaMemcpyDeviceToHost);
+		config.totalScanAngle = (beta_cpu[config.views - 1] - beta_cpu[0] + beta_cpu[1] - beta_cpu[0]) / 3.1415926f * 180;
 	}
 	else
 	{
@@ -359,7 +387,7 @@ void mango::FpjClass::SaveSinogram(const char * filename)
 
 void mango::FpjClass::ForwardProjectionBilinear()
 {
-	ForwardProjectionBilinear_Agent(image, sinogram_large,sid_array,sdd_array, offcenter_array, u, v, beta, config, 0);
+	ForwardProjectionBilinear_Agent(image, sinogram_large,sid_array,sdd_array, offcenter_array, u, v, beta, swing_angle_array, config, 0);
 
 	BinSinogram(sinogram_large, sinogram, config);
 }
@@ -375,7 +403,7 @@ void mango::FpjClass::ForwardProjectionBilinearAndSave(const char* filename)
 			printf("\b\b\b\b\b\b\b");
 		}
 		printf("%3d/%3d", z_idx + 1, config.detZEltCount);
-		ForwardProjectionBilinear_Agent(image, sinogram_large, sid_array, sdd_array, offcenter_array, u, v, beta, config, z_idx);
+		ForwardProjectionBilinear_Agent(image, sinogram_large, sid_array, sdd_array, offcenter_array, u, v, beta, swing_angle_array, config, z_idx);
 
 		BinSinogram(sinogram_large, sinogram, config);
 

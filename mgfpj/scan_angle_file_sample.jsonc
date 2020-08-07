@@ -1,5 +1,5 @@
 {
-    "ScanAngle": [0,1,2]
+    "value": [0,1,2]
     // just a sample
     //the number of angles in this file is actually not consistent with the VIews
 

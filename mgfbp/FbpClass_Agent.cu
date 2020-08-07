@@ -750,23 +750,28 @@ void InitializeNonuniformSDD_Agent(float* &distance_array, const int V, const st
 
 		distance_jsonc_value = doc["SourceDetectorDistance"];
 
-		if (distance_jsonc_value.Size() != V)
-		{
-			printf("\nNumber of sdd values is %d while the number of Views is %d!\n", distance_jsonc_value.Size(), V);
-			exit(-2);
-		}
-
-		for (unsigned i = 0; i < distance_jsonc_value.Size(); i++)
-		{
-			distance_array_cpu[i] = distance_jsonc_value[i].GetFloat();
-		}
-
+	} 
+	else if(doc.HasMember("Value"))//a new version of the program uses value as member to avoid complex member names
+	{
+		distance_jsonc_value = doc["Value"];
 	}
 	else
 	{
-		printf("\nDid not find SourceDetectorDistance member in jsonc file!\n");
+		printf("\nDid not find Value member in jsonc file!\n");
 		exit(-2);
 	}
+
+	if (distance_jsonc_value.Size() != V)
+	{
+		printf("\nNumber of sdd values is %d while the number of Views is %d!\n", distance_jsonc_value.Size(), V);
+		exit(-2);
+	}
+
+	for (unsigned i = 0; i < distance_jsonc_value.Size(); i++)
+	{
+		distance_array_cpu[i] = distance_jsonc_value[i].GetFloat();
+	}
+
 	cudaMemcpy(distance_array, distance_array_cpu, V * sizeof(float), cudaMemcpyHostToDevice);
 	cudaDeviceSynchronize();
 }
@@ -793,26 +798,29 @@ void InitializeNonuniformSID_Agent(float* &distance_array, const int V, const st
 	js::Value distance_jsonc_value;
 	if (doc.HasMember("SourceIsocenterDistance"))
 	{
-
 		distance_jsonc_value = doc["SourceIsocenterDistance"];
-
-		if (distance_jsonc_value.Size() != V)
-		{
-			printf("\nNumber of sid values is %d while the number of Views is %d!\n", distance_jsonc_value.Size(), V);
-			exit(-2);
-		}
-
-		for (unsigned i = 0; i < distance_jsonc_value.Size(); i++)
-		{
-			distance_array_cpu[i] = distance_jsonc_value[i].GetFloat();
-		}
-
+	}
+	else if (doc.HasMember("Value"))//a new version of the program uses value as member to avoid complex member names
+	{
+		distance_jsonc_value = doc["Value"];
 	}
 	else
 	{
-		printf("\nDid not find SourceIsocenterDistance member in jsonc file!\n");
+		printf("\nDid not find SourceIsocenterDistance or Value member in jsonc file!\n");
 		exit(-2);
 	}
+
+	if (distance_jsonc_value.Size() != V)
+	{
+		printf("\nNumber of sid values is %d while the number of Views is %d!\n", distance_jsonc_value.Size(), V);
+		exit(-2);
+	}
+
+	for (unsigned i = 0; i < distance_jsonc_value.Size(); i++)
+	{
+		distance_array_cpu[i] = distance_jsonc_value[i].GetFloat();
+	}
+
 	cudaMemcpy(distance_array, distance_array_cpu, V * sizeof(float), cudaMemcpyHostToDevice);
 	cudaDeviceSynchronize();
 }
@@ -839,26 +847,29 @@ void InitializeNonuniformOffCenter_Agent(float* &distance_array, const int V, co
 	js::Value distance_jsonc_value;
 	if (doc.HasMember("OffcenterArray"))
 	{
-
 		distance_jsonc_value = doc["OffcenterArray"];
-
-		if (distance_jsonc_value.Size() != V)
-		{
-			printf("\nNumber of offcenter values is %d while the number of Views is %d!\n", distance_jsonc_value.Size(), V);
-			exit(-2);
-		}
-
-		for (unsigned i = 0; i < distance_jsonc_value.Size(); i++)
-		{
-			distance_array_cpu[i] = distance_jsonc_value[i].GetFloat();
-		}
-
+	}
+	else if (doc.HasMember("Value"))//a new version of the program uses value as member to avoid complex member names
+	{
+		distance_jsonc_value = doc["Value"];
 	}
 	else
 	{
-		printf("\nDid not find OffcenterArray member in jsonc file!\n");
+		printf("\nDid not find OffcenterArray or Value member in jsonc file!\n");
 		exit(-2);
 	}
+
+	if (distance_jsonc_value.Size() != V)
+	{
+		printf("\nNumber of offcenter values is %d while the number of Views is %d!\n", distance_jsonc_value.Size(), V);
+		exit(-2);
+	}
+
+	for (unsigned i = 0; i < distance_jsonc_value.Size(); i++)
+	{
+		distance_array_cpu[i] = distance_jsonc_value[i].GetFloat();
+	}
+
 	cudaMemcpy(distance_array, distance_array_cpu, V * sizeof(float), cudaMemcpyHostToDevice);
 	cudaDeviceSynchronize();
 }
@@ -892,28 +903,28 @@ void InitializePMatrix_Agent(float* &pmatrix_array, const int V, const std::stri
 	js::Value pmatrix_jsonc_value;
 	if (doc.HasMember("PMatrix"))
 	{
-
 		pmatrix_jsonc_value = doc["PMatrix"];
-
-		if (pmatrix_jsonc_value.Size() != 12 * V)
-		{
-			printf("\nNumber of pmatrix elements is %d while the 12 times number of Views is %d!\n", pmatrix_jsonc_value.Size(), 12 * V);
-			exit(-2);
-		}
-
-		for (unsigned i = 0; i < 12 * V; i++)
-		{
-			//printf("\n%d: %f",i, pmatrix_jsonc_value[i].GetFloat());
-			pmatrix_array_cpu[i] = pmatrix_jsonc_value[i].GetFloat();
-		}
-
+	}
+	else if(doc.HasMember("Value"))
+	{
+		pmatrix_jsonc_value = doc["Value"];
 	}
 	else
 	{
-		printf("\nDid not find 'PMatrix' member in jsonc file!\n");
+		printf("\nDid not find PMatrix or Value member in jsonc file!\n");
+		exit(-2);
+	}
+	if (pmatrix_jsonc_value.Size() != 12 * V)
+	{
+		printf("\nNumber of pmatrix elements is %d while the 12 times number of Views is %d!\n", pmatrix_jsonc_value.Size(), 12 * V);
 		exit(-2);
 	}
 
+	for (unsigned i = 0; i < 12 * V; i++)
+	{
+		//printf("\n%d: %f",i, pmatrix_jsonc_value[i].GetFloat());
+		pmatrix_array_cpu[i] = pmatrix_jsonc_value[i].GetFloat();
+	}
 	cudaMemcpy(pmatrix_array, pmatrix_array_cpu, 12 * V * sizeof(float), cudaMemcpyHostToDevice);
 
 	cudaDeviceSynchronize();
@@ -961,24 +972,27 @@ void InitializeNonuniformBeta_Agent(float* &beta, const int V, const float rotat
 	js::Value scan_angle_jsonc_value;
 	if (doc.HasMember("ScanAngle"))
 	{
-
 		scan_angle_jsonc_value = doc["ScanAngle"];
-
-		if (scan_angle_jsonc_value.Size() != V)
-		{
-			printf("Number of scan angles is %d while the number of Views is %d!\n", scan_angle_jsonc_value.Size(), V);
-			exit(-2);
-		}
-
-		for (unsigned i = 0; i < scan_angle_jsonc_value.Size(); i++)
-		{
-			beta_cpu[i] = rotation / 180.0f*PI + scan_angle_jsonc_value[i].GetFloat() / 180.0*PI;
-		}
-
+	}
+	else if (doc.HasMember("Value"))
+	{
+		scan_angle_jsonc_value = doc["Value"];
 	}
 	else
 	{
-		printf("Did not find ScanAngle member in jsonc file!\n");
+		printf("Did not find ScanAngle or Value member in jsonc file!\n");
+		exit(-2);
+	}
+
+	if (scan_angle_jsonc_value.Size() != V)
+	{
+		printf("Number of scan angles is %d while the number of Views is %d!\n", scan_angle_jsonc_value.Size(), V);
+		exit(-2);
+	}
+
+	for (unsigned i = 0; i < scan_angle_jsonc_value.Size(); i++)
+	{
+		beta_cpu[i] = rotation / 180.0f*PI + scan_angle_jsonc_value[i].GetFloat() / 180.0*PI;
 	}
 	cudaMemcpy(beta, beta_cpu, sizeof(float)*V, cudaMemcpyHostToDevice);
 	cudaDeviceSynchronize();

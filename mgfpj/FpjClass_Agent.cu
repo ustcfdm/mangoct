@@ -45,7 +45,7 @@ __global__ void InitBeta(float* beta, const int V, const float startAngle, const
 // dz: image slice thickness [mm]
 // sid: source to isocenter distance
 // sdd: source to detector distance
-__global__ void ForwardProjectionBilinear_device(float* img, float* sgm, const float* u, const float *v, const float* offcenter_array, const float* beta, int M, int S,\
+__global__ void ForwardProjectionBilinear_device(float* img, float* sgm, const float* u, const float *v, const float* offcenter_array, const float* beta, const float* swing_angle_array, int M, int S,\
 	int N, int N_z, int V, float dx, float dz, const float* sid_array, const float* sdd_array, bool conebeam, \
 	int z_element_begin_idx, int z_element_end_idx)
 {
@@ -62,7 +62,6 @@ __global__ void ForwardProjectionBilinear_device(float* img, float* sgm, const f
 		if (conebeam)
 		{
 			D_z = float(S) * dz / 2.0f;
-			
 		}
 		else
 		{
@@ -81,8 +80,8 @@ __global__ void ForwardProjectionBilinear_device(float* img, float* sgm, const f
 		float offcenter_bias = offcenter_array[row] - offcenter_array[0];
 
 		// current detector element position
-		float xd = -(sdd - sid) * cosf(beta[row]) + (u[col]+ offcenter_bias) * sinf(beta[row]);
-		float yd = -(sdd - sid) * sinf(beta[row]) - (u[col]+ offcenter_bias) * cosf(beta[row]);
+		float xd = -(sdd - sid) * cosf(beta[row]) + (u[col]+ offcenter_bias) * cosf(beta[row] - PI/2.0f + swing_angle_array[row] /180.0f*PI);
+		float yd = -(sdd - sid) * sinf(beta[row]) + (u[col]+ offcenter_bias) * sinf(beta[row] - PI/2.0f + swing_angle_array[row] / 180.0f*PI);
 		float zd = 0;
 
 		// step point region
@@ -324,7 +323,7 @@ void InitializeNonuniformOffCenter_Agent(float* &offcenter_array, const int V, c
 	std::ifstream ifs(offCenterFile);
 	if (!ifs)
 	{
-		printf("Cannot find Offcenter information file '%s'!\n", offCenterFile.c_str());
+		printf("Cannot find Offcenter or Swing Angle information file '%s'!\n", offCenterFile.c_str());
 		exit(-2);
 	}
 	rapidjson::IStreamWrapper isw(ifs);
@@ -357,6 +356,54 @@ void InitializeNonuniformOffCenter_Agent(float* &offcenter_array, const int V, c
 	cudaDeviceSynchronize();
 }
 
+//new function with Value member to suit all non uniform parameters
+void InitializeNonuniformPara_Agent(float* &para_array, const int V, const std::string& paraFile)
+{
+	namespace fs = std::experimental::filesystem;
+	namespace js = rapidjson;
+
+	if (para_array != nullptr)
+		cudaFree(para_array);
+
+	cudaMalloc((void**)&para_array, V * sizeof(float));
+	float* para_array_cpu = new float[V];
+
+	std::ifstream ifs(paraFile);
+	if (!ifs)
+	{
+		printf("Cannot find file '%s'!\n", paraFile.c_str());
+		exit(-2);
+	}
+	rapidjson::IStreamWrapper isw(ifs);
+	rapidjson::Document doc;
+	doc.ParseStream<js::kParseCommentsFlag | js::kParseTrailingCommasFlag>(isw);
+	js::Value array_jsonc_value;
+	if (doc.HasMember("Value"))
+	{
+		array_jsonc_value = doc["Value"];
+	}
+	else
+	{
+		printf("Did not find Value member in jsonc file!\n");
+		exit(-2);
+	}
+
+
+	if (array_jsonc_value.Size() != V)
+	{
+		printf("Number of elements in the array is %d while the number of Views is %d!\n", array_jsonc_value.Size(), V);
+		exit(-2);
+	}
+
+	for (unsigned i = 0; i < array_jsonc_value.Size(); i++)
+	{
+		para_array_cpu[i] = array_jsonc_value[i].GetFloat(); //printf("%d: %f\n", i, para_array_cpu[i]);
+	}
+	cudaMemcpy(para_array, para_array_cpu, sizeof(float)*V, cudaMemcpyHostToDevice);
+	//printf("copy finished!\n");
+	cudaDeviceSynchronize();
+}
+
 void InitializeU_Agent(float* &u, const int N, const float du, const float offcenter)
 {
 	if (u != nullptr)
@@ -383,7 +430,8 @@ void InitializeNonuniformBeta_Agent(float* &beta, const int V, const float rotat
 	if (beta != nullptr)
 		cudaFree(beta);
 
-	cudaMallocManaged((void**)&beta, V * sizeof(float));
+	cudaMalloc((void**)&beta, V * sizeof(float));
+	float * beta_cpu = new float[V];
 	std::ifstream ifs(scanAngleFile);
 	if (!ifs)
 	{
@@ -396,37 +444,39 @@ void InitializeNonuniformBeta_Agent(float* &beta, const int V, const float rotat
 	js::Value scan_angle_jsonc_value;
 	if (doc.HasMember("ScanAngle"))
 	{
-
 		scan_angle_jsonc_value = doc["ScanAngle"];
-
-		if (scan_angle_jsonc_value.Size() != V)
-		{
-			printf("Number of scan angles is %d while the number of Views is %d!\n",scan_angle_jsonc_value.Size(),V);
-			exit(-2);
-		}
-
-		for (unsigned i = 0; i < scan_angle_jsonc_value.Size(); i++)
-		{
-			beta[i] = rotation / 180.0f*PI + scan_angle_jsonc_value[i].GetFloat() / 180.0*PI;
-		}
-
+	}
+	else if (doc.HasMember("Value"))
+	{
+		scan_angle_jsonc_value = doc["Value"];
 	}
 	else
 	{
-		printf("Did not find ScanAngle member in jsonc file!\n");
+		printf("Did not find ScanAngle or Value member in jsonc file!\n");
 		exit(-2);
 	}
 
+	if (scan_angle_jsonc_value.Size() != V)
+	{
+		printf("Number of scan angles is %d while the number of Views is %d!\n", scan_angle_jsonc_value.Size(), V);
+		exit(-2);
+	}
+
+	for (unsigned i = 0; i < scan_angle_jsonc_value.Size(); i++)
+	{
+		beta_cpu[i] = rotation / 180.0f*PI + scan_angle_jsonc_value[i].GetFloat() / 180.0*PI;
+	}
+	cudaMemcpy(beta, beta_cpu, sizeof(float)*V, cudaMemcpyHostToDevice);
 	cudaDeviceSynchronize();
 }
 
 void ForwardProjectionBilinear_Agent(float *& image, float * &sinogram, const float* sid_array, const float* sdd_array, const float* offcenter_array,\
-	const float* u, const float *v, const float* beta, const mango::Config & config, int z_element_idx)
+	const float* u, const float *v, const float* beta, const float* swing_angle_array, const mango::Config & config, int z_element_idx)
 {
 	dim3 grid((config.detEltCount*config.oversampleSize + 7) / 8, (config.views + 7) / 8);
 	dim3 block(8, 8);
 
-	ForwardProjectionBilinear_device<<<grid, block>>>(image, sinogram, u, v, offcenter_array, beta, config.imgDim, config.sliceCount,\
+	ForwardProjectionBilinear_device<<<grid, block>>>(image, sinogram, u, v, offcenter_array, beta, swing_angle_array, config.imgDim, config.sliceCount,\
 		config.detEltCount*config.oversampleSize, config.detZEltCount, config.views, config.pixelSize, config.sliceThickness, sid_array, sdd_array, config.coneBeam, z_element_idx, z_element_idx+1);
 
 	cudaDeviceSynchronize();
