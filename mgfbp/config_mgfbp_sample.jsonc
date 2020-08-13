@@ -46,6 +46,8 @@
   // the position (coordinate) of detector center [mm]
   "DetectorOffcenter": 0,
 
+  "DetectorOffcenterFile": "xxxx",
+
   // source to isocenter distance [mm]
   "SourceIsocenterDistance": 539,
   // (OPTIONAL; for nonuniform SID)
@@ -102,5 +104,9 @@
   *  7. "Delta": x (x is a number), convolve with a Delta function, the value is x
   */
 
-  "GaussianApodizedRamp": 1
+  "GaussianApodizedRamp": 1, 
+
+  // (OPTIONAL) set water mu to convert the pixel values to HU
+  // unit: mm^-1
+  "WaterMu": 0.02  
 }

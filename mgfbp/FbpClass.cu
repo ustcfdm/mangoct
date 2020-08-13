@@ -161,7 +161,7 @@ void mango::FbpClass::ReadConfigFile(const char * filename)
 
 	if (doc.HasMember("DetectorOffCenterFile"))
 	{
-		printf("--nonuniform offcenter--");
+		printf("--nonuniform offcenter--\n");
 		config.nonuniformOffCenter = true;
 		config.offCenterFile = doc["DetectorOffCenterFile"].GetString();
 	}
@@ -174,7 +174,7 @@ void mango::FbpClass::ReadConfigFile(const char * filename)
 
 	if (doc.HasMember("SIDFile"))
 	{
-		printf("--nonuniform SID--");
+		printf("--nonuniform SID--\n");
 		config.nonuniformSID = true;
 		config.sidFile = doc["SIDFile"].GetString();
 	}
@@ -187,7 +187,7 @@ void mango::FbpClass::ReadConfigFile(const char * filename)
 
 	if (doc.HasMember("SDDFile"))
 	{
-		printf("--nonuniform SDD--");
+		printf("--nonuniform SDD--\n");
 		config.nonuniformSDD = true;
 		config.sddFile = doc["SDDFile"].GetString();
 	}
@@ -199,7 +199,7 @@ void mango::FbpClass::ReadConfigFile(const char * filename)
 	// for recon with pmatrix
 	if (doc.HasMember("PMatrixFile"))
 	{
-		printf("--pmatrix applied--");
+		printf("--pmatrix applied--\n");
 		config.pmatrixFlag = true;
 		config.pmatrixFile = doc["PMatrixFile"].GetString();
 	}
@@ -258,9 +258,9 @@ void mango::FbpClass::ReadConfigFile(const char * filename)
 		config.coneBeam = false; 
 
 	if (config.coneBeam)
-		printf("--CONE beam--");
+		printf("--CONE beam--\n");
 	else
-		printf("--FAN beam--");
+		printf("--FAN beam--\n");
 
 	config.imgDim = doc["ImageDimension"].GetUint();
 
@@ -364,6 +364,17 @@ void mango::FbpClass::ReadConfigFile(const char * filename)
 		exit(1);
 	}
 
+	if (doc.HasMember("WaterMu"))
+	{
+		printf("--Convert To HU--\n");
+		config.converToHU = true;
+		config.waterMu = doc["WaterMu"].GetFloat();
+	}
+	else
+	{
+		config.converToHU = false;
+	}
+
 }
 
 void mango::FbpClass::InitParam()
@@ -413,9 +424,13 @@ void mango::FbpClass::InitParam()
 
 	if (config.nonuniformScanAngle == true)
 	{
-		printf("--nonuniform scan angle--");
+		printf("--nonuniform scan angle--\n");
 		InitializeNonuniformBeta_Agent(beta, config.views, config.imgRot, config.scanAngleFile);
-		config.totalScanAngle = (beta[config.views - 1] - beta[0])/float(config.views)*float(config.views + 1)/ 3.1415926f * 180;
+
+		float *beta_cpu = new float[config.views];
+		cudaMemcpy(beta_cpu,beta , sizeof(float)*config.views, cudaMemcpyDeviceToHost);
+
+		config.totalScanAngle = (beta_cpu[config.views - 1] - beta_cpu[0])/float(config.views)*float(config.views + 1)/ 3.1415926f * 180;
 		//It is not easy to define the total scan angle for a non uniform scan. 
 		//This equation is just one method. 
 	}
@@ -434,7 +449,6 @@ void mango::FbpClass::InitParam()
 		config.shortScan = true;
 		printf("--SHORT scan (scan angle = %.2f degrees)--\n", abs(config.totalScanAngle));
 	}
-
 
 
 	InitializeReconKernel_Agent(reconKernel, config.sgmWidth, config.detEltSize, config.kernelName, config.kernelParam);
@@ -521,6 +535,19 @@ void mango::FbpClass::BackprojectPixelDrivenAndSave(const char* filename)
 		BackprojectPixelDriven_Agent(sinogram_filter, image, sdd_array, sid_array, offcenter_array, pmatrix_array, u, v, beta, config, z_idx);
 
 		cudaDeviceSynchronize();
+		//printf("%f", image[0]);
+		//convert to HU
+		
+		if (config.converToHU)
+		{
+			for (int row_idx = 0; row_idx < config.imgDim; row_idx++)
+			{
+				for (int col_idx = 0; col_idx < config.imgDim; col_idx++)
+				{
+					image[row_idx*config.imgDim + col_idx] = (image[row_idx*config.imgDim + col_idx] - config.waterMu) / config.waterMu  * 1000.0f;
+				}
+			}
+		}
 
 		SaveReconImageSlice(filename, image, z_idx, config);
 

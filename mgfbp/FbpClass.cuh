@@ -68,6 +68,9 @@ namespace mango
 
 		std::string	kernelName;				// reconstruction kernel name
 		std::vector<float>	kernelParam;	// reconstruction kernel parameters
+
+		bool		converToHU;				// whether the the pixel values are convert to HU
+		float		waterMu;				// attenuation value of water [mm^-1]
 	};
 
 
