@@ -84,7 +84,7 @@ __global__ void InitReconKernel_GaussianApodized(float* reconKernel, const int N
 		for (int i = 0; i < 2 * N - 1; i++)
 		{
 			int n = i - (N - 1);
-			reconKernel[i] = exp(-float(n) * float(n) / 2.0 / delta / delta);
+			reconKernel[i] = exp( - float(n) * float(n) / 2.0 / delta / delta);
 			temp_sum = temp_sum + reconKernel[i];
 		}
 

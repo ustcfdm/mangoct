@@ -57,6 +57,9 @@ namespace mango
 
 		int		oversampleSize = 1;		// oversample size
 
+		bool	converToHU = false;		// whether the image has been conver to HU
+		float	waterMu;				// mu of water
+
 	};
 
 
