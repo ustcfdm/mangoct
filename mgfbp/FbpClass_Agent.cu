@@ -553,6 +553,8 @@ __global__ void BackprojectPixelDriven_pmatrix_device(float* sgm, float* img, fl
 	int col = threadIdx.x + blockDim.x * blockIdx.x;
 	int row = threadIdx.y + blockDim.y * blockIdx.y;
 
+	float du = u[1] - u[0];
+
 	if (col < M && row < M && imgS_idx < imgS)
 	{
 
@@ -597,8 +599,14 @@ __global__ void BackprojectPixelDriven_pmatrix_device(float* sgm, float* img, fl
 				int pos_in_matrix = 12 * view;
 				float k_u_divide_mag = pmatrix[pos_in_matrix] * x + pmatrix[pos_in_matrix + 1] * y + pmatrix[pos_in_matrix + 2] * z + pmatrix[pos_in_matrix + 3] * 1;
 				float one_divide_mag = pmatrix[pos_in_matrix + 8] * x + pmatrix[pos_in_matrix + 9] * y + pmatrix[pos_in_matrix + 10] * z + pmatrix[pos_in_matrix + 11] * 1;
+				
+				//the pmatrix is calculated when the detector is binned with 4 pixels
+				// each after binning is 0.4 mm
+				float k_f_bin_4 = k_u_divide_mag / one_divide_mag;//float number of k_f_bin_4
+				float u_position_true = (k_f_bin_4 + 0.5f)*0.4;
+				float k_f = u_position_true / du - 0.5f;
 
-				float k_f = k_u_divide_mag / one_divide_mag;//float number of k
+				//float k_f = k_u_divide_mag / one_divide_mag;//float number of k
 				k = floorf(k_f);
 
 				//the pmatrix is acquired with beta[0]=0
