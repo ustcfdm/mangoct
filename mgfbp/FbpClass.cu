@@ -279,7 +279,10 @@ void mango::FbpClass::ReadConfigFile(const char * filename)
 		exit(1);
 	}
 
-	config.imgRot = doc["ImageRotation"].GetFloat();
+	if (doc.HasMember("ImageRotation"))
+		config.imgRot = doc["ImageRotation"].GetFloat();
+	else
+		config.imgRot = 0;
 
 	config.xCenter = doc["ImageCenter"][0].GetFloat();
 	config.yCenter = doc["ImageCenter"][1].GetFloat();

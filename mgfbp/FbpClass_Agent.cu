@@ -548,7 +548,7 @@ __global__ void BackprojectPixelDriven_device(float* sgm, float* img, float* u, 
 
 __global__ void BackprojectPixelDriven_pmatrix_device(float* sgm, float* img, float* u, float* v, float* beta, float* pmatrix, \
 	bool shortScan, const int N, const int V, const int S, bool coneBeam, const int M, const int imgS, float* sdd_array, float* sid_array, \
-	const float dx, const float dz, const float xc, const float yc, const float zc, int imgS_idx)
+	const float dx, const float dz, const float xc, const float yc, const float zc, int imgS_idx, float imgRot)
 {
 	int col = threadIdx.x + blockDim.x * blockIdx.x;
 	int row = threadIdx.y + blockDim.y * blockIdx.y;
@@ -561,8 +561,8 @@ __global__ void BackprojectPixelDriven_pmatrix_device(float* sgm, float* img, fl
 		float x_after_rotation = (col - (M - 1) / 2.0f)*dx + xc;
 		float y_after_rotation = ((M - 1) / 2.0f - row)*dx + yc;
 
-		float x = x_after_rotation * cos(beta[0]) + y_after_rotation * sin(beta[0]);//(col - (M - 1) / 2.0f)*dx + xc;
-		float y = y_after_rotation * cos(beta[0]) - x_after_rotation * sin(beta[0]);//((M - 1) / 2.0f - row)*dx + yc;
+		float x = x_after_rotation * cos(imgRot) + y_after_rotation * sin(imgRot);//(col - (M - 1) / 2.0f)*dx + xc;
+		float y = y_after_rotation * cos(imgRot) - x_after_rotation * sin(imgRot);//((M - 1) / 2.0f - row)*dx + yc;
 		float z;
 		float U;
 		float w;
@@ -609,7 +609,7 @@ __global__ void BackprojectPixelDriven_pmatrix_device(float* sgm, float* img, fl
 				//float k_f = k_u_divide_mag / one_divide_mag;//float number of k
 				k = floorf(k_f);
 
-				//the pmatrix is acquired with beta[0]=0
+				//the pmatrix is acquired assuming beta[0]=0
 				//however, in a real recon, the image need to be rotated
 				//we need to retrieve the beta value for the pmatrix recon
 				//for calculation of U
@@ -1147,7 +1147,7 @@ void BackprojectPixelDriven_Agent(float * sgm_flt, float * img, float* sdd_array
 	{
 		BackprojectPixelDriven_pmatrix_device << <grid, block >> > (sgm_flt, img, u, v, beta, pmatrix_array, config.shortScan, config.sgmWidth, config.views, \
 			config.sliceCount, config.coneBeam, config.imgDim, config.imgSliceCount, sdd_array, sid_array, config.pixelSize, config.imgSliceThickness, \
-			config.xCenter, config.yCenter, config.zCenter, z_idx);
+			config.xCenter, config.yCenter, config.zCenter, z_idx, config.imgRot);
 	}
 
 	cudaDeviceSynchronize();
