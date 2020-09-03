@@ -554,7 +554,7 @@ __global__ void BackprojectPixelDriven_pmatrix_device(float* sgm, float* img, fl
 	int row = threadIdx.y + blockDim.y * blockIdx.y;
 
 	float du = u[1] - u[0];
-	float imgRot_in_degree = imgRot / PI * 180.0f;
+	float imgRot_in_rad = imgRot * PI / 180.0f;
 	if (col < M && row < M && imgS_idx < imgS)
 	{
 
@@ -563,8 +563,8 @@ __global__ void BackprojectPixelDriven_pmatrix_device(float* sgm, float* img, fl
 
 		
 
-		float x = x_after_rotation * cos(imgRot_in_degree) + y_after_rotation * sin(imgRot_in_degree);//(col - (M - 1) / 2.0f)*dx + xc;
-		float y = y_after_rotation * cos(imgRot_in_degree) - x_after_rotation * sin(imgRot_in_degree);//((M - 1) / 2.0f - row)*dx + yc;
+		float x = x_after_rotation * cos(imgRot_in_rad) + y_after_rotation * sin(imgRot_in_rad);//(col - (M - 1) / 2.0f)*dx + xc;
+		float y = y_after_rotation * cos(imgRot_in_rad) - x_after_rotation * sin(imgRot_in_rad);//((M - 1) / 2.0f - row)*dx + yc;
 		float z;
 		float U;
 		float w;
