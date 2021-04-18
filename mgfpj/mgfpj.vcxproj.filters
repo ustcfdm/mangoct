@@ -38,7 +38,4 @@
       <Filter>Source Files</Filter>
     </CudaCompile>
   </ItemGroup>
-  <ItemGroup>
-    <None Include="config_mgfpj_sample.jsonc" />
-  </ItemGroup>
 </Project>

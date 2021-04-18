@@ -105,9 +105,6 @@ copy "$(CudaToolkitBinDir)\cudart*.dll" "$(OutDir)"</Command>
     <ClInclude Include="targetver.h" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="config_mgfpj_sample.jsonc" />
-  </ItemGroup>
-  <ItemGroup>
     <ClCompile Include="FpjClass.cpp">
       <FileType>Document</FileType>
     </ClCompile>

@@ -166,10 +166,6 @@
       <Project>{2da8bcc0-ad11-4a38-ade4-030f004478d3}</Project>
     </ProjectReference>
   </ItemGroup>
-  <ItemGroup>
-    <None Include="config_mglog_DE_sample.jsonc" />
-    <None Include="config_mglog_sample.jsonc" />
-  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets" />
 </Project>

@@ -44,7 +44,4 @@
       <Filter>Source Files</Filter>
     </CudaCompile>
   </ItemGroup>
-  <ItemGroup>
-    <None Include="config_mgfbp_sample.jsonc" />
-  </ItemGroup>
 </Project>
