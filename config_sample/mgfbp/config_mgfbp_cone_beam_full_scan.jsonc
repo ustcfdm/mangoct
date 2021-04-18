@@ -1,0 +1,112 @@
+// This is a config sample for mgfbp
+
+{
+    /********************************************************* 
+    * input and output directory and files
+    *********************************************************/
+  
+    "InputDir": ".",
+    "OutputDir": ".",
+  
+    // all the files in the input directory, use regular expression
+    "InputFiles": "sgm_.*.raw",
+    // output file name (prefix, replace)
+    "OutputFilePrefix": "",
+    // replace substring in input file name
+    "OutputFileReplace": [ "sgm_", "img_bh_", "1024-720-512", "1000-1000-450" ],
+  
+    // save filtered sinogram data
+    "SaveFilteredSinogram": false,
+  
+    /*********************************************************
+    * sinogram and slice parameters
+    *********************************************************/
+  
+    // number of detector elements
+    "SinogramWidth": 1024,
+    // number of frames
+    "SinogramHeight": 720,
+    // number of views for reconstruction
+    "Views": 720,
+    // number of slices in each sinogram file
+    "SliceCount": 512,
+    // (FOR CONE BEAM; OPTIONAL) slice thickness for cone beam reconstruction [mm]
+    "SliceThinkness": 0.1,
+    // (FOR CONE BEAM; OPTIONAL) slice offcenter distance [mm]
+    "SliceOffCenter": 0,
+  
+    //(OPTIONAL) total scan angle for short scan. Set scan angle to be negtive to change rotation direction
+    "TotalScanAngle": 360,
+    //(OPTIONAL) scan angle array for nonuniform scan angles
+    // Scan angles are saved in an external jason file
+    // "ScanAngleFile": "scan_angle.jsonc",
+  
+    // the physical size of detector element size [mm]
+    "DetectorElementSize": 0.1,
+    // the position (coordinate) of detector center [mm]
+    "DetectorOffcenter": -3,
+  
+    // "DetectorOffcenterFile": "xxxx",
+  
+    // source to isocenter distance [mm]
+    "SourceIsocenterDistance": 685.8,
+    // (OPTIONAL; for nonuniform SID)
+    // "SIDFile": "sid_file_sample.jsonc",
+    // source to detector distance [mm]
+    "SourceDetectorDistance": 838.2,
+    // (OPTIONAL; for nonuniform SDD)
+    // "SDDFile": "sdd_file_sample.jsonc",
+  
+    /*********************************************************
+      * reconstruction parameters
+    *********************************************************/
+    // (OPTIONAL; for recon with pmatrix)
+    // "PMatrixFile": "pmatrix_file_sample.jsonc",
+  
+    // Beam hardening correction (optional), support 10 parameters [s = p0 + p1*s + p2*s^2 + p3*s^3 + ...]
+    "BeamHardeningCorrection": [ 0, 1, 0.04 ],
+  
+    // Whether the cone beam recon is needed
+    // in case of "false", all other items relted to cone beam recon will be null 
+    "ConeBeam": true,
+  
+    // image dimension (integer)
+    "ImageDimension": 1000,
+  
+    /* pixel size or image size, just use one of them */
+  
+    // image pixel size [mm]
+    // "PixelSize": 0.43,
+  
+    // image size [mm]
+    "ImageSize": 50,
+  
+    // (FOR CONE BEAM; OPTIONAL) recon image slice thickness [mm]
+    "ImageSliceThickness": 0.05,
+    // (FOR CONE BEAM; OPTIONAL) recon image slice count
+    "ImageSliceCount": 450,
+    // (FOR CONE BEAM; OPTIONAL) recon image slice center in Z direction [mm]
+    "ImageCenterZ": 0,
+  
+    // rotate the image (positive counterclockwise) [degree]
+    "ImageRotation": 0,
+    // image center [x(mm), y(mm)]
+    "ImageCenter": [ 0, 0 ],
+  
+    /* reconstruction kernel, avaliable list:
+    *  1. "HammingFilter": t + (1-t)*cos(pi*k/ 2*kn), 1 for ramp kernel, 0 for consine kernel, others are in-between
+    *  2. "QuadraticFilter": (for bone-plus kernel) tow parameters for t and h, three parameters for a, b, c
+    *  3. "Polynomial": an*k^n + ... + a1*k + a0, (n <= 6)
+    *     (For Bone plus kernel: [ -15.9236, -2.1540, 3.1106, 2.3872, 1.0000 ], rebin detector element to 0.7 mm
+    *  4. "Hilbert": 1 or -1 (phase contrast, 1 or -1 for right or left direction)
+    *  5. "Hilbert_angle": temporary test of differential phase contrast along angle direction
+    *  6.  "GaussianApodizedRamp": delta (delta=1 match MDCT if sinogram pixel size 0.4 mm), Ramp kernel apodized by a gaussian kernel (exp(-n^2/2/delta^2)), delta is in number of pixels
+    *  7. "Delta": x (x is a number), convolve with a Delta function, the value is x
+    */
+  
+    "HammingFilter": 0, 
+  
+    // (OPTIONAL) set water mu to convert the pixel values to HU
+    // unit: mm^-1
+    // "WaterMu": 0.02  
+  }

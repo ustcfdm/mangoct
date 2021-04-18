@@ -1,0 +1,79 @@
+// This is a config sample for mgfpj
+
+{
+
+  "ScanAngleFile":  "./pmatrix/scan_angle.jsonc",
+  // (OPTIONAL; for nonuniform SID)
+  "SIDFile": "./pmatrix/sid_file.jsonc",
+  // (OPTIONAL; pmatrix nonuniform SDD)
+  "SDDFile": "./pmatrix/sdd_file.jsonc",
+  // (OPTIONAL; for nonuzero Swing Angle)
+  "SwingAngleFile":"./pmatrix/delta_theta_file.jsonc",
+  // (OPTIONAL; file detector offcenter array)
+  "DetectorOffCenterFile": "./pmatrix/offcenter_file.jsonc",
+
+  /*********************************************************
+	* input and output directory and files
+	*********************************************************/
+  "InputDir": "",
+  "OutputDir": "",
+
+  // all the files in the input directory, use regular expression
+  "InputFiles": "",
+  // output file name (prefix, replace)
+  "OutputFilePrefix": "",
+  // replace substring in input file name
+  "OutputFileReplace": [ "img", "sgm", "512-512", "1280-495" ],
+
+  // "WaterMu":0,
+
+  /*********************************************************
+	* image parameters
+	*********************************************************/
+
+  // image dimension (integer)
+  "ImageDimension": 512,
+
+  /* pixel size or image size, just use one of them */
+  // image pixel size [mm]
+  // "PixelSize": 0,
+  // image size [mm]
+  "ImageSize": 220,
+
+  // number of slices in each image file
+  "SliceCount": 1,
+
+
+  /*********************************************************
+	* geometry and detector parameters
+	*********************************************************/
+
+  // source to isocenter distance [mm]
+  "SourceIsocenterDistance": 749.6,
+  // source to detector distance [mm]
+  "SourceDetectorDistance": 0,
+
+  // start angle (positive counterclockwise) [degree]
+  "StartAngle": 8.5,
+  // number of detector elements
+  "DetectorElementCount": 1280,
+  // number of views for reconstruction
+  "Views": 495,
+  // (optional) total scan angle for short scan. Set scan angle to negtive to change rotation direction
+  "TotalScanAngle": 197.78,
+
+  // (optional) scan angle file for nonuniform scan angles
+  // the previous TotalScanAngle term will be null if this term is uncommented
+  // the unit of the scan angles is degree
+  // the number of angles should be consistent with the Views
+  // check the sample file for more info
+  //"ScanAngleFile":  "scan_angle_file_sample.jsonc",
+
+  // the physical size of detector element size [mm]
+  "DetectorElementSize": 0.4,
+  // the position (coordinate) of detector center [mm]
+  "DetectorOffcenter": 0,
+
+  // oversample sinogram by increasing the number of detector elements by the factor of number below
+  "OversampleSize": 2
+}
